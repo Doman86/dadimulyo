@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { deleteRental, fetchRentals, updateRental } from '../../api/trucks';
 import { formatNumber, formatRupiah } from '../../utils/format';
+import { whatsappUrl } from '../../utils/contact';
 
 const STATUSES = [
   { value: 'pending', label: 'Menunggu', color: 'bg-yellow-100 text-yellow-700' },
@@ -155,6 +156,29 @@ export default function AdminRentals() {
                     </div>
                     {statusBadge(rental.status)}
                   </div>
+                  {rental.customer?.phone && (
+                    <div className="flex gap-2">
+                      <a
+                        href={whatsappUrl(
+                          rental.customer.phone,
+                          `Halo ${rental.customer.name || 'Bapak/Ibu'}, kami dari Dadi Mulyo terkait booking rental truck Anda (ID ${rental.id}).`
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+                        title="Hubungi customer melalui WhatsApp"
+                      >
+                        WhatsApp
+                      </a>
+                      <a
+                        href={`tel:${rental.customer.phone}`}
+                        className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        title="Telepon customer"
+                      >
+                        Telepon
+                      </a>
+                    </div>
+                  )}
                   <button
                     onClick={() => openEdit(rental)}
                     className="rounded bg-gray-100 px-3 py-1.5 text-sm font-medium hover:bg-gray-200"

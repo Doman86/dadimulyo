@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchDashboard } from '../../api/dashboard';
 import { useAuth } from '../../context/AuthContext';
 import { formatNumber, formatRupiah } from '../../utils/format';
+import { whatsappUrl } from '../../utils/contact';
 
 function StatCard({ label, value, accent = 'text-primary' }) {
   return (
@@ -25,6 +26,33 @@ function LeadStatusBadge({ status }) {
   return <span className={`rounded px-2 py-0.5 text-xs font-semibold ${s.color}`}>{s.label}</span>;
 }
 
+function ContactActions({ phone, name, message }) {
+  if (!phone) {
+    return <span className="text-xs text-red-600">Nomor customer belum tersedia</span>;
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      <a
+        href={whatsappUrl(phone, `Halo ${name || 'Bapak/Ibu'}, kami dari Dadi Mulyo. ${message}`)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+        title="Hubungi customer melalui WhatsApp"
+      >
+        WhatsApp
+      </a>
+      <a
+        href={`tel:${phone}`}
+        className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+        title="Telepon customer"
+      >
+        Telepon
+      </a>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const role = user?.role?.name;
@@ -33,12 +61,21 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(() => {
+    setLoading(true);
+    setError(null);
     fetchDashboard()
       .then(setStats)
       .catch(() => setError('Gagal memuat dashboard.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadDashboard();
+    const refreshTimer = window.setInterval(loadDashboard, 15000);
+
+    return () => window.clearInterval(refreshTimer);
+  }, [loadDashboard]);
 
   if (loading) return <p className="py-20 text-center text-gray-500">Memuat dashboard...</p>;
 
@@ -225,7 +262,17 @@ export default function AdminDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-primary">Dashboard Admin</h1>
-      <p className="text-sm text-gray-600">Ringkasan bisnis Dadi Mulyo.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-gray-600">Ringkasan bisnis Dadi Mulyo.</p>
+        <button
+          type="button"
+          onClick={loadDashboard}
+          disabled={loading}
+          className="rounded bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? 'Memuat...' : 'Refresh'}
+        </button>
+      </div>
 
       {error && <p className="mt-4 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>}
 
@@ -264,6 +311,11 @@ export default function AdminDashboard() {
                           year: 'numeric',
                         })}
                       </div>
+                      <ContactActions
+                        phone={order.customer?.phone || order.shipping_address?.phone}
+                        name={order.customer?.name || order.shipping_address?.recipient_name}
+                        message={`terkait pesanan ${order.order_number}.`}
+                      />
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-primary">{formatRupiah(order.total)}</div>
@@ -325,6 +377,11 @@ export default function AdminDashboard() {
                     <div className="text-xs text-gray-500">
                       {rental.customer?.name} · {rental.start_date} → {rental.end_date}
                     </div>
+                    <ContactActions
+                      phone={rental.customer?.phone}
+                      name={rental.customer?.name}
+                      message={`terkait booking rental truck ID ${rental.id}.`}
+                    />
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-primary">{formatRupiah(rental.total_price)}</div>

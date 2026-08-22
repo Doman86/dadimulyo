@@ -55,9 +55,10 @@ export default function Register() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">No. HP (opsional)</label>
+          <label className="block text-sm font-medium text-gray-700">No. HP / WhatsApp *</label>
           <input
             type="tel"
+            required
             value={form.phone}
             onChange={set('phone')}
             className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"

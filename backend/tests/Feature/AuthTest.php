@@ -41,6 +41,7 @@ class AuthTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'Budi',
             'email' => 'budi@example.com',
+            'phone' => '081234567891',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ])->assertStatus(201);

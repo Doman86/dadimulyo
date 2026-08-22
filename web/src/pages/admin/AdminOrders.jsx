@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchOrders, updateOrderStatus } from '../../api/orders';
 import { formatRupiah } from '../../utils/format';
+import { whatsappUrl } from '../../utils/contact';
 
 const STATUSES = [
   { value: 'pending', label: 'Pending' },
@@ -124,6 +125,29 @@ export default function AdminOrders() {
                     {order.items?.length ?? 0} item
                     {order.delivery ? ' · 🚛 Ada pengiriman' : ''}
                   </div>
+                  {(order.customer?.phone || order.shipping_address?.phone) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <a
+                        href={whatsappUrl(
+                          order.customer?.phone || order.shipping_address?.phone,
+                          `Halo ${order.customer?.name || order.shipping_address?.recipient_name || 'Bapak/Ibu'}, kami dari Dadi Mulyo terkait pesanan ${order.order_number}.`
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+                        title="Hubungi customer melalui WhatsApp"
+                      >
+                        WhatsApp
+                      </a>
+                      <a
+                        href={`tel:${order.customer?.phone || order.shipping_address?.phone}`}
+                        className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        title="Telepon customer"
+                      >
+                        Telepon
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">

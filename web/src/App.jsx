@@ -44,7 +44,7 @@ function AdminRoute({ children }) {
   const { user } = useAuth();
   const role = user?.role?.name;
   if (!user) return <Navigate to="/login" replace />;
-  if (role !== 'admin' && role !== 'truck_seller' && role !== 'sales' && role !== 'orange_seller') {
+  if (role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
   return children;

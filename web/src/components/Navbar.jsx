@@ -51,7 +51,7 @@ export default function Navbar() {
               <Link to="/dashboard" className="hover:text-secondary">
                 Dashboard
               </Link>
-              {(user.role?.name === 'admin' || user.role?.name === 'truck_seller' || user.role?.name === 'sales' || user.role?.name === 'orange_seller') && (
+              {user.role?.name === 'admin' && (
                 <Link to="/admin/dashboard" className="hover:text-secondary">
                   Panel Admin
                 </Link>

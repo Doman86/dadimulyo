@@ -1,0 +1,116 @@
+{
+  "document": "03-features",
+  "business_modules": {
+    "truck_showroom": {
+      "priority": "critical",
+      "features": [
+        "truck listing",
+        "truck detail",
+        "multiple truck images",
+        "truck specifications",
+        "truck category",
+        "brand",
+        "model",
+        "year",
+        "price",
+        "mileage",
+        "engine",
+        "transmission",
+        "fuel_type",
+        "capacity",
+        "condition",
+        "location",
+        "availability status",
+        "search",
+        "filter",
+        "sorting",
+        "wishlist",
+        "compare truck",
+        "contact sales",
+        "request offer"
+      ]
+    },
+    "truck_sales": {
+      "priority": "critical",
+      "features": [
+        "customer inquiry",
+        "sales lead",
+        "request price",
+        "request negotiation",
+        "sales follow-up",
+        "customer notes",
+        "lead status",
+        "sales assignment"
+      ]
+    },
+    "truck_rental": {
+      "priority": "high",
+      "features": [
+        "rental truck listing",
+        "rental price",
+        "daily rental",
+        "weekly rental",
+        "availability calendar",
+        "booking",
+        "rental status",
+        "customer data",
+        "rental history",
+        "booking confirmation"
+      ]
+    },
+    "orange_marketplace": {
+      "priority": "high",
+      "features": [
+        "orange product listing",
+        "orange categories",
+        "orange grade",
+        "price per kilogram",
+        "wholesale price",
+        "stock",
+        "minimum order",
+        "harvest schedule",
+        "farm location",
+        "product images",
+        "pre-order",
+        "bulk order"
+      ]
+    },
+    "order_system": {
+      "priority": "high",
+      "features": [
+        "cart",
+        "checkout",
+        "order creation",
+        "order items",
+        "order status",
+        "order history",
+        "invoice",
+        "payment status"
+      ]
+    },
+    "delivery": {
+      "priority": "medium",
+      "features": [
+        "delivery request",
+        "truck selection",
+        "delivery address",
+        "estimated shipping cost",
+        "delivery status",
+        "driver assignment",
+        "delivery history"
+      ]
+    },
+    "review": {
+      "priority": "medium",
+      "features": ["truck review", "seller review", "rental review", "orange product review"]
+    },
+    "wishlist": {
+      "priority": "medium",
+      "features": ["save truck", "remove truck", "saved products"]
+    },
+    "notification": {
+      "priority": "medium",
+      "features": ["order notification", "rental notification", "lead notification", "system notification"]
+    }
+  }
+}

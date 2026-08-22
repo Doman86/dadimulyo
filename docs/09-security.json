@@ -1,0 +1,20 @@
+{
+  "document": "09-security",
+  "authentication": "Laravel Sanctum",
+  "authorization": "role based authorization",
+  "password": "Laravel Hash",
+  "validation": "Form Request validation",
+  "file_upload": [
+    "validate MIME type",
+    "validate file size",
+    "generate safe filename",
+    "never trust original filename"
+  ],
+  "api": [
+    "validate request",
+    "authorize user",
+    "return consistent JSON",
+    "do not expose passwords",
+    "do not expose sensitive data"
+  ]
+}

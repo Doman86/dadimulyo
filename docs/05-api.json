@@ -1,0 +1,103 @@
+{
+  "document": "05-api",
+  "base_url": "/api",
+  "response_format": "JSON",
+  "authentication": "Sanctum token (Bearer)",
+  "endpoints": {
+    "authentication": [
+      "POST /api/register",
+      "POST /api/login",
+      "POST /api/logout",
+      "GET /api/user"
+    ],
+    "trucks": [
+      "GET /api/trucks (public) — list + search/filter/sort, query: search, category_id, condition, fuel_type, transmission, min_price, max_price, is_for_sale, is_for_rent, status, sort(newest|oldest|price_asc|price_desc), per_page",
+      "POST /api/trucks (admin / truck_seller)",
+      "GET /api/trucks/{id} (public) — detail + images + specifications + seller + reviews",
+      "PUT /api/trucks/{id} (admin / owner seller)",
+      "DELETE /api/trucks/{id} (admin / owner seller) — soft delete via status",
+      "POST /api/trucks/{id}/images (admin / owner seller) — multipart field: image, is_primary",
+      "DELETE /api/trucks/{id}/images/{image} (admin / owner seller)",
+      "POST /api/trucks/{id}/wishlist (customer, auth) — toggle",
+      "GET /api/wishlists (customer, auth) — daftar truck yang disimpan"
+    ],
+    "truck_categories": [
+      "GET /api/truck-categories (public)",
+      "POST /api/truck-categories (admin)",
+      "PUT /api/truck-categories/{id} (admin)",
+      "DELETE /api/truck-categories/{id} (admin)"
+    ],
+    "leads": [
+      "POST /api/leads (public) — form hubungi sales: name, phone, message, truck_id, source",
+      "GET /api/leads (sales / admin) — filter status",
+      "GET /api/leads/{id} (sales / admin / customer pemilik)",
+      "PUT /api/leads/{id} (sales / admin) — status: new, contacted, negotiating, won, lost; sales_id (penugasan); notes",
+      "DELETE /api/leads/{id} (admin)"
+    ],
+    "users": [
+      "GET /api/users (admin) — daftar pengguna, filter role (mis. ?role=sales) untuk dropdown penugasan"
+    ],
+    "rentals": [
+      "GET /api/rentals (customer: milik sendiri; admin: semua) — filter truck_id, status",
+      "POST /api/rentals (customer) — booking: truck_id, start_date, end_date, notes; cek ketersediaan; total = harga harian x jumlah hari; status awal pending",
+      "GET /api/rentals/{id} (customer pemilik / admin)",
+      "PUT /api/rentals/{id} (customer: hanya batalkan pending/confirmed; admin: ubah status/dates/notes)",
+      "DELETE /api/rentals/{id} (admin; customer hanya jika pending)",
+      "GET /api/trucks/{id}/availability (public) — cek ketersediaan: ?start_date=&end_date="
+    ],
+    "orange_products": [
+      "GET /api/oranges (public) — list + search/filter/sort: search, category_id, grade, min_price, max_price, in_stock, status, sort, per_page",
+      "POST /api/oranges (admin / orange_seller)",
+      "GET /api/oranges/{id} (public) — detail + images + category + seller + reviews",
+      "PUT /api/oranges/{id} (admin / owner seller) — termasuk update stok & harga",
+      "DELETE /api/oranges/{id} (admin / owner seller) — soft delete via status",
+      "POST /api/oranges/{id}/images (admin / owner seller) — multipart: image, is_primary",
+      "DELETE /api/oranges/{id}/images/{image} (admin / owner seller)"
+    ],
+    "orange_categories": [
+      "GET /api/orange-categories (public)",
+      "POST /api/orange-categories (admin)",
+      "PUT /api/orange-categories/{id} (admin)",
+      "DELETE /api/orange-categories/{id} (admin)"
+    ],
+    "orders": [
+      "GET /api/orders (customer: milik sendiri; admin: semua) — filter status, payment_status",
+      "POST /api/orders (customer) — checkout: items[orange_product_id, quantity_kg], address (inline) atau shipping_address_id, shipping_cost, notes, delivery{...}; kurangi stok; harga grosir otomatis untuk quantity_kg >= 50; buat delivery bila diminta",
+      "GET /api/orders/{id} (customer pemilik / admin)",
+      "PUT /api/orders/{id}/status (admin) — status: pending, confirmed, processing, completed, cancelled; payment_status: unpaid, paid, refunded; shipping_cost"
+    ],
+    "delivery": [
+      "GET /api/deliveries (admin) — filter status, order_id",
+      "POST /api/deliveries (admin) — buat delivery + assign truck/driver",
+      "GET /api/deliveries/{id} (admin / customer pemilik order)",
+      "PUT /api/deliveries/{id}/status (admin) — pending, assigned, in_transit, delivered, cancelled; delivered_at otomatis",
+      "DELETE /api/deliveries/{id} (admin)"
+    ],
+    "dashboard": [
+      "GET /api/dashboard (auth, semua role) — ringkasan statistik sesuai role: admin (truck/rental/order/lead/user/orange counts, revenue, recent orders/leads/rentals), sales (lead counts per status + recent leads), truck_seller (truck & lead counts + recent), orange_seller (produk & stok + recent products), customer (order/rental/wishlist counts + recent)"
+    ]
+  },
+  "notes": {
+    "order_status": "pending | confirmed | processing | completed | cancelled",
+    "payment_status": "unpaid | paid | refunded",
+    "delivery_status": "pending | assigned | in_transit | delivered | cancelled",
+    "wholesale_rule": "harga grosir otomatis berlaku bila quantity_kg >= 50 dan wholesale_price terisi",
+    "order_number": "format DMYYYYMMDD-XXXXXX",
+    "truck_status": "available | sold | rented | deleted",
+    "orange_status": "available | deleted",
+    "orange_rules": "wholesale_price harus <= price_per_kg; stok dalam kg; minimum_order_kg default 1",
+    "rental_status": "pending | confirmed | active | completed | cancelled",
+    "rental_price_source": "kolom rental_price_per_day pada truck; harga sewa harus diisi saat truck ditandai is_for_rent",
+    "lead_status": "new | contacted | negotiating | won | lost",
+    "image_storage": "public storage, folder trucks/, URL /storage/trucks/...",
+    "image_rules": "jpeg/jpg/png/webp, max 5 MB"
+  },
+  "rules": {
+    "validate_request": true,
+    "authorize_user": true,
+    "consistent_json": true,
+    "do_not_expose_passwords": true,
+    "do_not_expose_sensitive_data": true,
+    "api_changes": "must update API documentation"
+  }
+}

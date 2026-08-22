@@ -1,0 +1,39 @@
+{
+  "document": "06-web",
+  "framework": "React.js",
+  "css": "Tailwind CSS",
+  "api_client": "Axios",
+  "state_management": "React Context initially",
+  "routing": "React Router",
+  "pages": {
+    "public": ["/", "/about", "/trucks", "/trucks/{id}", "/rental", "/oranges", "/oranges/{id}", "/contact", "/faq"],
+    "customer": [
+      "/dashboard",
+      "/wishlist",
+      "/cart",
+      "/checkout",
+      "/orders",
+      "/orders/{id}",
+      "/rentals",
+      "/profile"
+    ],
+    "sales": ["/sales/dashboard", "/sales/leads", "/sales/customers"],
+    "admin": [
+      "/admin/dashboard",
+      "/admin/users",
+      "/admin/trucks",
+      "/admin/rentals",
+      "/admin/oranges",
+      "/admin/orders",
+      "/admin/deliveries",
+      "/admin/leads",
+      "/admin/reports"
+    ]
+  },
+  "rules": {
+    "responsive_ui": true,
+    "reusable_components": true,
+    "reusable_services": true,
+    "handle_api_errors": true
+  }
+}

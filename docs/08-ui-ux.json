@@ -1,0 +1,35 @@
+{
+  "document": "08-ui-ux",
+  "brand_direction": "modern professional truck showroom combined with agricultural marketplace",
+  "visual_identity": {
+    "primary": "dark green",
+    "secondary": "orange",
+    "neutral": "white, gray, charcoal",
+    "truck_accent": "dark charcoal",
+    "agro_accent": "orange"
+  },
+  "principles": [
+    "mobile responsive",
+    "fast navigation",
+    "large product imagery",
+    "clear prices",
+    "clear call-to-action",
+    "professional showroom appearance",
+    "easy contact with sales",
+    "minimal unnecessary decoration"
+  ],
+  "homepage_sections": [
+    "hero",
+    "featured trucks",
+    "latest trucks",
+    "truck categories",
+    "rental trucks",
+    "orange products",
+    "why Dadi Mulyo",
+    "customer reviews",
+    "contact CTA"
+  ],
+  "rules": {
+    "ui_changes": "must preserve responsive behavior"
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "document": "13-roadmap",
+  "development_phases": {
+    "phase_1": {
+      "name": "Foundation",
+      "status": "done",
+      "tasks": [
+        "create Laravel backend",
+        "create MySQL database",
+        "create React application",
+        "configure Tailwind",
+        "create Flutter application",
+        "configure environment"
+      ]
+    },
+    "phase_2": {
+      "name": "Authentication",
+      "status": "done",
+      "tasks": ["register", "login", "logout", "roles", "profile"]
+    },
+    "phase_3": {
+      "name": "Truck Showroom",
+      "status": "mostly_done",
+      "tasks": [
+        "truck categories",
+        "truck CRUD",
+        "multiple images",
+        "specifications",
+        "search",
+        "filter",
+        "detail page",
+        "wishlist",
+        "sales inquiry"
+      ]
+    },
+    "phase_4": {
+      "name": "Sales CRM",
+      "status": "partial",
+      "tasks": ["leads", "sales assignment", "customer notes", "follow up", "lead status"]
+    },
+    "phase_5": {
+      "name": "Truck Rental",
+      "status": "partial",
+      "tasks": ["rental listing", "availability", "booking", "pricing", "rental history"]
+    },
+    "phase_6": {
+      "name": "Orange Marketplace",
+      "status": "mostly_done",
+      "tasks": ["categories", "products", "grades", "stock", "pricing", "bulk order", "pre-order"]
+    },
+    "phase_7": {
+      "name": "Order and Delivery",
+      "status": "partial",
+      "tasks": ["cart", "checkout", "order", "delivery", "truck assignment", "delivery status"]
+    },
+    "phase_8": {
+      "name": "Dashboard",
+      "status": "mostly_done",
+      "tasks": ["admin dashboard", "sales dashboard", "customer dashboard", "admin oranges", "admin users"]
+    },
+    "phase_9": {
+      "name": "Flutter",
+      "status": "needs_verification",
+      "tasks": [
+        "authentication",
+        "home",
+        "truck browsing",
+        "truck detail",
+        "rental",
+        "orange marketplace",
+        "orders",
+        "profile",
+        "wishlist",
+        "rental history",
+        "contact sales"
+      ]
+    },
+    "phase_10": {
+      "name": "Shared Hosting Deployment",
+      "status": "pending",
+      "tasks": [
+        "production environment configuration",
+        "database migration",
+        "React production build",
+        "Laravel configuration",
+        "storage configuration",
+        "API configuration",
+        "testing"
+      ]
+    }
+  },
+  "mvp": {
+    "must_have": [
+      "authentication",
+      "truck showroom",
+      "truck CRUD",
+      "truck image gallery",
+      "truck detail",
+      "search",
+      "filter",
+      "contact sales",
+      "lead management",
+      "truck rental",
+      "orange marketplace",
+      "basic order system",
+      "admin dashboard"
+    ],
+    "not_required_initially": [
+      "S3",
+      "VPS",
+      "real time chat",
+      "live GPS tracking",
+      "AI recommendation",
+      "complex payment gateway",
+      "microservices",
+      "Kubernetes",
+      "Docker infrastructure"
+    ]
+  },
+  "status_legend": {
+    "done": "Fitur tersedia dan sudah diverifikasi.",
+    "mostly_done": "Alur utama tersedia, tetapi masih ada fitur pendukung yang belum selesai.",
+    "partial": "Sebagian fitur tersedia; masih perlu implementasi sebelum dianggap selesai.",
+    "needs_verification": "Implementasi ada, tetapi belum diverifikasi penuh pada perangkat atau alur nyata.",
+    "pending": "Belum dikerjakan."
+  },
+  "implementation_checklist": {
+    "phase_1_foundation": [
+      {"task": "Backend dapat dijalankan di port 8000", "status": "done"},
+      {"task": "Frontend dapat dijalankan di port 5173", "status": "done"},
+      {"task": "MySQL database dadimulyo tersedia", "status": "done"},
+      {"task": "Environment example dan local environment terdokumentasi", "status": "done"}
+    ],
+    "phase_2_authentication": [
+      {"task": "Register publik membuat role customer", "status": "done"},
+      {"task": "Login, logout, dan profile", "status": "done"},
+      {"task": "Admin dapat membuat akun internal dari halaman pengguna", "status": "done"},
+      {"task": "Non-admin tidak dapat membuat atau memilih role admin", "status": "done"},
+      {"task": "Reset password dan verifikasi email", "status": "pending"}
+    ],
+    "phase_3_truck_showroom": [
+      {"task": "Listing, detail, kategori, pencarian, filter, dan sorting", "status": "done"},
+      {"task": "CRUD truck dengan spesifikasi dan multi foto", "status": "done"},
+      {"task": "Wishlist truck", "status": "done"},
+      {"task": "Hubungi sales dan request offer", "status": "done"},
+      {"task": "Compare truck", "status": "pending"}
+    ],
+    "phase_4_sales_crm": [
+      {"task": "Lead masuk dari form kontak", "status": "done"},
+      {"task": "Status lead dan penugasan sales", "status": "done"},
+      {"task": "Catatan customer dan riwayat follow-up", "status": "partial"},
+      {"task": "Halaman sales dashboard dan customer khusus sales", "status": "pending"},
+      {"task": "Penawaran harga dan negosiasi", "status": "pending"}
+    ],
+    "phase_5_rental": [
+      {"task": "Listing truck rental dan cek availability", "status": "done"},
+      {"task": "Booking dengan harga harian", "status": "done"},
+      {"task": "Konfirmasi booking dan riwayat rental", "status": "partial"},
+      {"task": "Harga mingguan", "status": "pending"},
+      {"task": "Kalender availability", "status": "pending"}
+    ],
+    "phase_6_orange_marketplace": [
+      {"task": "Kategori, produk, grade, harga, stok, dan minimum order", "status": "done"},
+      {"task": "Harga grosir otomatis untuk pembelian minimal 50 kg", "status": "done"},
+      {"task": "Pre-order dan bulk order", "status": "partial"},
+      {"task": "Multi foto produk", "status": "done"},
+      {"task": "Validasi alur stok saat order", "status": "needs_verification"}
+    ],
+    "phase_7_order_delivery": [
+      {"task": "Cart, checkout, order item, dan order history", "status": "done"},
+      {"task": "Update status order dan pembayaran", "status": "partial"},
+      {"task": "Invoice dan bukti pembayaran", "status": "pending"},
+      {"task": "Delivery, pilihan truck, driver, dan status pengiriman", "status": "partial"},
+      {"task": "Uji alur order sampai delivery end-to-end", "status": "needs_verification"}
+    ],
+    "phase_8_dashboard": [
+      {"task": "Dashboard admin", "status": "done"},
+      {"task": "Dashboard customer", "status": "done"},
+      {"task": "Dashboard sales khusus", "status": "pending"},
+      {"task": "Kelola user, truck, jeruk, order, rental, dan delivery", "status": "mostly_done"},
+      {"task": "Laporan dan export data", "status": "partial"}
+    ],
+    "phase_9_mobile": [
+      {"task": "Authentication dan profile", "status": "needs_verification"},
+      {"task": "Truck, rental, jeruk, cart, checkout, dan order", "status": "needs_verification"},
+      {"task": "Wishlist, rental history, dan contact sales", "status": "needs_verification"},
+      {"task": "Uji Android dengan API lokal dan production", "status": "pending"}
+    ],
+    "phase_10_deployment": [
+      {"task": "Production environment dan database hosting", "status": "pending"},
+      {"task": "Build React dan upload web/dist", "status": "done"},
+      {"task": "Laravel public document root dan storage", "status": "pending"},
+      {"task": "HTTPS, CORS, dan API URL production", "status": "pending"},
+      {"task": "Smoke test authentication, media, order, dan delivery", "status": "pending"}
+    ]
+  },
+  "next_priorities": [
+    "Stabilkan dan uji alur order sampai delivery end-to-end.",
+    "Lengkapi role sales dengan dashboard, customer notes, follow-up, dan penawaran.",
+    "Tambahkan invoice serta alur pembayaran manual sederhana.",
+    "Lengkapi kalender rental, harga mingguan, dan konfirmasi booking.",
+    "Verifikasi seluruh screen Flutter sebelum deployment."
+  ]
+}

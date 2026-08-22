@@ -1,0 +1,78 @@
+{
+  "document": "02-roles",
+  "user_roles": {
+    "admin": {
+      "permissions": [
+        "manage users",
+        "manage trucks",
+        "manage truck categories",
+        "manage rentals",
+        "manage orange products",
+        "manage orders",
+        "manage deliveries",
+        "manage reviews",
+        "manage leads",
+        "manage reports",
+        "manage system settings"
+      ]
+    },
+    "sales": {
+      "permissions": [
+        "view leads",
+        "manage customers",
+        "follow up customers",
+        "view trucks",
+        "manage assigned truck listings",
+        "update lead status",
+        "record customer notes"
+      ]
+    },
+    "truck_seller": {
+      "permissions": [
+        "create truck",
+        "edit truck",
+        "delete truck",
+        "upload truck images",
+        "manage truck specifications",
+        "manage truck price",
+        "view truck inquiries"
+      ]
+    },
+    "orange_seller": {
+      "permissions": [
+        "create orange product",
+        "edit orange product",
+        "delete orange product",
+        "manage stock",
+        "manage price",
+        "manage product images",
+        "manage orders"
+      ]
+    },
+    "customer": {
+      "permissions": [
+        "browse trucks",
+        "view truck detail",
+        "wishlist truck",
+        "compare trucks",
+        "contact sales",
+        "request offer",
+        "rent truck",
+        "buy oranges",
+        "create orders",
+        "review products",
+        "view order history"
+      ]
+    },
+    "driver": {
+      "permissions": [
+        "view assigned delivery",
+        "view schedule",
+        "update delivery status",
+        "view delivery history"
+      ],
+      "implementation": "optional phase"
+    }
+  },
+  "seed_roles": ["admin", "sales", "truck_seller", "orange_seller", "customer", "driver"]
+}

@@ -1,0 +1,26 @@
+{
+  "document": "07-mobile",
+  "framework": "Flutter",
+  "language": "Dart",
+  "api_client": "Dio or http",
+  "state_management": "Provider initially",
+  "screens": {
+    "authentication": ["LoginScreen", "RegisterScreen"],
+    "customer": [
+      "HomeScreen",
+      "TruckListScreen",
+      "TruckDetailScreen",
+      "RentalScreen",
+      "OrangeListScreen",
+      "OrangeDetailScreen",
+      "CartScreen",
+      "CheckoutScreen",
+      "OrderHistoryScreen",
+      "ProfileScreen"
+    ]
+  },
+  "implementation_phase": "phase_9",
+  "rules": {
+    "web_and_mobile_consume_same_api": true
+  }
+}

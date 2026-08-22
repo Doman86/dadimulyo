@@ -1,0 +1,40 @@
+# Gradle
+.gradle/
+.gradle_home/
+**/.gradle/
+build/
+**/build/
+
+# Flutter / Dart
+.dart_tool/
+.pub-cache/
+.pub/
+**/.dart_tool/
+**/.pub-cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node
+node_modules/
+
+# Laravel
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php

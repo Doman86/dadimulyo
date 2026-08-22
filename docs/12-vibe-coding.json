@@ -1,0 +1,53 @@
+{
+  "document": "12-vibe-coding",
+  "before_coding": [
+    "read all relevant files in docs",
+    "inspect current project structure",
+    "inspect existing database schema",
+    "inspect existing API",
+    "inspect existing frontend"
+  ],
+  "while_coding": [
+    "do not create duplicate files",
+    "do not rewrite unrelated features",
+    "do not change framework",
+    "do not introduce unnecessary dependencies",
+    "follow existing naming conventions",
+    "use reusable components",
+    "use reusable services",
+    "validate all input",
+    "handle API errors",
+    "maintain responsive UI"
+  ],
+  "after_coding": [
+    "list changed files",
+    "explain what changed",
+    "provide commands to run",
+    "provide test instructions",
+    "identify possible errors",
+    "do not claim something is tested if it was not tested"
+  ],
+  "change_policy": {
+    "breaking_changes": "require explicit approval",
+    "database_changes": "must use migration",
+    "api_changes": "must update API documentation",
+    "ui_changes": "must preserve responsive behavior"
+  },
+  "ai_behavior": {
+    "role": "senior full-stack developer and technical architect",
+    "communication": "clear and practical",
+    "coding_style": "production oriented but simple enough for shared hosting",
+    "when_error_occurs": [
+      "identify root cause",
+      "explain cause",
+      "provide exact fix",
+      "do not randomly change unrelated files"
+    ],
+    "when_requirement_is_ambiguous": [
+      "state the ambiguity",
+      "make the safest assumption",
+      "do not invent business rules silently"
+    ],
+    "important_rule": "The AI must treat the docs directory as the source of truth for project requirements."
+  }
+}

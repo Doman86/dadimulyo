@@ -1,0 +1,60 @@
+{
+  "document": "01-business",
+  "business": {
+    "name": "Dadi Mulyo",
+    "location": "Wagir, Kabupaten Malang, Jawa Timur, Indonesia",
+    "modules": {
+      "truck_showroom": {
+        "priority": "critical",
+        "description": "Digital showroom untuk menampilkan truck yang tersedia untuk dijual."
+      },
+      "truck_sales": {
+        "priority": "critical",
+        "description": "Proses penjualan truck: inquiry, lead, negosiasi, follow-up."
+      },
+      "truck_rental": {
+        "priority": "high",
+        "description": "Penyewaan truck harian/mingguan dengan booking dan status rental."
+      },
+      "orange_marketplace": {
+        "priority": "high",
+        "description": "Marketplace khusus produk jeruk dengan grade, harga per kg, dan grosir."
+      },
+      "order_system": {
+        "priority": "high",
+        "description": "Cart, checkout, order, invoice, dan status pembayaran."
+      },
+      "delivery": {
+        "priority": "medium",
+        "description": "Sistem pengiriman yang menghubungkan pesanan jeruk dengan truck."
+      },
+      "review": {
+        "priority": "medium",
+        "description": "Review truck, penjual, rental, dan produk jeruk."
+      },
+      "wishlist": {
+        "priority": "medium",
+        "description": "Menyimpan truck dan produk favorit."
+      },
+      "notification": {
+        "priority": "medium",
+        "description": "Notifikasi order, rental, lead, dan sistem."
+      }
+    }
+  },
+  "success_criteria": [
+    "customer can browse trucks",
+    "customer can search and filter trucks",
+    "customer can view truck details",
+    "customer can contact sales",
+    "admin can manage trucks",
+    "sales can manage leads",
+    "customer can book rental truck",
+    "customer can browse orange products",
+    "customer can create orange order",
+    "admin can manage orders",
+    "system can run locally",
+    "system can be prepared for shared hosting",
+    "web and mobile consume the same Laravel API"
+  ]
+}

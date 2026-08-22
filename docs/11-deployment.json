@@ -1,0 +1,70 @@
+{
+  "document": "11-deployment",
+  "development": {
+    "environment": "local computer",
+    "server": "Laragon Apache",
+    "database": "MySQL",
+    "storage": "local"
+  },
+  "target": {
+    "type": "shared hosting",
+    "priority": "temporary deployment target",
+    "layout": {
+      "api_document_root": "backend/public",
+      "web_document_root": "web/dist",
+      "recommended_subdomains": {
+        "api": "api.example.com",
+        "web": "example.com"
+      }
+    }
+  },
+  "requirements": [
+    "PHP version compatible with Laravel version",
+    "MySQL",
+    "Composer if supported",
+    "Apache",
+    "PHP extensions required by Laravel",
+    "writable storage directory",
+    "Apache mod_rewrite enabled",
+    "HTTPS certificate for web and API"
+  ],
+  "deployment_steps": [
+    "Create a MySQL database and user on the hosting panel.",
+    "Set the API document root to backend/public; do not expose backend, storage, or vendor as the document root.",
+    "Upload the backend application files, excluding local .env and development-only files.",
+    "Run composer install --no-dev --optimize-autoloader when Composer is available, or upload the vendor directory produced by the same command.",
+    "Copy .env.example to .env and set APP_ENV=production, APP_DEBUG=false, APP_URL, database values, and a generated APP_KEY.",
+    "Run php artisan migrate --force and php artisan storage:link, then clear and cache configuration with php artisan optimize.",
+    "Build the web application with npm run build and upload the contents of web/dist to the web document root.",
+    "Set VITE_API_URL to the HTTPS API URL before building the web application.",
+    "Verify the public API, a deep-linked React route, authentication, image storage, and a database-backed request."
+  ],
+  "production_environment": {
+    "backend": [
+      "APP_ENV=production",
+      "APP_DEBUG=false",
+      "APP_URL=https://api.example.com",
+      "DB_CONNECTION=mysql",
+      "FILESYSTEM_DISK=public",
+      "SESSION_DRIVER=database",
+      "CACHE_STORE=database",
+      "QUEUE_CONNECTION=database"
+    ],
+    "web": [
+      "VITE_API_URL=https://api.example.com/api"
+    ]
+  },
+  "post_deploy_checks": [
+    "GET https://api.example.com/api/trucks returns JSON without a server error.",
+    "Opening https://example.com/trucks directly and refreshing it returns the React application.",
+    "Login, image upload, storage URLs, and a test order work over HTTPS.",
+    "APP_DEBUG is false and no .env file is present in the web document root."
+  ],
+  "prohibited_dependencies": [
+    "S3 requirement",
+    "VPS requirement",
+    "Docker requirement",
+    "Kubernetes requirement",
+    "cloud storage requirement"
+  ]
+}

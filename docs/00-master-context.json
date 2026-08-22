@@ -1,0 +1,97 @@
+{
+  "document": "00-master-context",
+  "project": {
+    "name": "Dadi Mulyo Digital Platform",
+    "short_name": "Dadi Mulyo",
+    "version": "1.0.0",
+    "status": "development",
+    "business_location": "Wagir, Kabupaten Malang, Jawa Timur, Indonesia",
+    "business_type": [
+      "truck showroom",
+      "truck sales",
+      "truck rental",
+      "orange marketplace",
+      "truck delivery",
+      "agricultural product commerce"
+    ],
+    "main_goal": "Membangun platform digital untuk mendukung bisnis Dadi Mulyo dalam menampilkan, menjual, menyewakan truck, menjual buah jeruk, menerima calon pelanggan, mengelola transaksi, dan mengatur pengiriman.",
+    "development_priority": "Fokus pada sistem yang stabil, mudah dikembangkan, mudah dipelihara, dan kompatibel dengan shared hosting."
+  },
+  "important_context": {
+    "development_environment": "local computer",
+    "temporary_deployment_target": "shared hosting",
+    "future_deployment": "shared hosting terlebih dahulu",
+    "cloud_storage_required": false,
+    "s3_required": false,
+    "vps_required": false,
+    "docker_required": false,
+    "kubernetes_required": false
+  },
+  "technology_stack": {
+    "backend": {
+      "framework": "Laravel",
+      "architecture": "REST API",
+      "authentication": "Laravel Sanctum",
+      "language": "PHP",
+      "database": "MySQL"
+    },
+    "web": {
+      "framework": "React.js",
+      "css": "Tailwind CSS",
+      "api_client": "Axios",
+      "state_management": "React Context initially",
+      "routing": "React Router"
+    },
+    "mobile": {
+      "framework": "Flutter",
+      "language": "Dart",
+      "api_client": "Dio or http",
+      "state_management": "Provider initially"
+    },
+    "development": {
+      "local_server": "Laragon",
+      "web_server": "Apache",
+      "database_server": "MySQL",
+      "editor": "Visual Studio Code"
+    }
+  },
+  "architecture": {
+    "type": "separated_frontend_backend",
+    "structure": {
+      "backend": "Laravel REST API",
+      "web": "React + Tailwind",
+      "mobile": "Flutter",
+      "database": "MySQL"
+    },
+    "communication": {
+      "web_to_backend": "REST API",
+      "mobile_to_backend": "REST API",
+      "format": "JSON",
+      "authentication": "Sanctum token"
+    }
+  },
+  "repository_structure": {
+    "root": "DADI-MULYO",
+    "directories": ["backend", "web", "mobile", "database", "docs"],
+    "documentation": {
+      "directory": "docs",
+      "files": [
+        "00-master-context.json",
+        "01-business.json",
+        "02-roles.json",
+        "03-features.json",
+        "04-database.json",
+        "05-api.json",
+        "06-web.json",
+        "07-mobile.json",
+        "08-ui-ux.json",
+        "09-security.json",
+        "10-storage.json",
+        "11-deployment.json",
+        "12-vibe-coding.json",
+        "13-roadmap.json"
+      ]
+    }
+  },
+  "source_of_truth": "The docs directory is the source of truth for project requirements."
+}

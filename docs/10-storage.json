@@ -1,0 +1,16 @@
+{
+  "document": "10-storage",
+  "type": "local",
+  "driver": "public",
+  "root": "storage/app/public",
+  "directories": {
+    "truck_images": "trucks",
+    "orange_images": "oranges",
+    "profiles": "profiles",
+    "documents": "documents",
+    "banners": "banners"
+  },
+  "command": "php artisan storage:link",
+  "cloud_storage": false,
+  "s3_required": false
+}

@@ -2,12 +2,23 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
-  static const String _baseUrl = 'http://10.0.2.2:8000/api';
+  // Base URL ditentukan saat runtime (lihat main.dart -> _configureBaseUrl):
+  // - Android Emulator : http://10.0.2.2:8000/api
+  // - HP via kabel USB : http://127.0.0.1:8000/api (butuh "adb reverse tcp:8000 tcp:8000")
+  // - HP via WiFi LAN  : http://<IP_LAPTOP_ANDA>:8000/api
+  static String _baseUrl = 'http://10.0.2.2:8000/api';
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';
 
   late final Dio _dio;
   static ApiClient? _instance;
+
+  /// Panggil method ini untuk mengganti base URL (misal: saat di HP real device).
+  /// Juga update instance Dio yang mungkin sudah dibuat sebelumnya.
+  static void setBaseUrl(String url) {
+    _baseUrl = url;
+    _instance?.dio.options.baseUrl = url;
+  }
 
   ApiClient._() {
     _dio = Dio(BaseOptions(

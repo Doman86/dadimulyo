@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Reveal from '../components/Reveal';
 
 export default function Register() {
   const { register, loading } = useAuth();
@@ -28,77 +29,73 @@ export default function Register() {
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-2xl font-bold text-primary">Daftar Akun</h1>
-      {error && (
-        <p className="mt-3 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>
-      )}
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-          <input
-            type="text"
-            required
-            value={form.name}
-            onChange={set('name')}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
-          />
+    <div className="min-h-[80vh] flex items-center justify-center bg-cream px-4 py-16">
+      <Reveal variant="zoom" className="w-full max-w-md">
+        <div className="card-lux p-8 !rounded-2xl">
+          {/* Logo */}
+          <div className="text-center">
+            <Link to="/" className="inline-flex items-center gap-2">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-gold-light via-gold to-gold-deep font-display text-lg font-bold text-forest shadow-lg shadow-gold/30">
+                DM
+              </span>
+            </Link>
+            <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Daftar Akun</h1>
+            <p className="mt-1 text-sm text-gray-400">Buat akun untuk mulai berbelanja</p>
+          </div>
+
+          {error && (
+            <div className="mt-4 alert-lux-error">{error}</div>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="label-lux">Nama Lengkap</label>
+              <input type="text" required value={form.name} onChange={set('name')} placeholder="Nama lengkap Anda" className="input-lux" />
+            </div>
+            <div>
+              <label className="label-lux">Email</label>
+              <input type="email" required value={form.email} onChange={set('email')} placeholder="email@contoh.com" className="input-lux" />
+            </div>
+            <div>
+              <label className="label-lux">No. HP / WhatsApp *</label>
+              <input type="tel" required value={form.phone} onChange={set('phone')} placeholder="0812-xxxx-xxxx" className="input-lux" />
+            </div>
+            <div>
+              <label className="label-lux">Password</label>
+              <input type="password" required minLength={8} value={form.password} onChange={set('password')} placeholder="Min. 8 karakter" className="input-lux" />
+            </div>
+            <div>
+              <label className="label-lux">Konfirmasi Password</label>
+              <input type="password" required value={form.password_confirmation} onChange={set('password_confirmation')} placeholder="Ulangi password" className="input-lux" />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
+                  Memproses...
+                </span>
+              ) : 'Daftar'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Sudah punya akun?{' '}
+              <Link to="/login" className="font-bold text-secondary hover:underline">Masuk di sini</Link>
+            </p>
+          </div>
+
+          <div className="divider-gold my-5" />
+
+          <Link to="/" className="block text-center text-xs text-gray-400 hover:text-primary transition-colors">
+            ← Kembali ke Beranda
+          </Link>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            required
-            value={form.email}
-            onChange={set('email')}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">No. HP / WhatsApp *</label>
-          <input
-            type="tel"
-            required
-            value={form.phone}
-            onChange={set('phone')}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={form.password}
-            onChange={set('password')}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Konfirmasi Password</label>
-          <input
-            type="password"
-            required
-            value={form.password_confirmation}
-            onChange={set('password_confirmation')}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded bg-primary px-4 py-2.5 font-semibold text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? 'Memproses...' : 'Daftar'}
-        </button>
-      </form>
-      <p className="mt-4 text-sm text-gray-600">
-        Sudah punya akun?{' '}
-        <Link to="/login" className="font-medium text-secondary">
-          Masuk di sini
-        </Link>
-      </p>
+      </Reveal>
     </div>
   );
 }

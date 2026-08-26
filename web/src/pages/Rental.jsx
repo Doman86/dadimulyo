@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { checkAvailability, createRental, fetchTrucks } from '../api/trucks';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
+import Reveal from '../components/Reveal';
 
 export default function Rental() {
   const { user } = useAuth();
@@ -14,9 +15,9 @@ export default function Rental() {
   const [dates, setDates] = useState({ start_date: '', end_date: '' });
   const [notes, setNotes] = useState('');
   const [checking, setChecking] = useState(false);
-  const [availability, setAvailability] = useState(null); // { available, rental_price_per_day }
+  const [availability, setAvailability] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState(null); // { type: 'success' | 'error', text }
+  const [message, setMessage] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -65,12 +66,10 @@ export default function Rental() {
   async function handleSubmit(e) {
     e.preventDefault();
     setMessage(null);
-
     if (!user) {
       navigate('/login', { state: { from: '/rental' } });
       return;
     }
-
     setSubmitting(true);
     try {
       const rental = await createRental({
@@ -87,198 +86,211 @@ export default function Rental() {
       setNotes('');
       setAvailability(null);
     } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Gagal membuat booking.',
-      });
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Gagal membuat booking.' });
     } finally {
       setSubmitting(false);
     }
   }
 
   const estimate = estimateTotal();
-  const inputCls =
-    'mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none';
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-3xl font-bold text-primary">Sewa Truck</h1>
-      <p className="mt-1 text-gray-600">
-        Sewa truck harian untuk kebutuhan usaha Anda. Pilih truck, tentukan tanggal, dan booking.
-      </p>
-
-      {message && (
-        <p
-          className={`mt-4 rounded px-3 py-2 text-sm ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {message.text}
-        </p>
-      )}
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {/* Daftar truck sewaan */}
-        <div className="lg:col-span-2">
-          {loading ? (
-            <p className="text-center text-gray-500">Memuat data...</p>
-          ) : trucks.length === 0 ? (
-            <p className="text-center text-gray-500">Belum ada truck yang disewakan.</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {trucks.map((truck) => (
-                <button
-                  key={truck.id}
-                  onClick={() => selectTruck(truck)}
-                  className={`overflow-hidden rounded-lg border bg-white text-left transition ${
-                    selected?.id === truck.id
-                      ? 'border-primary ring-2 ring-primary'
-                      : 'hover:shadow-md'
-                  }`}
-                >
-                  <div className="aspect-video w-full bg-gray-200">
-                    {truck.images?.[0]?.image_url ? (
-                      <img
-                        src={truck.images[0].image_url}
-                        alt={`${truck.brand} ${truck.model}`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-4xl">🚛</div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="text-sm text-gray-500">
-                      {truck.year} · {truck.category?.name}
-                    </div>
-                    <h2 className="mt-1 font-semibold text-gray-900">
-                      {truck.brand} {truck.model}
-                    </h2>
-                    <div className="mt-2 text-sm font-bold text-primary">
-                      {formatRupiah(truck.rental_price_per_day)}
-                      <span className="font-normal text-gray-500"> / hari</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Form booking */}
-        <aside className="lg:sticky lg:top-6 h-fit rounded-lg border bg-white p-5">
-          <h2 className="text-lg font-bold text-primary">Form Booking</h2>
-
-          {!selected ? (
-            <p className="mt-3 text-sm text-gray-500">
-              Pilih salah satu truck di daftar untuk mulai booking.
+    <div>
+      {/* Page Hero */}
+      <section className="page-hero">
+        <div className="orb orb-1 -top-20 -right-20 opacity-30" />
+        <div className="orb orb-3 bottom-[-50px] left-10 opacity-20" />
+        <div className="relative z-10">
+          <Reveal>
+            <span className="section-label centered text-gold-light/80">Sewa Truck</span>
+          </Reveal>
+          <Reveal variant="up" delay={150}>
+            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Sewa Truck</h1>
+          </Reveal>
+          <Reveal variant="up" delay={250}>
+            <p className="mt-3 text-white/50 max-w-lg mx-auto">
+              Sewa truck harian untuk kebutuhan usaha Anda. Pilih truck, tentukan tanggal, dan booking.
             </p>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div className="rounded bg-gray-50 p-3 text-sm">
-                <div className="font-semibold text-gray-900">
-                  {selected.brand} {selected.model}
-                </div>
-                <div className="text-primary">
-                  {formatRupiah(selected.rental_price_per_day)} / hari
-                </div>
-              </div>
+          </Reveal>
+        </div>
+      </section>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
-                <input
-                  type="date"
-                  required
-                  min={today}
-                  value={dates.start_date}
-                  onChange={(e) => {
-                    setDates({ ...dates, start_date: e.target.value });
-                    setAvailability(null);
-                  }}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tanggal Selesai</label>
-                <input
-                  type="date"
-                  required
-                  min={dates.start_date || today}
-                  value={dates.end_date}
-                  onChange={(e) => {
-                    setDates({ ...dates, end_date: e.target.value });
-                    setAvailability(null);
-                  }}
-                  className={inputCls}
-                />
-              </div>
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        {message && (
+          <Reveal>
+            <div className={`mb-6 ${message.type === 'success' ? 'alert-lux-success' : 'alert-lux-error'}`}>
+              {message.text}
+            </div>
+          </Reveal>
+        )}
 
-              <button
-                type="button"
-                onClick={handleCheck}
-                disabled={checking || !dates.start_date || !dates.end_date}
-                className="w-full rounded border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-white disabled:opacity-40"
-              >
-                {checking ? 'Memeriksa...' : 'Cek Ketersediaan'}
-              </button>
-
-              {availability && (
-                <div
-                  className={`rounded px-3 py-2 text-sm ${
-                    availability.available
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-700'
-                  }`}
-                >
-                  {availability.available
-                    ? '✅ Truck tersedia pada tanggal tersebut.'
-                    : '❌ Truck sudah dibooking pada rentang tanggal tersebut.'}
-                </div>
-              )}
-
-              {estimate && (
-                <div className="rounded bg-gray-50 px-3 py-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Durasi</span>
-                    <span className="font-medium">{estimate.days} hari</span>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Daftar truck sewaan */}
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="card-lux overflow-hidden">
+                    <div className="skeleton aspect-video w-full" />
+                    <div className="p-4 space-y-3">
+                      <div className="skeleton h-3 w-1/3 rounded" />
+                      <div className="skeleton h-5 w-2/3 rounded" />
+                    </div>
                   </div>
-                  <div className="mt-1 flex justify-between">
-                    <span className="text-gray-600">Total</span>
-                    <span className="font-bold text-primary">
-                      {formatRupiah(estimate.total)}
-                    </span>
+                ))}
+              </div>
+            ) : trucks.length === 0 ? (
+              <Reveal>
+                <div className="py-16 text-center">
+                  <div className="text-5xl mb-4">🚛</div>
+                  <p className="text-gray-500 text-lg">Belum ada truck yang disewakan.</p>
+                </div>
+              </Reveal>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {trucks.map((truck, i) => (
+                  <Reveal key={truck.id} variant="up" delay={Math.min(i * 60, 300)}>
+                    <button
+                      onClick={() => selectTruck(truck)}
+                      className={`card-lux overflow-hidden w-full text-left !rounded-xl transition-all duration-300 ${
+                        selected?.id === truck.id
+                          ? '!border-gold !shadow-[0_0_0_2px_rgba(201,162,39,0.3)]'
+                          : ''
+                      }`}
+                    >
+                      <div className="card-img-zoom aspect-video w-full overflow-hidden bg-sand relative">
+                        {truck.images?.[0]?.image_url ? (
+                          <img src={truck.images[0].image_url} alt={`${truck.brand} ${truck.model}`} className="h-full w-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-forest/10 to-sand text-5xl">🚛</div>
+                        )}
+                        {selected?.id === truck.id && (
+                          <div className="absolute top-3 right-3">
+                            <span className="badge-gold">Dipilih</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <div className="text-sm text-gray-400">
+                          {truck.year} · {truck.category?.name}
+                        </div>
+                        <h2 className="mt-1 font-bold text-charcoal">
+                          {truck.brand} {truck.model}
+                        </h2>
+                        <div className="mt-2 text-sm font-extrabold text-primary">
+                          {formatRupiah(truck.rental_price_per_day)}
+                          <span className="font-normal text-gray-400"> / hari</span>
+                        </div>
+                      </div>
+                    </button>
+                  </Reveal>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Form booking */}
+          <Reveal variant="right">
+            <aside className="card-lux h-fit p-6 !rounded-2xl lg:sticky lg:top-24">
+              <h2 className="font-display text-lg font-bold text-primary">Form Booking</h2>
+
+              {!selected ? (
+                <p className="mt-3 text-sm text-gray-400">
+                  Pilih salah satu truck di daftar untuk mulai booking.
+                </p>
+              ) : (
+                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                  <div className="rounded-xl bg-sand p-3 text-sm">
+                    <div className="font-bold text-charcoal">
+                      {selected.brand} {selected.model}
+                    </div>
+                    <div className="text-primary font-bold">
+                      {formatRupiah(selected.rental_price_per_day)} / hari
+                    </div>
                   </div>
-                  {estimate.weeks > 0 && availability.rental_price_per_week && (
-                    <div className="mt-1 text-xs text-gray-500">Paket mingguan digunakan untuk {estimate.weeks} minggu.</div>
+
+                  <div>
+                    <label className="label-lux">Tanggal Mulai</label>
+                    <input
+                      type="date"
+                      required
+                      min={today}
+                      value={dates.start_date}
+                      onChange={(e) => { setDates({ ...dates, start_date: e.target.value }); setAvailability(null); }}
+                      className="input-lux"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-lux">Tanggal Selesai</label>
+                    <input
+                      type="date"
+                      required
+                      min={dates.start_date || today}
+                      value={dates.end_date}
+                      onChange={(e) => { setDates({ ...dates, end_date: e.target.value }); setAvailability(null); }}
+                      className="input-lux"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCheck}
+                    disabled={checking || !dates.start_date || !dates.end_date}
+                    className="w-full btn-outline-lux rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-40"
+                  >
+                    {checking ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        Memeriksa...
+                      </span>
+                    ) : 'Cek Ketersediaan'}
+                  </button>
+
+                  {availability && (
+                    <div className={`rounded-xl px-4 py-3 text-sm font-medium ${availability.available ? 'alert-lux-success' : 'alert-lux-error'}`}>
+                      {availability.available ? 'Truck tersedia pada tanggal tersebut.' : 'Truck sudah dibooking pada rentang tanggal tersebut.'}
+                    </div>
                   )}
-                </div>
+
+                  {estimate && (
+                    <div className="rounded-xl bg-sand px-4 py-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Durasi</span>
+                        <span className="font-bold text-charcoal">{estimate.days} hari</span>
+                      </div>
+                      <div className="mt-1 flex justify-between">
+                        <span className="text-gray-500">Total</span>
+                        <span className="font-extrabold text-primary">{formatRupiah(estimate.total)}</span>
+                      </div>
+                      {estimate.weeks > 0 && availability.rental_price_per_week && (
+                        <div className="mt-1 text-xs text-gray-400">Paket mingguan digunakan untuk {estimate.weeks} minggu.</div>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="label-lux">Catatan (opsional)</label>
+                    <textarea
+                      rows={3}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Keperluan sewa, tujuan, dll."
+                      className="input-lux"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !availability?.available}
+                    className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-40"
+                  >
+                    {submitting ? 'Memproses...' : user ? 'Booking Sekarang' : 'Login untuk Booking'}
+                  </button>
+                </form>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Catatan (opsional)</label>
-                <textarea
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Keperluan sewa, tujuan, dll."
-                  className={inputCls}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || !availability?.available}
-                className="w-full rounded bg-primary px-4 py-2.5 font-semibold text-white hover:opacity-90 disabled:opacity-40"
-              >
-                {submitting
-                  ? 'Memproses...'
-                  : user
-                    ? 'Booking Sekarang'
-                    : 'Login untuk Booking'}
-              </button>
-            </form>
-          )}
-        </aside>
+            </aside>
+          </Reveal>
+        </div>
       </div>
     </div>
   );

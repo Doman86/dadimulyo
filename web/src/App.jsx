@@ -154,9 +154,6 @@ export default function App() {
               }
             />
           </Route>
-          <Route path="about" element={<About />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="faq" element={<Faq />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

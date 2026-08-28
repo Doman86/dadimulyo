@@ -27,17 +27,23 @@ function StatusBadge({ map, value }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const role = user?.role?.name;
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  if (['admin', 'sales', 'truck_seller', 'orange_seller'].includes(user?.role?.name)) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+  // Redirect admin/seller roles to admin panel — but AFTER all hooks are declared
+  const isAdminOrSeller = ['admin', 'sales', 'truck_seller', 'orange_seller'].includes(role);
 
   useEffect(() => {
+    if (isAdminOrSeller) return;
     fetchDashboard().then(setStats).catch(() => setError('Gagal memuat dashboard.')).finally(() => setLoading(false));
-  }, []);
+  }, [isAdminOrSeller]);
+
+  // Redirect AFTER hooks are all declared
+  if (isAdminOrSeller) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   if (loading) return <div className="py-20 text-center"><div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" /><p className="mt-4 text-gray-500">Memuat dashboard...</p></div>;
 

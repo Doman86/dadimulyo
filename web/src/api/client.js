@@ -16,13 +16,15 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401, clear the session so the UI can redirect to login.
+// On 401, clear the session and notify AuthContext to redirect to login.
 client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
+      // Dispatch custom event so AuthContext can react immediately
+      window.dispatchEvent(new Event('auth:unauthorized'));
     }
     return Promise.reject(error);
   }

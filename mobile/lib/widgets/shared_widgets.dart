@@ -116,6 +116,9 @@ class TruckCard extends StatelessWidget {
       onTap: onTap,
       child: Card(
         clipBehavior: Clip.antiAlias,
+        elevation: 2,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -127,27 +130,57 @@ class TruckCard extends StatelessWidget {
                   : _placeholder(),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${year != null ? '$year · ' : ''}${categoryName ?? 'Truck'}',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${year != null ? '$year · ' : ''}${categoryName ?? 'Truck'}',
+                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                        ),
+                      ),
+                      if (condition == 'baru')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('Baru',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary)),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text('$brand $model',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                  const SizedBox(height: 4),
+                          fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 5),
                   Text(AppTheme.formatRupiah(price),
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                          fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.goldDeep)),
                   if (location != null) ...[
                     const SizedBox(height: 4),
-                    Text(location!, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 13, color: AppTheme.textSecondary),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(location!,
+                              style:
+                                  const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                        ),
+                      ],
+                    ),
                   ],
                 ],
               ),
@@ -192,6 +225,9 @@ class OrangeProductCard extends StatelessWidget {
       onTap: onTap,
       child: Card(
         clipBehavior: Clip.antiAlias,
+        elevation: 2,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -203,7 +239,7 @@ class OrangeProductCard extends StatelessWidget {
                   : _placeholder(),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -214,34 +250,46 @@ class OrangeProductCard extends StatelessWidget {
                           style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                       if (grade != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                              color: AppTheme.secondary, borderRadius: BorderRadius.circular(4)),
+                              gradient: AppTheme.goldGradient,
+                              borderRadius: BorderRadius.circular(6)),
                           child: Text('Grade $grade',
                               style: const TextStyle(
-                                  fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF241A02))),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                  const SizedBox(height: 4),
+                          fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 5),
                   Row(
                     children: [
                       Text(AppTheme.formatRupiah(pricePerKg),
                           style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.goldDeep)),
                       const Text(' /kg',
                           style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text('Stok ${AppTheme.formatNumber(stockKg)} kg',
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('Stok ${AppTheme.formatNumber(stockKg)} kg',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.primary)),
+                  ),
                 ],
               ),
             ),

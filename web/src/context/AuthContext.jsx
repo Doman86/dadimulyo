@@ -10,6 +10,13 @@ export function AuthProvider({ children }) {
   });
   const [loading, setLoading] = useState(false);
 
+  // Listen for 401 events from the API client interceptor
+  useEffect(() => {
+    const handler = () => setUser(null);
+    window.addEventListener('auth:unauthorized', handler);
+    return () => window.removeEventListener('auth:unauthorized', handler);
+  }, []);
+
   useEffect(() => {
     if (user) {
       refreshUser();

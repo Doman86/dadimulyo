@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import Reveal from '../components/Reveal';
+import { submitLead } from '../api/trucks';
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setSubmitted(true);
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    setError(null);
+    setSending(true);
+    try {
+      await submitLead({
+        name: form.name,
+        phone: form.phone,
+        message: form.message
+          ? `${form.subject ? `[${form.subject}] ` : ''}${form.message}${form.email ? `\n\nEmail: ${form.email}` : ''}`
+          : `Kontak dari website${form.email ? ` — Email: ${form.email}` : ''}`,
+        source: 'contact_page',
+      });
+      setSubmitted(true);
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (err) {
+      setError('Gagal mengirim pesan. Silakan coba lagi atau hubungi kami via WhatsApp.');
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -101,6 +120,7 @@ export default function Contact() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                  {error && <div className="alert-lux-error">{error}</div>}
                   <div>
                     <label className="label-lux">Nama Lengkap *</label>
                     <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Masukkan nama lengkap Anda" className="input-lux" />
@@ -111,8 +131,8 @@ export default function Contact() {
                       <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@contoh.com" className="input-lux" />
                     </div>
                     <div>
-                      <label className="label-lux">No. HP / WhatsApp</label>
-                      <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0812-xxxx-xxxx" className="input-lux" />
+                      <label className="label-lux">No. HP / WhatsApp *</label>
+                      <input type="tel" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0812-xxxx-xxxx" className="input-lux" />
                     </div>
                   </div>
                   <div>
@@ -130,8 +150,13 @@ export default function Contact() {
                     <label className="label-lux">Pesan *</label>
                     <textarea required rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tuliskan pesan Anda di sini..." className="input-lux" />
                   </div>
-                  <button type="submit" className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold">
-                    Kirim Pesan
+                  <button type="submit" disabled={sending} className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-60">
+                    {sending ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
+                        Mengirim...
+                      </span>
+                    ) : 'Kirim Pesan'}
                   </button>
                 </form>
               )}

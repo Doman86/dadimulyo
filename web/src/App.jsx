@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -32,6 +33,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Faq from './pages/Faq';
 import CompareTrucks from './pages/CompareTrucks';
+import NotFound from './pages/NotFound';
 import { useAuth } from './context/AuthContext';
 
 function ProtectedRoute({ children }) {
@@ -58,9 +60,9 @@ function RequireAdmin({ children }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 text-charcoal">
+    <div className="flex min-h-screen flex-col bg-cream text-charcoal">
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/trucks" element={<Trucks />} />
@@ -154,9 +156,10 @@ export default function App() {
               }
             />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }

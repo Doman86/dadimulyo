@@ -1,67 +1,195 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand colors matching the web app
-  static const Color primary = Color(0xFF1B5E20);      // dark green
+  // Brand colors matching the web app (dark forest green + gold)
+  static const Color primary = Color(0xFF14532D);        // forest green
+  static const Color primaryDark = Color(0xFF04150E);    // near-black green
+  static const Color forest = Color(0xFF0B2E1F);
+  static const Color pine = Color(0xFF071F15);
+  static const Color moss = Color(0xFF166534);
   static const Color primaryLight = Color(0xFF4CAF50);
-  static const Color primaryDark = Color(0xFF0D3B12);
-  static const Color secondary = Color(0xFFFF8C00);     // orange
+
+  // Gold accent (replaces the old orange secondary)
+  static const Color gold = Color(0xFFC9A227);
+  static const Color goldLight = Color(0xFFE8C766);
+  static const Color goldDeep = Color(0xFF9A7B1A);
+
+  static const Color secondary = Color(0xFFC9A227);
   static const Color accent = Color(0xFFFFF3E0);
+
+  // Neutrals (cream background to match web)
   static const Color surface = Color(0xFFF5F5F5);
-  static const Color background = Color(0xFFFAFAFA);
-  static const Color textPrimary = Color(0xFF212121);
+  static const Color background = Color(0xFFFAF8F2); // cream
+  static const Color backgroundAlt = Color(0xFFF1ECDF); // sand
+  static const Color textPrimary = Color(0xFF1C2321);
   static const Color textSecondary = Color(0xFF757575);
   static const Color cardBg = Colors.white;
 
+  static const LinearGradient brandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryDark, forest, pine],
+  );
+
+  static const LinearGradient goldGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [goldLight, gold, goldDeep],
+  );
+
   static ThemeData get theme {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      primary: primary,
+      secondary: secondary,
+      surface: background,
+      brightness: Brightness.light,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        primary: primary,
-        secondary: secondary,
-        surface: surface,
-        brightness: Brightness.light,
-      ),
+      colorScheme: scheme,
       scaffoldBackgroundColor: background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: primaryDark,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(0)),
+        ),
       ),
       cardTheme: CardThemeData(
         color: cardBg,
-        elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.black.withValues(alpha: 0.06),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
-          side: const BorderSide(color: primary),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          side: const BorderSide(color: primary, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: secondary),
+      ),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         filled: true,
         fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: gold, width: 1.5),
+        ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: primary,
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: primaryDark,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: backgroundAlt,
+        selectedColor: gold,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: primary),
+    );
+  }
+
+  /// Gold gradient primary button (mewah).
+  static Widget goldButton({
+    required VoidCallback? onPressed,
+    required String label,
+    Widget? icon,
+    bool loading = false,
+    double? height,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: height ?? 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: goldGradient,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: gold.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onPressed == null || loading ? null : onPressed,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF241A02)),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[icon, const SizedBox(width: 10)],
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Color(0xFF241A02),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
       ),
     );
   }

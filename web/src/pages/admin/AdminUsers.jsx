@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchUsers } from '../../api/leads';
+import Reveal from '../../components/Reveal';
 
 const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'sales', label: 'Sales' },
-  { value: 'truck_seller', label: 'Truck Seller' },
-  { value: 'orange_seller', label: 'Orange Seller' },
-  { value: 'customer', label: 'Customer' },
-  { value: 'driver', label: 'Driver' },
+  { value: 'admin', label: 'Admin', color: 'bg-red-50 text-red-600 border border-red-100' },
+  { value: 'sales', label: 'Sales', color: 'bg-blue-50 text-blue-600 border border-blue-100' },
+  { value: 'truck_seller', label: 'Truck Seller', color: 'bg-purple-50 text-purple-600 border border-purple-100' },
+  { value: 'orange_seller', label: 'Orange Seller', color: 'bg-emerald-50 text-emerald-600 border border-emerald-100' },
+  { value: 'customer', label: 'Customer', color: 'bg-gray-50 text-gray-600 border border-gray-100' },
+  { value: 'driver', label: 'Driver', color: 'bg-amber-50 text-amber-600 border border-amber-100' },
 ];
+
+const ROLE_COLORS = Object.fromEntries(ROLES.map((r) => [r.value, r.color]));
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -24,116 +27,87 @@ export default function AdminUsers() {
       .finally(() => setLoading(false));
   }, [roleFilter]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   function getRoleBadge(roleName) {
     const role = ROLES.find((r) => r.value === roleName);
     if (!role) return <span className="text-xs text-gray-500">{roleName}</span>;
-    const colors = {
-      admin: 'bg-red-100 text-red-700',
-      sales: 'bg-blue-100 text-blue-700',
-      truck_seller: 'bg-purple-100 text-purple-700',
-      orange_seller: 'bg-green-100 text-green-700',
-      customer: 'bg-gray-100 text-gray-700',
-      driver: 'bg-yellow-100 text-yellow-700',
-    };
-    return (
-      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${colors[roleName] || 'bg-gray-100 text-gray-700'}`}>
-        {role.label}
-      </span>
-    );
+    return <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${ROLE_COLORS[roleName] || 'bg-gray-50 text-gray-600 border border-gray-100'}`}>{role.label}</span>;
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Kelola Pengguna</h1>
-          <p className="text-sm text-gray-600">Daftar semua pengguna sistem.</p>
+    <div className="space-y-6">
+      <Reveal>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-extrabold text-charcoal">Kelola Pengguna</h1>
+            <p className="mt-1 text-sm text-gray-400">Daftar semua pengguna sistem.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setRoleFilter('')} className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${roleFilter === '' ? 'bg-forest text-gold-light shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-gold/30'}`}>Semua</button>
+            {ROLES.map((r) => (
+              <button key={r.value} onClick={() => setRoleFilter(r.value)} className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${roleFilter === r.value ? 'bg-forest text-gold-light shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-gold/30'}`}>{r.label}</button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setRoleFilter('')}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${
-              roleFilter === '' ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            Semua
-          </button>
-          {ROLES.map((r) => (
-            <button
-              key={r.value}
-              onClick={() => setRoleFilter(r.value)}
-              className={`rounded px-3 py-1.5 text-sm font-medium ${
-                roleFilter === r.value ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      </Reveal>
 
-      {error && (
-        <p className="mt-4 rounded bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>
-      )}
+      {error && <Reveal><div className="alert-lux-error">{error}</div></Reveal>}
 
       {loading ? (
-        <p className="mt-8 text-center text-gray-500">Memuat data...</p>
-      ) : users.length === 0 ? (
-        <p className="mt-8 text-center text-gray-500">Tidak ada pengguna ditemukan.</p>
-      ) : (
-        <div className="mt-6 overflow-x-auto rounded-lg border bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-gray-600">
-              <tr>
-                <th className="px-4 py-3">Pengguna</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Telepon</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Terdaftar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-t">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                        {u.name?.charAt(0).toUpperCase() || '?'}
-                      </div>
-                      <div className="font-semibold text-gray-900">{u.name}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                  <td className="px-4 py-3 text-gray-600">{u.phone || '-'}</td>
-                  <td className="px-4 py-3">{getRoleBadge(u.role?.name)}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded px-2 py-0.5 text-xs font-semibold ${
-                        u.status === 'active' || !u.status
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      {u.status || 'active'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {new Date(u.created_at).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+          <p className="mt-4 text-sm text-gray-400">Memuat data...</p>
         </div>
+      ) : users.length === 0 ? (
+        <Reveal><div className="rounded-2xl border border-dashed border-gray-200 bg-white/50 p-16 text-center">
+          <p className="text-4xl">👤</p>
+          <p className="mt-3 text-sm text-gray-400">Tidak ada pengguna ditemukan.</p>
+        </div></Reveal>
+      ) : (
+        <Reveal delay={100}>
+          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-50 bg-gray-50/50 text-left text-gray-400">
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Pengguna</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Telepon</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Terdaftar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {users.map((u) => (
+                    <tr key={u.id} className="transition-colors hover:bg-gray-50/50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark text-sm font-bold text-white">
+                            {u.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <p className="font-semibold text-charcoal">{u.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{u.email}</td>
+                      <td className="px-6 py-4 text-gray-500">{u.phone || '-'}</td>
+                      <td className="px-6 py-4">{getRoleBadge(u.role?.name)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${u.status === 'active' || !u.status ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                          {u.status || 'active'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-400 text-sm">
+                        {new Date(u.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Reveal>
       )}
     </div>
   );

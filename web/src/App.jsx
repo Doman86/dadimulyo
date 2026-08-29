@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -46,10 +46,10 @@ function AdminRoute({ children }) {
   const { user } = useAuth();
   const role = user?.role?.name;
   if (!user) return <Navigate to="/login" replace />;
-  if (role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+  if (['admin', 'sales', 'truck_seller', 'orange_seller'].includes(role)) {
+    return children;
   }
-  return children;
+  return <Navigate to="/dashboard" replace />;
 }
 
 function RequireAdmin({ children }) {
@@ -59,9 +59,12 @@ function RequireAdmin({ children }) {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith('/admin');
+
   return (
     <div className="flex min-h-screen flex-col bg-cream text-charcoal">
-      <Navbar />
+      {!isAdmin && <Navbar />}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -159,7 +162,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdmin && <Footer />}
     </div>
   );
 }

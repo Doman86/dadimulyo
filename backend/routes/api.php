@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Named 'login' route required by Sanctum middleware for unauthenticated redirects.
+// Returns JSON 401 instead of redirect for API consumers.
+Route::get('/login', fn () => response()->json([
+    'success' => false,
+    'message' => 'Unauthenticated.',
+], 401))->name('login');
+
 // Public: truck browsing & categories
 Route::get('/trucks', [TruckController::class, 'index']);
 Route::get('/trucks/{truck}', [TruckController::class, 'show']);

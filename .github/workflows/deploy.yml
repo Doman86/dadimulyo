@@ -1,0 +1,120 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy (dadimulyo.my.id)
+    runs-on: ubuntu-latest
+    concurrency: deploy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------------- BUILD FRONTEND ----------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+
+      - name: Replace .htaccess with production version
+        run: cp scripts/hostinger/public_html.htaccess web/dist/.htaccess
+
+      # ---------------- SETUP SSH ----------------
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.HOSTINGER_SSH_PORT }}" "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      # ---------------- UPLOAD FRONTEND ----------------
+      - name: Deploy frontend (SPA)
+        run: |
+          H="${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}"
+          P="${{ secrets.HOSTINGER_SSH_PORT }}"
+          DEST="/home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html"
+
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+            web/dist/index.html "$H:$DEST/index.html"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+            web/dist/favicon.svg "$H:$DEST/favicon.svg"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+            web/dist/.htaccess "$H:$DEST/.htaccess"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+            web/dist/assets/ "$H:$DEST/assets/"
+
+          # Keep a copy of the newest bundle under the old cache alias
+          # so devices holding a stale index.html (referencing index-DFl8US7K.js)
+          # still load a working app.
+          ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no "$H" \
+            "cd $DEST/assets && NEW_JS=\$(ls -t index-*.js | head -1) && cp \"\$NEW_JS\" index-DFl8US7K.js && echo 'alias updated -> '\$NEW_JS"
+
+      # ---------------- UPLOAD BACKEND ----------------
+      - name: Deploy backend (Laravel source only)
+        run: |
+          H="${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}"
+          P="${{ secrets.HOSTINGER_SSH_PORT }}"
+          DEST="/home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html/api_backend"
+
+          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+            --exclude 'vendor/' \
+            --exclude 'node_modules/' \
+            --exclude '.env' \
+            --exclude '.env.local' \
+            --exclude '.pub-cache/' \
+            --exclude '.phpunit.result.cache' \
+            --exclude 'backend.zip' \
+            --exclude 'storage/logs/' \
+            --exclude 'storage/framework/cache/' \
+            --exclude 'storage/framework/sessions/' \
+            --exclude 'storage/framework/views/' \
+            --exclude 'public/storage/' \
+            --exclude 'tests/' \
+            backend/ "$H:$DEST/"
+
+      # ---------------- POST-DEPLOY (server side) ----------------
+      - name: Refresh caches & run migrations on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USER }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          command_timeout: 5m
+          script: |
+            set -e
+            cd /home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html/api_backend
+
+            # Install any new dependencies (no-op if unchanged)
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan storage:link --force
+            php artisan route:cache
+            php artisan config:cache
+
+            echo "--- verify ---"
+            php artisan route:list --path=site-stats
+            echo "DEPLOY OK"
+
+      - name: Smoke test
+        run: |
+          sleep 2
+          echo "site: $(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/)"
+          echo "api : $(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/api/site-stats)"

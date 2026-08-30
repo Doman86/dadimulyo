@@ -1,0 +1,36 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Direct access to backend internals (anything under api_backend except public) -> Forbidden
+    RewriteRule ^api_backend/(?!public(?:\/|$)).*$ - [F,L]
+
+    # API requests -> Laravel backend entry point (keeps /api path for routing)
+    RewriteRule ^api/(.*)$ api_backend/public/index.php [L]
+
+    # Uploaded storage files -> backend public/storage
+    RewriteRule ^storage/(.*)$ api_backend/public/storage/$1 [L]
+
+    # Real existing files/dirs are served as-is
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Missing assets (hashed js/css) should 404, NOT fall back to HTML
+    RewriteRule ^assets/ - [R=404,L]
+
+    # SPA fallback for everything else -> index.html
+    RewriteRule ^ /index.html [L]
+</IfModule>
+
+# HTML: revalidate every time (so new builds are picked up immediately)
+<FilesMatch "\.(html?)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>
+
+# Assets: cache forever (hashed filenames change on every build)
+<FilesMatch "\.(js|css|svg|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# Ensure JS is served with a correct JS MIME type (module scripts require it)
+AddType text/javascript .js

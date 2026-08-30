@@ -1,119 +1,135 @@
 # DADI MULYO — AUTOMATIC DEPLOYMENT (GitHub → Hostinger)
 
+> **Status: LIVE** — Deploy manual via SSH sudah berjalan. Domain produksi:
+> `dadimulyo.my.id` (bukan `dadimulyo.com`).
+
+## Akses SSH Aktual
+
+| Item | Nilai |
+|------|-------|
+| SSH host | `153.92.11.45` |
+| SSH port | `65002` |
+| SSH user | `u519141514` |
+| SSH key (lokal, Windows PowerShell) | `~/.ssh/dm_deploy` |
+| Frontend path | `/home/u519141514/domains/dadimulyo.my.id/public_html` |
+| Backend path | `/home/u519141514/domains/dadimulyo.my.id/public_html/api_backend` |
+
+Contoh koneksi dari lokal:
+```bash
+ssh -i ~/.ssh/dm_deploy -p 65002 u519141514@153.92.11.45
+```
+
+---
+
 ## Option A: GitHub Actions + Hostinger SSH (Recommended)
 
 ### Setup
 
-1. **Enable SSH in Hostinger**:
+1. **Enable SSH di Hostinger**:
    - Hostinger Panel → Advanced → SSH Access
-   - Note the SSH host, port, and username
+   - Catat SSH host, port, dan username
 
-2. **Add GitHub Secrets**:
+2. **Tambahkan GitHub Secrets** (bila pakai CI/CD):
    Go to GitHub repo → Settings → Secrets and variables → Actions
 
    | Secret | Value |
    |--------|-------|
-   | `HOSTINGER_SSH_HOST` | server.dadimulyo.com |
-   | `HOSTINGER_SSH_USER` | u123456789 |
-   | `HOSTINGER_SSH_KEY` | (private SSH key contents) |
-   | `HOSTINGER_SSH_PORT` | 65002 |
-   | `HOSTINGER_BACKEND_PATH` | /home/u123456789/domains/api.dadimulyo.com/public_html |
-   | `HOSTINGER_FRONTEND_PATH` | /home/u123456789/domains/dadimulyo.com/public_html |
+   | `HOSTINGER_SSH_HOST` | `153.92.11.45` |
+   | `HOSTINGER_SSH_USER` | `u519141514` |
+   | `HOSTINGER_SSH_KEY` | (isi private SSH key `~/.ssh/dm_deploy`) |
+   | `HOSTINGER_SSH_PORT` | `65002` |
+   | `HOSTINGER_BACKEND_PATH` | `/home/u519141514/domains/dadimulyo.my.id/public_html/api_backend` |
+   | `HOSTINGER_FRONTEND_PATH` | `/home/u519141514/domains/dadimulyo.my.id/public_html` |
 
-3. **Generate SSH key pair** (if you don't have one):
+3. **Generate SSH key pair** (jika workflow butuh key terpisah):
    ```bash
    ssh-keygen -t ed25519 -C "github-actions" -f deploy_key
-   # Add deploy_key.pub to Hostinger: ~/.ssh/authorized_keys
-   # Add deploy_key contents to GitHub Secrets as HOSTINGER_SSH_KEY
+   # Tambahkan deploy_key.pub ke Hostinger: ~/.ssh/authorized_keys
+   # Isi deploy_key ke GitHub Secret HOSTINGER_SSH_KEY
    ```
 
 ### Workflow
 
-Push to `main` → GitHub Actions runs:
-1. **Build** backend (`composer install --no-dev`) and frontend (`npm run build`)
-2. **Upload** via rsync/scp to Hostinger
-3. **Deploy** run migrations, cache configs, set permissions
+Push ke `main` → GitHub Actions menjalankan:
+1. **Build** backend (`composer install --no-dev`) dan frontend (`npm run build`)
+2. **Upload** via rsync/scp ke Hostinger
+3. **Deploy**: migrate, cache config, perbaiki permissions
 
 ### Manual Trigger
 
 ```bash
-# Push to main to trigger automatic deployment
 git push origin main
 ```
 
 ---
 
-## Option B: Git Pull on Hostinger
+## Option B: Git Pull di Hostinger
 
-If Hostinger supports Git:
-
-1. **Initialize Git on Hostinger**:
+1. **Init Git di Hostinger**:
    ```bash
-   # SSH into Hostinger
-   cd /home/u123456789/domains/api.dadimulyo.com/public_html
+   cd /home/u519141514/domains/dadimulyo.my.id/public_html
    git init
    git remote add origin https://github.com/Doman86/dadimulyo.git
    git fetch origin main
    git checkout main
    ```
 
-2. **Post-pull hook** (create `post-pull.sh`):
+2. **Post-pull hook** (`post-pull.sh`):
    ```bash
    #!/bin/bash
-   cd /home/u123456789/domains/api.dadimulyo.com/public_html/backend
+   cd /home/u519141514/domains/dadimulyo.my.id/public_html/api_backend
    composer install --no-dev --optimize-autoloader
    php artisan config:cache
    php artisan route:cache
    php artisan migrate --force
 
-   cd /home/u123456789/domains/api.dadimulyo.com/public_html/web
-   npm ci
-   npm run build
+   cd /home/u519141514/domains/dadimulyo.my.id/public_html
+   # jalankan build web/ lalu salin hasil dist/
    ```
 
-3. **Pull to deploy**:
+3. **Pull untuk deploy**:
    ```bash
-   cd backend && composer install --no-dev && php artisan migrate --force && php artisan config:cache
+   cd api_backend && composer install --no-dev && php artisan migrate --force && php artisan config:cache
    ```
 
 ---
 
-## Option C: Manual Upload (No CI/CD)
+## Option C: Manual Upload (No CI/CD) — DIPAKAI SAAT INI
 
-1. Run build script locally:
+1. Build frontend lokal:
    ```bash
-   bash scripts/build-production.sh
+   cd web && npm ci && npm run build
    ```
 
-2. Upload via Hostinger File Manager:
-   - `backend/` contents → API subdomain document root
-   - `web/dist/` contents → Main domain document root
+2. Upload via SSH (dari folder repo lokal):
+   - `web/dist/` contents → `/home/u519141514/domains/dadimulyo.my.id/public_html/`
+   - Perubahan `backend/` (mis. `app/`, `routes/`) → `/home/u519141514/domains/dadimulyo.my.id/public_html/api_backend/`
+   - **Jangan** meng-upload `vendor/`, `.env`, atau storage runtime.
 
-3. On server, run:
+3. Di server, jalankan:
    ```bash
-   cd backend
-   composer install --no-dev --optimize-autoloader
-   cp .env.example .env   # Edit with production values
-   php artisan key:generate
-   php artisan migrate --force
-   php artisan storage:link
-   php artisan config:cache
+   cd /home/u519141514/domains/dadimulyo.my.id/public_html/api_backend
+   php artisan optimize:clear
    php artisan route:cache
+   php artisan config:cache
    ```
 
 ---
 
 ## Deployment Checklist
 
-After every deployment:
+- [ ] Frontend load di `https://dadimulyo.my.id`
+- [ ] API respond di `https://dadimulyo.my.id/api/site-stats`
+- [ ] Login admin berfungsi
+- [ ] Listing truck & jeruk load
+- [ ] Tidak ada CORS error di console browser
+- [ ] SSL valid
+- [ ] `dadimulyo.com` TIDAK dipakai (domain yang benar hanya `dadimulyo.my.id`)
 
-- [ ] Frontend loads at `https://dadimulyo.com`
-- [ ] API responds at `https://api.dadimulyo.com/up`
-- [ ] Login works (`admin@dadimulyo.com`)
-- [ ] Truck listing loads
-- [ ] Orange listing loads
-- [ ] Cart functionality works
-- [ ] Orders can be created
-- [ ] File uploads work (truck/orange images)
-- [ ] No CORS errors in browser console
-- [ ] SSL certificate valid on both domains
+---
+
+## Catatan Penting
+
+- **Domain benar**: `dadimulyo.my.id`. Jangan gunakan `dadimulyo.com` (tidak terdaftar / tidak resolve).
+- Dokumen lama menyebut `dadimulyo.com` dan `u123456789` — itu hanya placeholder, bukan nilai aktual.
+- Semua path produksi menggunakan `/home/u519141514/...` dan domain `dadimulyo.my.id`.

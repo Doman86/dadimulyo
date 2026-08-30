@@ -11,7 +11,7 @@ class AppConfig {
   // ─── Contact ──────────────────────────────────────────────────
   static const String contactPhone = '0812-3456-7890';
   static const String contactPhoneDigits = '6281234567890'; // internasional
-  static const String contactEmail = 'info@dadimulyo.com';
+  static const String contactEmail = 'info@dadimulyo.my.id';
 
   // ─── Address ──────────────────────────────────────────────────
   static const String addressStreet = 'Wagir, Kab. Malang';

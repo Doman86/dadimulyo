@@ -1,256 +1,142 @@
-# DADI MULYO — HOSTINGER DEPLOYMENT GUIDE
+# DADI MULYO — HOSTINGER DEPLOYMENT GUIDE (PRODUCTION)
 
-## Architecture
+> Status: **LIVE** — `https://dadimulyo.my.id` (di-deploy via SSH)
+
+## Informasi Akun Aktual
+
+| Item | Nilai |
+|------|-------|
+| Domain | `dadimulyo.my.id` |
+| SSH host | `153.92.11.45` |
+| SSH port | `65002` |
+| SSH user | `u519141514` |
+| SSH key (lokal) | `~/.ssh/dm_deploy` |
+| Home dir | `/home/u519141514/domains/dadimulyo.my.id` |
+| Keystore API `.env` | `~/.ssh/dadimulyo.secrets` (jika dibuat) |
+
+## Architecture (Single-Domain + Proxy)
 
 ```
-dadimulyo.com          → React SPA (web/dist/)
-api.dadimulyo.com      → Laravel API (backend/)
-dadimulyo_db           → MySQL database (Hostinger)
+dadimulyo.my.id
+├── public_html/                    → React SPA (web/dist/), document root
+│   ├── index.html
+│   ├── assets/
+│   ├── .htaccess                   → SPA fallback + proxy /api/* ke api_backend
+│   └── api_backend/                → Laravel API (backend/), TIDAK boleh diakses langsung
+│       └── public/index.php        → entry point (via rewrite dari /api)
+└── MySQL `u519141514_dadimulyo`    (user `u519141514_dadi`)
 ```
 
-**Split-domain architecture**: Frontend on the main domain, API on a subdomain. This is the recommended setup for shared hosting because:
-- Laravel `public/` becomes the API subdomain document root
-- React `dist/` becomes the main domain document root
-- No directory conflicts between PHP and static files
-- CORS is configured once between the two domains
+- Frontend & API ada di **satu domain** (`dadimulyo.my.id`), bukan subdomain terpisah.
+- `.htaccess` di `public_html/` me-rewrite `^api/(.*)$` → `api_backend/public/index.php`.
+- Konten `api_backend/` **selain** `public/` diblokir (`RewriteRule ... - [F,L]`).
 
 ---
 
-## Prerequisites
+## Deploy (Langganan → Server)
 
-- [ ] Hostinger hosting account (shared hosting plan)
-- [ ] Domain `dadimulyo.com` (or your chosen domain) configured in Hostinger
-- [ ] Subdomain `api.dadimulyo.com` created in Hostinger panel
-- [ ] MySQL database created in Hostinger panel
-- [ ] PHP 8.3+ enabled (Hostinger usually defaults to 8.1+)
-- [ ] SSH access (optional but recommended)
-
----
-
-## Step 1: Create Hostinger Resources
-
-### Database
-1. Hostinger Panel → Databases → MySQL
-2. Create database: `u123456789_dadimulyo` (prefix varies by account)
-3. Create database user with full privileges
-4. Note: hostname, username, password
-
-### Subdomain
-1. Hostinger Panel → Domains → Subdomains
-2. Create: `api.dadimulyo.com`
-3. Set document root to: `/home/u123456789/domains/api.dadimulyo.com/public_html`
-
----
-
-## Step 2: Upload Backend
-
-### Via File Manager or SSH:
-```bash
-# From your local machine
-cd backend
-
-# Upload everything EXCEPT:
-# - vendor/
-# - node_modules/
-# - .env (will be created on server)
-# - storage/logs/*
-# - storage/framework/cache/*
-```
-
-### Via SSH (recommended):
-```bash
-ssh u123456789@server.dadimulyo.com
-cd /home/u123456789/domains/api.dadimulyo.com/public_html
-
-# Upload files, then:
-composer install --no-dev --optimize-autoloader
-cp .env.example .env
-php artisan key:generate
-```
-
----
-
-## Step 3: Configure Backend .env
-
-Edit `backend/.env` on the server:
-
-```env
-APP_NAME="Dadi Mulyo"
-APP_ENV=production
-APP_KEY=base64:generated_key_here
-APP_DEBUG=false
-APP_URL=https://api.dadimulyo.com
-
-APP_LOCALE=id
-APP_FALLBACK_LOCALE=en
-
-LOG_CHANNEL=stack
-LOG_STACK=single
-LOG_LEVEL=error
-
-DB_CONNECTION=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_DATABASE=u123456789_dadimulyo
-DB_USERNAME=u123456789_dbuser
-DB_PASSWORD=your_db_password_here
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=true
-SESSION_PATH=/
-SESSION_DOMAIN=.dadimulyo.com
-
-FILESYSTEM_DISK=local
-QUEUE_CONNECTION=database
-CACHE_STORE=database
-
-MAIL_MAILER=log
-
-SANCTUM_STATEFUL_DOMAINS=dadimulyo.com,api.dadimulyo.com
-FRONTEND_URL=https://dadimulyo.com
-```
-
----
-
-## Step 4: Run Migrations & Seed
-
-```bash
-cd /home/u123456789/domains/api.dadimulyo.com/public_html
-php artisan migrate --force
-php artisan db:seed --force    # First deploy only
-php artisan storage:link
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
-
----
-
-## Step 5: Upload Frontend
-
-Build locally first:
+### 1. Build frontend lokal
 ```bash
 cd web
 npm ci
-npm run build
+npm run build        # hasil: web/dist/
 ```
 
-Upload `web/dist/` contents to the main domain document root:
-```
-/home/u123456789/domains/dadimulyo.com/public_html/
-├── index.html
-├── assets/
-│   ├── index-xxxxx.js
-│   └── index-xxxxx.css
-├── favicon.svg
-└── .htaccess
-```
-
-**Important**: Upload the `.htaccess` file from `web/public/` — it handles SPA routing (rewrites all paths to `index.html`).
-
----
-
-## Step 6: Domain Configuration
-
-### Main domain (dadimulyo.com)
-- Document root: `/home/u123456789/domains/dadimulyo.com/public_html`
-- SSL: Enable in Hostinger panel (free Let's Encrypt)
-
-### API subdomain (api.dadimulyo.com)
-- Document root: `/home/u123456789/domains/api.dadimulyo.com/public_html`
-- SSL: Enable in Hostinger panel
-- **Point to `backend/public/`** — this is critical
-
----
-
-## Step 7: Laravel public/ Directory
-
-The API subdomain document root MUST be `backend/public/`. If Hostinger doesn't allow changing the document root to a subdirectory, create a symbolic link or `.htaccess` redirect:
-
-**Option A**: Set document root to `backend/` and add to `backend/.htaccess`:
-```apache
-RewriteEngine On
-RewriteRule ^(.*)$ public/$1 [L]
-```
-
-**Option B**: Set document root to `backend/public/` directly (preferred).
-
----
-
-## Step 8: File Permissions
-
+### 2. Backup & salin frontend
 ```bash
-chmod -R 775 storage bootstrap/cache
-chmod -R 775 public/storage    # If storage:link created
+# Backup aset lama (optional)
+cp index.html _secure_backup/index.html.prev
+cd assets && cp index-*.js _secure_backup/ 2>/dev/null
+
+# Salin build baru ke public_html
+cp web/dist/index.html                ~/domains/dadimulyo.my.id/public_html/
+cp web/dist/assets/*.js               ~/domains/dadimulyo.my.id/public_html/assets/
+cp web/dist/assets/*.css              ~/domains/dadimulyo.my.id/public_html/assets/
+```
+
+> Catatan penting: bundle JS/CSS punya hash unik per build. `index.html` baru harus
+> selalu dipasang **bersamaan** dengan bundle barunya, supaya tidak ada pengguna yang
+> memegang `index.html` lama yang memanggil file JS lama (yang sudah terhapus).
+
+### 3. Salin backend (hanya file yang berubah)
+```bash
+# Contoh: satu file controller
+cp backend/app/Http/Controllers/Api/SiteStatsController.php \
+   ~/domains/dadimulyo.my.id/public_html/api_backend/app/Http/Controllers/Api/
+cp backend/routes/api.php \
+   ~/domains/dadimulyo.my.id/public_html/api_backend/routes/api.php
+```
+
+### 4. Refresh cache Laravel di server
+```bash
+cd ~/domains/dadimulyo.my.id/public_html/api_backend
+php artisan optimize:clear
+php artisan route:cache
+php artisan config:cache
+```
+
+### 5. Migrasi / seeder (jika skema/data berubah)
+```bash
+php artisan migrate --force
+php artisan db:seed --force        # idempotent; aman dijalankan berulang
+php artisan storage:link           # jika belum
 ```
 
 ---
 
-## Step 9: Verify
+## Environment (.env) — Produksi
 
-1. Visit `https://dadimulyo.com` — should load React SPA
-2. Visit `https://api.dadimulyo.com/up` — should return `{"status":"ok"}`
-3. Visit `https://api.dadimulyo.com/api/trucks` — should return JSON
-4. Login: `admin@dadimulyo.com` / `password` (change after first login!)
+Nilai-nilai berikut **sudah terpasang di server**:
 
----
-
-## Environment Variables Reference
-
-### Backend (.env)
 | Variable | Production Value |
 |----------|-----------------|
-| APP_ENV | production |
-| APP_DEBUG | false |
-| APP_URL | https://api.dadimulyo.com |
-| DB_HOST | localhost (Hostinger DB) |
-| DB_DATABASE | u123456789_dadimulyo |
-| DB_USERNAME | u123456789_dbuser |
-| DB_PASSWORD | (from Hostinger panel) |
-| SESSION_DOMAIN | .dadimulyo.com |
-| SANCTUM_STATEFUL_DOMAINS | dadimulyo.com |
-| FRONTEND_URL | https://dadimulyo.com |
+| APP_URL | `https://dadimulyo.my.id` |
+| APP_ENV | `production` |
+| APP_DEBUG | `false` |
+| DB_DATABASE | `u519141514_dadimulyo` |
+| DB_USERNAME | `u519141514_dadi` |
+| SESSION_DOMAIN | `.dadimulyo.my.id` |
+| SANCTUM_STATEFUL_DOMAINS | `dadimulyo.my.id` |
+| FRONTEND_URL | `https://dadimulyo.my.id` |
+| MAIL_MAILER | `log` |
 
-### Frontend
-| Variable | Value |
-|----------|-------|
-| VITE_API_URL | /api (relative, if proxied) or https://api.dadimulyo.com/api |
+Frontend memakai `VITE_API_URL=/api` (relatif) sehingga cukup satu domain, tanpa CORS.
 
-**Note**: The frontend `.env.production` uses `VITE_API_URL=/api`. If the API is on a separate subdomain, you need to either:
-- **Option A**: Set `VITE_API_URL=https://api.dadimulyo.com/api` in `.env.production` and rebuild
-- **Option B**: Add a proxy rewrite on the main domain `.htaccess`:
-  ```apache
-  RewriteCond %{HTTP_HOST} ^dadimulyo\.com$ [NC]
-  RewriteRule ^api/(.*)$ https://api.dadimulyo.com/api/$1 [L,R=301]
-  ```
-- **Option C** (Recommended): Keep relative `/api` and configure Apache/Nginx reverse proxy on the main domain to proxy `/api/*` to the API subdomain.
+---
+
+## .htaccess (public_html)
+
+Sudah terpasang di server — menangani: blokir akses internal API backend, proxy `/api/*`,
+SPA fallback, `404` untuk aset yang hilang, cache HTML `no-cache`, cache aset `immutable`,
+dan MIME `text/javascript` untuk `.js`.
+
+---
+
+## Verify (Selesai Deploy)
+
+1. `https://dadimulyo.my.id/` → 200, konten render (desktop & mobile)
+2. `https://dadimulyo.my.id/api/site-stats` → JSON `{"success":true,...}`
+3. `https://dadimulyo.my.id/api/trucks` → JSON daftar truk
+4. `https://dadimulyo.my.id/api/oranges` → JSON daftar jeruk
+5. Login admin: akun dari hasil seed
 
 ---
 
 ## Troubleshooting
 
-### CORS errors
-- Verify `FRONTEND_URL=https://dadimulyo.com` in backend `.env`
-- Verify `SANCTUM_STATEFUL_DOMAINS=dadimulyo.com` in backend `.env`
-- Clear cache: `php artisan config:clear && php artisan config:cache`
+### Blank page (pengguna memegang index.html lama)
+- Pastikan `index.html` diset `Cache-Control: no-cache, must-revalidate` (sudah di `.htaccess`).
+- Bundle lama yang masih direferensikan `index.html` lama → `.htaccess` kini mem-`404` aset
+  hilang, bukan fallback HTML (agar tidak salah MIME).
 
-### 404 on API routes
-- Verify document root points to `backend/public/`
-- Check `.htaccess` exists in `backend/public/`
-- Enable mod_rewrite: Hostinger panel → Apache → mod_rewrite
-
-### Blank page on frontend
-- Verify `.htaccess` exists in the main domain document root
-- Check browser console for asset loading errors
-- Verify all assets from `dist/` are uploaded
+### API 404
+- Cek `.htaccess` rewrite `/api/*` masih ada.
+- `php artisan route:list --path=site-stats`
 
 ### Database connection refused
-- Verify DB credentials match Hostinger panel
-- Hostinger MySQL host is usually `localhost`
-- Check `php artisan tinker` → `DB::connection()->getPdo()`
+- Verifikasi kredensial di `.env` (lihat tabel di atas).
+- Hostinger MySQL host biasanya `localhost`.
 
-### Storage/Image not loading
-- Run `php artisan storage:link`
-- Verify `storage/app/public` is writable
-- Check symlink: `ls -la public/storage`
+### Storage/Image tidak tampil
+- `php artisan storage:link`
+- `ls -la public/storage`

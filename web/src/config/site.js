@@ -16,7 +16,7 @@ const siteConfig = {
   contact: {
     phone: '0812-3456-7890',
     phoneDigits: '6281234567890', // format internasional untuk WhatsApp
-    email: 'info@dadimulyo.com',
+    email: 'info@dadimulyo.my.id',
     whatsappUrl: 'https://wa.me/6281234567890',
     mapsUrl: 'https://maps.google.com/?q=Wagir+Malang+Jawa+Timur',
   },

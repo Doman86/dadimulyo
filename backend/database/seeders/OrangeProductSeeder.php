@@ -12,7 +12,7 @@ class OrangeProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $sellerEmail = env('DEMO_ORANGE_SELLER_EMAIL', 'orangeseller@dadimulyo.com');
+        $sellerEmail = env('DEMO_ORANGE_SELLER_EMAIL', 'orangeseller@dadimulyo.my.id');
         $defaultPassword = env('DEMO_DEFAULT_PASSWORD', 'password');
 
         $seller = User::where('email', $sellerEmail)->first()

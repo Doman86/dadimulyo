@@ -14,8 +14,8 @@ class TruckSeeder extends Seeder
     {
         $sellerRole = Role::where('name', 'truck_seller')->first()?->id;
 
-        $sellerEmail = env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.com');
-        $adminEmail = env('DEMO_ADMIN_EMAIL', 'admin@dadimulyo.com');
+        $sellerEmail = env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.my.id');
+        $adminEmail = env('DEMO_ADMIN_EMAIL', 'admin@dadimulyo.my.id');
         $defaultPassword = env('DEMO_DEFAULT_PASSWORD', 'password');
 
         $seller = User::where('email', $sellerEmail)->first()

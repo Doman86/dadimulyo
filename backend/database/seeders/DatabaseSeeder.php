@@ -32,27 +32,27 @@ class DatabaseSeeder extends Seeder
         $users = [
             [
                 'name' => 'Admin Dadi Mulyo',
-                'email' => env('DEMO_ADMIN_EMAIL', 'admin@dadimulyo.com'),
+                'email' => env('DEMO_ADMIN_EMAIL', 'admin@dadimulyo.my.id'),
                 'role' => 'admin',
             ],
             [
                 'name' => 'Sales Andi',
-                'email' => env('DEMO_SALES_EMAIL', 'sales@dadimulyo.com'),
+                'email' => env('DEMO_SALES_EMAIL', 'sales@dadimulyo.my.id'),
                 'role' => 'sales',
             ],
             [
                 'name' => 'Seller Truck Budi',
-                'email' => env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.com'),
+                'email' => env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.my.id'),
                 'role' => 'truck_seller',
             ],
             [
                 'name' => 'Seller Jeruk Citra',
-                'email' => env('DEMO_ORANGE_SELLER_EMAIL', 'orangeseller@dadimulyo.com'),
+                'email' => env('DEMO_ORANGE_SELLER_EMAIL', 'orangeseller@dadimulyo.my.id'),
                 'role' => 'orange_seller',
             ],
             [
                 'name' => 'Customer Dedi',
-                'email' => env('DEMO_CUSTOMER_EMAIL', 'customer@dadimulyo.com'),
+                'email' => env('DEMO_CUSTOMER_EMAIL', 'customer@dadimulyo.my.id'),
                 'role' => 'customer',
             ],
         ];

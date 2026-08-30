@@ -39,7 +39,7 @@ php artisan serve
 ```
 
 Endpoint API: `http://localhost:8000/api` (lihat `docs/05-api.json`).
-Akun admin awal: `admin@dadimulyo.com` / `password`.
+Akun admin awal: `admin@dadimulyo.my.id` / `password`.
 
 ### 2. Web (port 5173)
 

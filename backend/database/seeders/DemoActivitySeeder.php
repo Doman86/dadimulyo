@@ -18,9 +18,9 @@ class DemoActivitySeeder extends Seeder
 {
     public function run(): void
     {
-        $customerEmail = env('DEMO_CUSTOMER_EMAIL', 'customer@dadimulyo.com');
-        $salesEmail = env('DEMO_SALES_EMAIL', 'sales@dadimulyo.com');
-        $sellerEmail = env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.com');
+        $customerEmail = env('DEMO_CUSTOMER_EMAIL', 'customer@dadimulyo.my.id');
+        $salesEmail = env('DEMO_SALES_EMAIL', 'sales@dadimulyo.my.id');
+        $sellerEmail = env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.my.id');
 
         $customer = User::where('email', $customerEmail)->first();
         $sales = User::where('email', $salesEmail)->first();

@@ -330,41 +330,66 @@ export default function TruckForm() {
         </section>
 
         {/* Gambar */}
-        {isEdit && (
-          <section className="rounded-lg border bg-white p-6">
-            <h2 className="font-semibold text-gray-900">Gambar</h2>
-            {images.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-3">
-                {images.map((img) => (
-                  <div key={img.id} className="relative">
-                    <img
-                      src={img.image_url}
-                      alt=""
-                      className="h-24 w-32 rounded border object-cover"
-                    />
-                    {img.is_primary && (
-                      <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-white">
-                        UTAMA
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteImage(img)}
-                      className="absolute right-1 top-1 rounded bg-red-600 px-1.5 text-xs text-white hover:bg-red-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+        <section className="rounded-lg border bg-white p-6">
+          <h2 className="font-semibold text-gray-900">Gambar</h2>
+
+          {isEdit && images.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {images.map((img) => (
+                <div key={img.id} className="relative">
+                  <img
+                    src={img.image_url}
+                    alt=""
+                    className="h-24 w-32 rounded border object-cover"
+                  />
+                  {img.is_primary && (
+                    <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      UTAMA
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(img)}
+                    className="absolute right-1 top-1 rounded bg-red-600 px-1.5 text-xs text-white hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Preview gambar baru saat Tambah (belum ada truck id untuk simpan) */}
+          {!isEdit && newImage && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="relative">
+                <img
+                  src={URL.createObjectURL(newImage)}
+                  alt={newImage.name}
+                  className="h-24 w-32 rounded border object-cover"
+                />
+                <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  BARU
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNewImage(null)}
+                  className="absolute right-1 top-1 rounded bg-red-600 px-1.5 text-xs text-white hover:bg-red-700"
+                >
+                  ✕
+                </button>
               </div>
-            )}
-            <label className="mt-4 inline-block cursor-pointer rounded border border-dashed border-gray-400 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-              {newImage ? `📎 ${newImage.name}` : 'Unggah gambar baru...'}
-              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-            </label>
-            <p className="mt-1 text-xs text-gray-500">JPG/PNG/WebP, maks 5 MB. Diunggah setelah simpan.</p>
-          </section>
-        )}
+            </div>
+          )}
+
+          <label className="mt-4 inline-block cursor-pointer rounded border border-dashed border-gray-400 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+            {newImage ? `📎 ${newImage.name}` : 'Unggah gambar...'}
+            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+          </label>
+          <p className="mt-1 text-xs text-gray-500">
+            JPG/PNG/WebP, maks 5 MB. {isEdit ? 'Diunggah setelah simpan.' : 'Gambar akan diunggah otomatis setelah truck tersimpan.'}
+          </p>
+        </section>
 
         <div className="flex gap-3">
           <button

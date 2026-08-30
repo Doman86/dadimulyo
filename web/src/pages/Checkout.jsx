@@ -6,6 +6,7 @@ import { BULK_THRESHOLD_KG, useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 const EMPTY_ADDRESS = {
   recipient_name: '',
@@ -111,7 +112,7 @@ export default function Checkout() {
                 <h2 className="font-display text-lg font-bold text-charcoal">Pengiriman</h2>
                 <label className="mt-3 flex items-center gap-2.5 text-sm text-gray-600 cursor-pointer group">
                   <input type="checkbox" checked={needDelivery} onChange={(e) => setNeedDelivery(e.target.checked)} className="h-4 w-4 rounded border-gray-300 accent-primary" />
-                  <span className="group-hover:text-primary transition-colors">Saya butuh pengiriman menggunakan truck Dadi Mulyo</span>
+                  <span className="group-hover:text-primary transition-colors">Saya butuh pengiriman menggunakan truck {siteConfig.company.name}</span>
                 </label>
                 {needDelivery && (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">

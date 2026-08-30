@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 const FAQ_SECTIONS = [
   {
     title: 'Pembelian Jeruk',
     icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>,
     items: [
-      { q: 'Bagaimana cara membeli jeruk di Dadi Mulyo?', a: 'Pilih produk jeruk yang diinginkan di halaman "Jeruk", masukkan jumlah (kg), tambahkan ke keranjang, lalu lakukan checkout. Isi alamat pengiriman dan submit pesanan. Tim kami akan menghubungi Anda untuk konfirmasi pesanan dan detail pembayaran.' },
+      { q: `Bagaimana cara membeli jeruk di ${siteConfig.company.name}?`, a: 'Pilih produk jeruk yang diinginkan di halaman "Jeruk", masukkan jumlah (kg), tambahkan ke keranjang, lalu lakukan checkout. Isi alamat pengiriman dan submit pesanan. Tim kami akan menghubungi Anda untuk konfirmasi pesanan dan detail pembayaran.' },
       { q: 'Berapa minimum order jeruk?', a: 'Minimum order bervariasi per produk, biasanya mulai dari 2–10 kg. Lihat detail produk untuk informasi minimum order yang berlaku. Jika membeli dalam jumlah besar, hubungi kami untuk harga khusus.' },
       { q: 'Apakah ada harga grosir?', a: 'Ya! Untuk pembelian 50 kg atau lebih per produk, harga grosir otomatis berlaku di sistem. Harga grosir sudah terlihat di halaman produk. Semakin banyak yang dibeli, semakin hemat.' },
       { q: 'Apa saja grade jeruk yang tersedia?', a: 'Kami menyediakan jeruk dalam 3 grade: Grade A (premium, ukuran besar, seragam), Grade B (kualitas baik, ukuran sedang), dan Grade C (standar, cocok untuk jus). Setiap grade memiliki harga yang berbeda.' },
@@ -30,7 +31,7 @@ const FAQ_SECTIONS = [
     icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H21a.75.75 0 00.75-.75V11.25a3 3 0 00-3-3h-1.5l-1.72-4.575A1.5 1.5 0 0014.692 2.5H9.308a1.5 1.5 0 00-1.438 1.075L6.15 8.25H3.75a3 3 0 00-3 3v6.375c0 .621.504 1.125 1.125 1.125h1.5" /></svg>,
     items: [
       { q: 'Bagaimana cara menghubungi sales untuk pembelian truck?', a: 'Buka halaman detail truck yang diminati, lalu isi form "Hubungi Sales" di bagian bawah halaman. Tim sales kami akan segera menghubungi Anda via telepon atau WhatsApp.' },
-      { q: 'Apakah bisa nego harga?', a: 'Ya, harga yang tercantum bisa dinego. Silakan hubungi tim sales kami melalui form di halaman detail truck atau langsung via WhatsApp di 0812-3456-7890.' },
+      { q: 'Apakah bisa nego harga?', a: `Ya, harga yang tercantum bisa dinego. Silakan hubungi tim sales kami melalui form di halaman detail truck atau langsung via WhatsApp di ${siteConfig.contact.phone}.` },
       { q: 'Apakah ada garansi untuk truck bekas?', a: 'Setiap truck bekas yang dijual telah melalui inspeksi dan pengecekan menyeluruh. Kondisi truck dijelaskan secara transparan di halaman detail.' },
       { q: 'Bisakah saya lihat truck langsung sebelum beli?', a: 'Tentu! Anda bisa datang langsung ke showroom kami di Wagir, Kabupaten Malang. Hubungi kami terlebih dahulu untuk memastikan truck yang Anda minati masih tersedia.' },
     ],
@@ -73,7 +74,7 @@ export default function Faq() {
           </Reveal>
           <Reveal variant="up" delay={250}>
             <p className="mt-3 text-white/50 max-w-lg mx-auto">
-              Temukan jawaban atas pertanyaan yang sering ditanyakan tentang layanan Dadi Mulyo.
+              Temukan jawaban atas pertanyaan yang sering ditanyakan tentang layanan {siteConfig.company.name}.
             </p>
           </Reveal>
         </div>
@@ -124,7 +125,7 @@ export default function Faq() {
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-4">
                 <Link to="/contact" className="btn-lux rounded-full px-6 py-2.5 text-sm font-bold">Hubungi Kami</Link>
-                <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className="btn-ghost-lux rounded-full px-6 py-2.5 text-sm font-bold text-white">
+                <a href={siteConfig.contact.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost-lux rounded-full px-6 py-2.5 text-sm font-bold text-white">
                   Chat WhatsApp
                 </a>
               </div>

@@ -97,7 +97,8 @@ class Order {
       paymentStatus: json['payment_status'] ?? 'unpaid',
       notes: json['notes'],
       createdAt: json['created_at'] ?? '',
-      items: (json['items'] as List?)
+      items:
+          (json['items'] as List?)
               ?.map((e) => OrderItem.fromJson(e))
               .toList() ??
           [],

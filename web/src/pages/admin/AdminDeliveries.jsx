@@ -5,6 +5,7 @@ import { fetchTrucks } from '../../api/trucks';
 import { fetchUsers } from '../../api/leads';
 import { formatRupiah } from '../../utils/format';
 import Reveal from '../../components/Reveal';
+import siteConfig from '../../config/site';
 
 const STATUSES = [
   { value: 'pending', label: 'Menunggu', color: 'bg-amber-50 text-amber-600 border border-amber-100' },
@@ -24,7 +25,7 @@ export default function AdminDeliveries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [createForm, setCreateForm] = useState({ order_id: '', truck_id: '', driver_id: '', pickup_address: 'Kebun Dadi Mulyo, Wagir, Malang', destination_address: '', shipping_cost: '', scheduled_at: '', notes: '' });
+  const [createForm, setCreateForm] = useState({ order_id: '', truck_id: '', driver_id: '', pickup_address: siteConfig.address.pickupDefault, destination_address: '', shipping_cost: '', scheduled_at: '', notes: '' });
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({ status: '', truck_id: '', driver_id: '', notes: '' });
@@ -51,7 +52,7 @@ export default function AdminDeliveries() {
     e.preventDefault(); setCreating(true); setError(null);
     try {
       await createDelivery({ order_id: Number(createForm.order_id), truck_id: createForm.truck_id ? Number(createForm.truck_id) : undefined, driver_id: createForm.driver_id ? Number(createForm.driver_id) : undefined, pickup_address: createForm.pickup_address || undefined, destination_address: createForm.destination_address || undefined, shipping_cost: createForm.shipping_cost === '' ? undefined : Number(createForm.shipping_cost), scheduled_at: createForm.scheduled_at || undefined, notes: createForm.notes || undefined });
-      setShowCreate(false); setCreateForm({ order_id: '', truck_id: '', driver_id: '', pickup_address: 'Kebun Dadi Mulyo, Wagir, Malang', destination_address: '', shipping_cost: '', scheduled_at: '', notes: '' }); load();
+      setShowCreate(false); setCreateForm({ order_id: '', truck_id: '', driver_id: '', pickup_address: siteConfig.address.pickupDefault, destination_address: '', shipping_cost: '', scheduled_at: '', notes: '' }); load();
     } catch (err) { setError(err.response?.data?.message || 'Gagal membuat pengiriman.'); } finally { setCreating(false); }
   }
 

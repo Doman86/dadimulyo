@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchReports } from '../../api/reports';
 import { formatNumber, formatRupiah } from '../../utils/format';
 import Reveal from '../../components/Reveal';
+import siteConfig from '../../config/site';
 
 function ReportCard({ label, value, sub, accent = 'text-primary', delay = 0 }) {
   return (
@@ -110,7 +111,7 @@ export default function AdminReports() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-extrabold text-charcoal">Laporan</h1>
-            <p className="mt-1 text-sm text-gray-400">Ringkasan data bisnis Dadi Mulyo.</p>
+            <p className="mt-1 text-sm text-gray-400">Ringkasan data bisnis {siteConfig.company.name}.</p>
           </div>
           <div className="flex gap-2">
             {[{ value: 'week', label: 'Minggu Ini' }, { value: 'month', label: 'Bulan Ini' }, { value: 'year', label: 'Tahun Ini' }].map((p) => (

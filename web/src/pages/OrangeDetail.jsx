@@ -4,6 +4,7 @@ import { fetchOrange } from '../api/oranges';
 import { useCart } from '../context/CartContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function OrangeDetail() {
   const { id } = useParams();
@@ -195,8 +196,8 @@ export default function OrangeDetail() {
                 <p className="mt-1 text-sm text-white/50">
                   Harga grosir berlaku untuk pembelian di atas minimum order.
                 </p>
-                <a href="tel:081234567890" className="mt-3 inline-flex btn-lux rounded-full px-5 py-2 text-xs font-bold">
-                  Hubungi 0812-3456-7890
+                <a href={`tel:${siteConfig.contact.phoneDigits}`} className="mt-3 inline-flex btn-lux rounded-full px-5 py-2 text-xs font-bold">
+                  Hubungi {siteConfig.contact.phone}
                 </a>
               </div>
             </div>

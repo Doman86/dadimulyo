@@ -4,6 +4,7 @@ import { fetchDashboard } from '../api/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 const ORDER_STATUS = {
   pending: { label: 'Pending', cls: 'badge-orange' },
@@ -57,7 +58,7 @@ export default function Dashboard() {
       <section className="page-hero !py-12">
         <div className="relative z-10">
           <Reveal><h1 className="font-display text-3xl font-extrabold text-white">Halo, {user?.name}</h1></Reveal>
-          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">Ringkasan aktivitas Anda di Dadi Mulyo.</p></Reveal>
+          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">Ringkasan aktivitas Anda di {siteConfig.company.name}.</p></Reveal>
         </div>
       </section>
 

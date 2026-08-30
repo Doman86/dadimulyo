@@ -28,9 +28,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
     try {
       final result = await _api.getWishlists();
       setState(() {
-        _wishlistedTrucks = (result['data'] as List?)
-                ?.map((e) => Truck.fromJson(e))
-                .toList() ?? [];
+        _wishlistedTrucks =
+            (result['data'] as List?)?.map((e) => Truck.fromJson(e)).toList() ??
+            [];
         _loading = false;
       });
     } catch (_) {
@@ -45,8 +45,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
         _wishlistedTrucks.removeWhere((t) => t.id == truckId);
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Dihapus dari wishlist')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Dihapus dari wishlist')));
       }
     } catch (_) {}
   }
@@ -58,22 +59,22 @@ class _WishlistScreenState extends State<WishlistScreen> {
       body: _loading
           ? const LoadingWidget(message: 'Memuat wishlist...')
           : _wishlistedTrucks.isEmpty
-              ? const EmptyState(
-                  emoji: '❤️',
-                  title: 'Belum Ada Truck Tersimpan',
-                  subtitle: 'Simpan truck favorit Anda untuk dilihat nanti.',
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadWishlist,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _wishlistedTrucks.length,
-                    itemBuilder: (ctx, i) {
-                      final truck = _wishlistedTrucks[i];
-                      return _wishlistCard(truck);
-                    },
-                  ),
-                ),
+          ? const EmptyState(
+              emoji: '❤️',
+              title: 'Belum Ada Truck Tersimpan',
+              subtitle: 'Simpan truck favorit Anda untuk dilihat nanti.',
+            )
+          : RefreshIndicator(
+              onRefresh: _loadWishlist,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _wishlistedTrucks.length,
+                itemBuilder: (ctx, i) {
+                  final truck = _wishlistedTrucks[i];
+                  return _wishlistCard(truck);
+                },
+              ),
+            ),
     );
   }
 
@@ -113,7 +114,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
         child: InkWell(
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => TruckDetailScreen(truckId: truck.id)),
+            MaterialPageRoute(
+              builder: (_) => TruckDetailScreen(truckId: truck.id),
+            ),
           ),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -150,13 +153,17 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       Text(
                         '${truck.year != null ? '${truck.year} · ' : ''}${truck.category?.name ?? 'Truck'}',
                         style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${truck.brand} ${truck.model}',
                         style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 15),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -164,16 +171,19 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       Text(
                         AppTheme.formatRupiah(truck.price),
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primary,
-                            fontSize: 14),
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primary,
+                          fontSize: 14,
+                        ),
                       ),
                       if (truck.location != null) ...[
                         const SizedBox(height: 2),
                         Text(
                           truck.location!,
                           style: const TextStyle(
-                              fontSize: 11, color: AppTheme.textSecondary),
+                            fontSize: 11,
+                            color: AppTheme.textSecondary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

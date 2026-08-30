@@ -29,7 +29,11 @@ class OrangeCategory {
   OrangeCategory({required this.id, required this.name, this.description});
 
   factory OrangeCategory.fromJson(Map<String, dynamic> json) {
-    return OrangeCategory(id: json['id'], name: json['name'], description: json['description']);
+    return OrangeCategory(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+    );
   }
 }
 
@@ -83,7 +87,8 @@ class OrangeProduct {
       harvestDate: json['harvest_date'],
       farmLocation: json['farm_location'],
       status: json['status'] ?? 'available',
-      images: (json['images'] as List?)
+      images:
+          (json['images'] as List?)
               ?.map((e) => OrangeImage.fromJson(e))
               .toList() ??
           [],
@@ -93,10 +98,12 @@ class OrangeProduct {
     );
   }
 
-  String get primaryImageUrl =>
-      images.isNotEmpty
-          ? (images.firstWhere((img) => img.isPrimary, orElse: () => images.first).imageUrl ?? '')
-          : '';
+  String get primaryImageUrl => images.isNotEmpty
+      ? (images
+                .firstWhere((img) => img.isPrimary, orElse: () => images.first)
+                .imageUrl ??
+            '')
+      : '';
 
   bool get inStock => stockKg > 0;
 }

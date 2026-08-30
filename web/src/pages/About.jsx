@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function About() {
   return (
@@ -13,12 +14,12 @@ export default function About() {
             <span className="section-label centered text-gold-light/80">Tentang Kami</span>
           </Reveal>
           <Reveal variant="up" delay={150}>
-            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Dadi Mulyo</h1>
+            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">{siteConfig.company.name}</h1>
           </Reveal>
           <Reveal variant="up" delay={250}>
             <p className="mt-3 text-white/50 max-w-xl mx-auto leading-relaxed">
               Bisnis yang bergerak di bidang penjualan dan penyewaan truck serta marketplace jeruk segar
-              yang berlokasi di Wagir, Kabupaten Malang, Jawa Timur.
+              yang berlokasi di {siteConfig.address.full}.
             </p>
           </Reveal>
         </div>
@@ -78,7 +79,7 @@ export default function About() {
             {
               icon: <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>,
               title: 'Jeruk Segar',
-              desc: 'Jeruk berkualitas langsung dari kebun Wagir dan sekitarnya, Malang. Tersedia dalam berbagai grade (A, B, C) dengan harga eceran dan grosir.',
+              desc: `Jeruk berkualitas langsung dari kebun ${siteConfig.address.city}. Tersedia dalam berbagai grade (A, B, C) dengan harga eceran dan grosir.`,
             },
           ].map((item, i) => (
             <Reveal key={item.title} variant="zoom" delay={i * 100}>
@@ -97,7 +98,7 @@ export default function About() {
         <Reveal>
           <div className="mt-16 section-header">
             <span className="section-label centered">Keunggulan</span>
-            <h2 className="mt-3">Mengapa Dadi Mulyo?</h2>
+            <h2 className="mt-3">Mengapa {siteConfig.company.name}?</h2>
           </div>
         </Reveal>
 
@@ -108,7 +109,7 @@ export default function About() {
             { icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>, title: 'Tim Sales Profesional', desc: 'Tim sales kami siap membantu Anda menemukan truck yang sesuai. Hubungi langsung dari halaman detail truck.' },
             { icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H21a.75.75 0 00.75-.75V11.25a3 3 0 00-3-3h-1.5l-1.72-4.575A1.5 1.5 0 0014.692 2.5H9.308a1.5 1.5 0 00-1.438 1.075L6.15 8.25H3.75a3 3 0 00-3 3v6.375c0 .621.504 1.125 1.125 1.125h1.5" /></svg>, title: 'Pengiriman Terpercaya', desc: 'Pengiriman jeruk dengan truck sendiri. Jadwal fleksibel dan biaya yang bisa dikonfirmasi sebelumnya.' },
             { icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>, title: 'Pemesanan Online', desc: 'Beli jeruk, sewa truck, dan kelola pesanan langsung dari website atau aplikasi mobile kami.' },
-            { icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>, title: 'Berbasis Lokal', desc: 'Berlokasi di Wagir, Kabupaten Malang. Kami memahami kebutuhan masyarakat Jawa Timur.' },
+            { icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>, title: 'Berbasis Lokal', desc: `Berlokasi di ${siteConfig.address.street}. Kami memahami kebutuhan masyarakat ${siteConfig.address.province}.` },
           ].map((item, i) => (
             <Reveal key={item.title} variant="up" delay={Math.min(i * 60, 300)}>
               <div className="card-lux group flex gap-4 p-5">
@@ -130,14 +131,14 @@ export default function About() {
             <h2 className="font-display text-2xl font-bold text-primary">Cerita Kami</h2>
             <div className="mt-4 space-y-4 text-gray-600 leading-relaxed">
               <p>
-                Dadi Mulyo didirikan dengan visi menjadi platform digital yang mendukung bisnis lokal di
-                bidang otomotif dan pertanian. Berawal dari Wagir, Kabupaten Malang, kami melayani
+                {siteConfig.company.name} didirikan dengan visi menjadi platform digital yang mendukung bisnis lokal di
+                bidang otomotif dan pertanian. Berawal dari {siteConfig.address.street}, kami melayani
                 kebutuhan transportasi dan produk pertanian masyarakat sekitar.
               </p>
               <p>
                 Kami menyadari bahwa banyak pelanggan yang kesulitan menemukan truck yang sesuai dengan
                 kebutuhan dan budget mereka. Begitu pula petani jeruk yang membutuhkan akses pasar yang
-                lebih luas. Dadi Mulyo hadir sebagai jembatan antara kebutuhan transportasi dan produk
+                lebih luas. {siteConfig.company.name} hadir sebagai jembatan antara kebutuhan transportasi dan produk
                 pertanian.
               </p>
               <p>
@@ -158,7 +159,7 @@ export default function About() {
             <div className="noise-overlay absolute inset-0" />
             <div className="relative z-10">
               <h2 className="font-display text-2xl font-bold">Lokasi Kami</h2>
-              <p className="mt-2 text-white/50">Wagir, Kabupaten Malang, Jawa Timur, Indonesia</p>
+              <p className="mt-2 text-white/50">{siteConfig.address.full}</p>
               <p className="mt-1 text-sm text-white/30">Senin – Sabtu: 08.00 – 17.00 WIB</p>
               <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <Link to="/trucks" className="btn-lux rounded-full px-7 py-3 text-sm font-bold">Lihat Truck</Link>

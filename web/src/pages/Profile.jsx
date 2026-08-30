@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ export default function Profile() {
       <section className="page-hero !py-12">
         <div className="relative z-10">
           <Reveal><h1 className="font-display text-3xl font-extrabold text-white">Profil Saya</h1></Reveal>
-          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">Informasi akun Anda di Dadi Mulyo.</p></Reveal>
+          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">Informasi akun Anda di {siteConfig.company.name}.</p></Reveal>
         </div>
       </section>
 

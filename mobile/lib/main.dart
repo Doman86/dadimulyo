@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'services/api_client.dart';
 import 'widgets/app_theme.dart';
+import 'widgets/animations.dart';
 import 'screens/home/home_screen.dart';
 
 void main() async {
@@ -35,13 +37,15 @@ Future<void> _configureBaseUrl() async {
 
       if (isEmulator) {
         // Emulator Android: 10.0.2.2 adalah alias untuk localhost PC
-        ApiClient.setBaseUrl('http://10.0.2.2:8000/api');
+        ApiClient.setBaseUrl('http://10.0.2.2:8000/api');  // dart-define: API_BASE_URL
       } else {
         // HP fisik:
         // - Default 127.0.0.1 -> lewat kabel USB (adb reverse tcp:8000 tcp:8000)
         //   (script run_hp.bat sudah otomatis menjalankan adb reverse)
         // - Atau lewat WiFi: flutter run --dart-define=SERVER_IP=<IP_LAPTOP>
-        ApiClient.setBaseUrl('http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api');
+        ApiClient.setBaseUrl(
+          'http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api',
+        );
       }
     } else if (Platform.isIOS) {
       final iosInfo = await deviceInfo.iosInfo;
@@ -50,12 +54,15 @@ Future<void> _configureBaseUrl() async {
       if (isEmulator) {
         ApiClient.setBaseUrl('http://127.0.0.1:8000/api');
       } else {
-        ApiClient.setBaseUrl('http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api');
+        ApiClient.setBaseUrl(
+          'http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api',
+        );
       }
     }
   } catch (_) {
     ApiClient.setBaseUrl(
-        'http://${serverIp.isEmpty ? '10.0.2.2' : serverIp}:8000/api');
+      'http://${serverIp.isEmpty ? '10.0.2.2' : serverIp}:8000/api',
+    );
   }
 }
 
@@ -83,13 +90,15 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    _scaleAnim = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
 
@@ -109,8 +118,7 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (ctx, animation, secondaryAnimation) =>
-            const _AppRoot(),
+        pageBuilder: (ctx, animation, secondaryAnimation) => const _AppRoot(),
         transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -127,95 +135,116 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryDark,
-              AppTheme.primary,
-            ],
-          ),
-        ),
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: ScaleTransition(
-            scale: _scaleAnim,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo / Icon
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+      body: AnimatedGradientBackground(
+        phases: const [
+          [AppTheme.primaryDark, AppTheme.primary],
+          [Color(0xFF0B3D26), AppTheme.primaryDark],
+          [AppTheme.forest, AppTheme.primary],
+        ],
+        period: const Duration(seconds: 5),
+        child: Stack(
+          children: [
+            const Positioned.fill(
+              child: FloatingOrbs(
+                orbColors: [AppTheme.gold],
+                maxDrift: 26,
+                opacity: 0.30,
+              ),
+            ),
+            Center(
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: ScaleTransition(
+                  scale: _scaleAnim,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo emas berkerlip
+                      Shimmer(
+                        child: Container(
+                          width: 104,
+                          height: 104,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.gold.withValues(alpha: 0.45),
+                                blurRadius: 32,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text('🚛', style: TextStyle(fontSize: 50)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Brand Name
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${AppConfig.companyName.split(' ')[0]} ',
+                              style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            TextSpan(
+                              text: AppConfig.companyName.split(' ').length > 1
+                                  ? AppConfig.companyName.split(' ')[1]
+                                  : '',
+                              style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.goldLight,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Tagline animated shimmer
+                      Shimmer(
+                        baseColor: const Color(0xFF9FB7A8),
+                        highlightColor: const Color(0xFFF3E2B4),
+                        child: const Text(
+                          'Showroom Truck & Jeruk Segar',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                            letterSpacing: 3,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 54),
+
+                      // Loading indicator emas
+                      SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.8,
+                          color: AppTheme.goldLight.withValues(alpha: 0.9),
+                          backgroundColor: Colors.white10,
+                        ),
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text(
-                      '🚛',
-                      style: TextStyle(fontSize: 48),
-                    ),
-                  ),
                 ),
-                const SizedBox(height: 24),
-
-                // Brand Name
-                RichText(
-                  text: const TextSpan(children: [
-                    TextSpan(
-                      text: 'Dadi ',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Mulyo',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.secondary,
-                      ),
-                    ),
-                  ]),
-                ),
-                const SizedBox(height: 8),
-
-                // Tagline
-                Text(
-                  'Showroom Truck & Jeruk Segar',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-
-                // Loading indicator
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -235,7 +264,7 @@ class _AppRoot extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: MaterialApp(
-        title: 'Dadi Mulyo',
+        title: AppConfig.companyName,
         theme: AppTheme.theme,
         debugShowCheckedModeBanner: false,
         home: const HomeScreen(),
@@ -252,7 +281,7 @@ class DadiMulyoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Dadi Mulyo',
+      title: AppConfig.companyName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       home: const SplashScreen(),

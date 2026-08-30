@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/app_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../widgets/app_theme.dart';
@@ -8,11 +9,7 @@ class ContactSalesScreen extends StatefulWidget {
   final int? truckId;
   final String? truckName;
 
-  const ContactSalesScreen({
-    super.key,
-    this.truckId,
-    this.truckName,
-  });
+  const ContactSalesScreen({super.key, this.truckId, this.truckName});
 
   @override
   State<ContactSalesScreen> createState() => _ContactSalesScreenState();
@@ -85,13 +82,14 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                 const Text(
                   'Pesan Terkirim!',
                   style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Tim sales Dadi Mulyo akan segera menghubungi Anda.',
+                  'Tim sales ${AppConfig.companyName} akan segera menghubungi Anda.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppTheme.textSecondary),
                 ),
@@ -132,14 +130,20 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Ingin bertanya tentang:',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.textSecondary)),
-                            Text(widget.truckName!,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
+                            const Text(
+                              'Ingin bertanya tentang:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              widget.truckName!,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -152,9 +156,10 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
               const Text(
                 'Formulir Pertanyaan',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -168,10 +173,13 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Text(_error!,
-                      style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
                 ),
 
               TextFormField(
@@ -180,7 +188,8 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                   labelText: 'Nama Lengkap *',
                   prefixIcon: Icon(Icons.person_outlined),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Nama wajib diisi' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Nama wajib diisi' : null,
                 onChanged: (v) => _name = v,
               ),
               const SizedBox(height: 16),
@@ -192,7 +201,8 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                   labelText: 'No. HP / WhatsApp *',
                   prefixIcon: Icon(Icons.phone_outlined),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'No. HP wajib diisi' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'No. HP wajib diisi' : null,
                 onChanged: (v) => _phone = v,
               ),
               const SizedBox(height: 16),
@@ -204,7 +214,8 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                   alignLabelWithHint: true,
                 ),
                 maxLines: 4,
-                validator: (v) => v == null || v.isEmpty ? 'Pesan wajib diisi' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Pesan wajib diisi' : null,
                 onChanged: (v) => _message = v,
               ),
               const SizedBox(height: 24),
@@ -218,7 +229,10 @@ class _ContactSalesScreenState extends State<ContactSalesScreen> {
                           height: 18,
                           width: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.send),
                   label: Text(_submitting ? 'Mengirim...' : 'Kirim Pesan'),
                 ),

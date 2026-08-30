@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Brand colors matching the web app (dark forest green + gold)
-  static const Color primary = Color(0xFF14532D);        // forest green
-  static const Color primaryDark = Color(0xFF04150E);    // near-black green
+  static const Color primary = Color(0xFF14532D); // forest green
+  static const Color primaryDark = Color(0xFF04150E); // near-black green
   static const Color forest = Color(0xFF0B2E1F);
   static const Color pine = Color(0xFF071F15);
   static const Color moss = Color(0xFF166534);
@@ -50,15 +50,42 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: luxuryPageTransition,
+      ),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          letterSpacing: -0.5,
+          height: 1.15,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          height: 1.2,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+        ),
+        bodyMedium: TextStyle(fontSize: 14, color: textPrimary, height: 1.4),
+        bodySmall: TextStyle(fontSize: 12.5, color: textSecondary, height: 1.4),
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: primaryDark,
         foregroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 6,
         centerTitle: true,
         titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 18,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
         ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(0)),
@@ -67,9 +94,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: cardBg,
         elevation: 0,
-        shadowColor: Colors.black12,
+        shadowColor: Colors.black26,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
         ),
       ),
@@ -82,8 +110,10 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -91,8 +121,10 @@ class AppTheme {
           foregroundColor: primary,
           side: const BorderSide(color: primary, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -101,17 +133,20 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: gold, width: 1.5),
         ),
       ),
@@ -121,13 +156,16 @@ class AppTheme {
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+        selectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: primaryDark,
         contentTextStyle: const TextStyle(color: Colors.white),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: backgroundAlt,
@@ -137,6 +175,24 @@ class AppTheme {
       progressIndicatorTheme: const ProgressIndicatorThemeData(color: primary),
     );
   }
+
+  /// Luxury page transition (slide + fade + subtle scale), dipakai app-wide.
+  static const luxuryPageTransition = <TargetPlatform, PageTransitionsBuilder>{
+    TargetPlatform.android: _LuxuryPageTransitionsBuilder(),
+    TargetPlatform.iOS: _LuxuryPageTransitionsBuilder(),
+    TargetPlatform.macOS: _LuxuryPageTransitionsBuilder(),
+    TargetPlatform.windows: _LuxuryPageTransitionsBuilder(),
+    TargetPlatform.linux: _LuxuryPageTransitionsBuilder(),
+    TargetPlatform.fuchsia: _LuxuryPageTransitionsBuilder(),
+  };
+
+  static List<BoxShadow> luxuryShadow(double radius) => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.08),
+      blurRadius: radius,
+      offset: Offset(0, radius * 0.4),
+    ),
+  ];
 
   /// Gold gradient primary button (mewah).
   static Widget goldButton({
@@ -171,7 +227,10 @@ class AppTheme {
                   ? const SizedBox(
                       height: 22,
                       width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF241A02)),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Color(0xFF241A02),
+                      ),
                     )
                   : Row(
                       mainAxisSize: MainAxisSize.min,
@@ -209,5 +268,38 @@ class AppTheme {
       return number.toInt().toString();
     }
     return number.toStringAsFixed(1);
+  }
+}
+
+/// Page transition mewah: slide + fade + subtle scale untuk seluruh navigasi.
+class _LuxuryPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _LuxuryPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.07, 0.03),
+        end: Offset.zero,
+      ).animate(curved),
+      child: FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.985, end: 1.0).animate(curved),
+          child: child,
+        ),
+      ),
+    );
   }
 }

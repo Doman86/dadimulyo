@@ -32,7 +32,8 @@ class _TruckListScreenState extends State<TruckListScreen> {
     try {
       final result = await _api.getTruckCategories();
       setState(() {
-        _categories = (result['data'] as List?)
+        _categories =
+            (result['data'] as List?)
                 ?.map((e) => TruckCategory.fromJson(e))
                 .toList() ??
             [];
@@ -52,7 +53,8 @@ class _TruckListScreenState extends State<TruckListScreen> {
 
       final result = await _api.getTrucks(params);
       setState(() {
-        _trucks = (result['data']?['data'] as List?)
+        _trucks =
+            (result['data']?['data'] as List?)
                 ?.map((e) => Truck.fromJson(e))
                 .toList() ??
             [];
@@ -79,8 +81,13 @@ class _TruckListScreenState extends State<TruckListScreen> {
                   decoration: InputDecoration(
                     hintText: 'Cari merek / model...',
                     prefixIcon: const Icon(Icons.search, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
@@ -95,15 +102,31 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _categoryId.isEmpty ? null : _categoryId,
-                        hint: const Text('Kategori', style: TextStyle(fontSize: 13)),
+                        hint: const Text(
+                          'Kategori',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(value: '', child: Text('Semua')),
-                          ..._categories.map((c) => DropdownMenuItem(value: c.id.toString(), child: Text(c.name))),
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('Semua'),
+                          ),
+                          ..._categories.map(
+                            (c) => DropdownMenuItem(
+                              value: c.id.toString(),
+                              child: Text(c.name),
+                            ),
+                          ),
                         ],
                         onChanged: (v) {
                           _categoryId = v ?? '';
@@ -115,16 +138,27 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _condition.isEmpty ? null : _condition,
-                        hint: const Text('Kondisi', style: TextStyle(fontSize: 13)),
+                        hint: const Text(
+                          'Kondisi',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: const [
                           DropdownMenuItem(value: '', child: Text('Semua')),
                           DropdownMenuItem(value: 'baru', child: Text('Baru')),
-                          DropdownMenuItem(value: 'bekas', child: Text('Bekas')),
+                          DropdownMenuItem(
+                            value: 'bekas',
+                            child: Text('Bekas'),
+                          ),
                         ],
                         onChanged: (v) {
                           _condition = v ?? '';
@@ -138,14 +172,31 @@ class _TruckListScreenState extends State<TruckListScreen> {
                         value: _sort,
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'newest', child: Text('Terbaru')),
-                          DropdownMenuItem(value: 'oldest', child: Text('Terlama')),
-                          DropdownMenuItem(value: 'price_asc', child: Text('Harga ↑')),
-                          DropdownMenuItem(value: 'price_desc', child: Text('Harga ↓')),
+                          DropdownMenuItem(
+                            value: 'newest',
+                            child: Text('Terbaru'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oldest',
+                            child: Text('Terlama'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'price_asc',
+                            child: Text('Harga ↑'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'price_desc',
+                            child: Text('Harga ↓'),
+                          ),
                         ],
                         onChanged: (v) {
                           _sort = v ?? 'newest';
@@ -164,32 +215,39 @@ class _TruckListScreenState extends State<TruckListScreen> {
             child: _loading
                 ? const LoadingWidget(message: 'Memuat data...')
                 : _trucks.isEmpty
-                    ? const EmptyState(
-                        emoji: '🚛',
-                        title: 'Tidak ada truck',
-                        subtitle: 'Coba ubah filter pencarian Anda.',
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadTrucks,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: _trucks.length,
-                          itemBuilder: (ctx, i) {
-                            final truck = _trucks[i];
-                            return TruckCard(
-                              imageUrl: truck.primaryImageUrl,
-                              brand: truck.brand,
-                              model: truck.model,
-                              year: truck.year,
-                              categoryName: truck.category?.name,
-                              price: truck.price,
-                              location: truck.location,
-                              onTap: () => Navigator.push(ctx,
-                                  MaterialPageRoute(builder: (_) => TruckDetailScreen(truckId: truck.id))),
-                            );
-                          },
-                        ),
-                      ),
+                ? const EmptyState(
+                    emoji: '🚛',
+                    title: 'Tidak ada truck',
+                    subtitle: 'Coba ubah filter pencarian Anda.',
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadTrucks,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _trucks.length,
+                      itemBuilder: (ctx, i) {
+                        final truck = _trucks[i];
+                        return TruckCard(
+                          imageUrl: truck.primaryImageUrl,
+                          brand: truck.brand,
+                          model: truck.model,
+                          year: truck.year,
+                          categoryName: truck.category?.name,
+                          price: truck.price,
+                          location: truck.location,
+                          condition: truck.condition,
+                          delayMs: (70.0 * i).clamp(0, 500),
+                          onTap: () => Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  TruckDetailScreen(truckId: truck.id),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

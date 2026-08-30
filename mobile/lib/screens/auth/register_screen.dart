@@ -32,6 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!mounted) return;
     setState(() => _error = null);
 
     final auth = context.read<AuthProvider>();
@@ -47,10 +48,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (result['success'] == true) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } else {
       setState(() => _error = result['message']);
     }
+  }
+
+  /// Validasi format email
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email wajib diisi';
+    }
+    final emailRegex = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,}$');
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'Format email tidak valid';
+    }
+    return null;
+  }
+
+  /// Validasi nomor HP Indonesia
+  String? _validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Phone opsional
+    }
+    final phone = value.replaceAll(RegExp(r'[\s\-]'), '');
+    // Harus angka, minimal 10 digit, maksimal 15 digit
+    if (!RegExp(r'^\d{10,15}$').hasMatch(phone)) {
+      return 'Nomor HP tidak valid (10-15 digit angka)';
+    }
+    return null;
   }
 
   @override
@@ -67,44 +95,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Text('Buat Akun Baru',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+              const Text(
+                'Buat Akun Baru',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('Daftar untuk mulai berbelanja',
-                  style: TextStyle(color: AppTheme.textSecondary)),
+              const Text(
+                'Daftar untuk mulai berbelanja',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
               const SizedBox(height: 24),
               if (_error != null)
                 Container(
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                      color: Colors.red[50], borderRadius: BorderRadius.circular(8)),
-                  child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
                 ),
               TextFormField(
                 controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outlined)),
-                validator: (v) => v == null || v.isEmpty ? 'Nama wajib diisi' : null,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  prefixIcon: Icon(Icons.person_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Nama wajib diisi';
+                  if (v.trim().length < 2) return 'Nama minimal 2 karakter';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
-                validator: (v) => v == null || v.isEmpty ? 'Email wajib diisi' : null,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                validator: _validateEmail,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
-                    labelText: 'No. HP (opsional)', prefixIcon: Icon(Icons.phone_outlined)),
+                  labelText: 'No. HP (opsional)',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: '08xxxxxxxxxx',
+                ),
+                validator: _validatePhone,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outlined)),
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outlined),
+                ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Password wajib diisi';
                   if (v.length < 8) return 'Password minimal 8 karakter';
@@ -115,9 +177,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _confirmCtrl,
                 obscureText: true,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: const InputDecoration(
-                    labelText: 'Konfirmasi Password', prefixIcon: Icon(Icons.lock_outlined)),
-                validator: (v) => v != _passCtrl.text ? 'Password tidak cocok' : null,
+                  labelText: 'Konfirmasi Password',
+                  prefixIcon: Icon(Icons.lock_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Konfirmasi password wajib diisi';
+                  if (v != _passCtrl.text) return 'Password tidak cocok';
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -126,17 +196,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Daftar'),
               ),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text.rich(TextSpan(children: [
-                  TextSpan(text: 'Sudah punya akun? ', style: TextStyle(color: AppTheme.textSecondary)),
-                  TextSpan(text: 'Masuk di sini',
-                      style: TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w600)),
-                ])),
+                child: const Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Sudah punya akun? ',
+                        style: TextStyle(color: AppTheme.textSecondary),
+                      ),
+                      TextSpan(
+                        text: 'Masuk di sini',
+                        style: TextStyle(
+                          color: AppTheme.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

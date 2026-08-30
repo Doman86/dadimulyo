@@ -44,15 +44,13 @@ class User {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'profile_image': profileImage,
-        'status': status,
-        'role': role != null
-            ? {'id': role!.id, 'name': role!.name}
-            : null,
-        'created_at': createdAt,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'profile_image': profileImage,
+    'status': status,
+    'role': role != null ? {'id': role!.id, 'name': role!.name} : null,
+    'created_at': createdAt,
+  };
 }

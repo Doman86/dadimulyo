@@ -4,6 +4,7 @@ import { fetchTruck, submitLead, toggleWishlist } from '../api/trucks';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function TruckDetail() {
   const { id } = useParams();
@@ -218,7 +219,7 @@ export default function TruckDetail() {
             <div className="relative z-10">
               <h2 className="font-display text-2xl font-bold">Tertarik dengan truck ini?</h2>
               <p className="mt-1 text-white/50">
-                Isi form berikut, tim sales Dadi Mulyo akan segera menghubungi Anda.
+                Isi form berikut, tim sales {siteConfig.company.name} akan segera menghubungi Anda.
               </p>
               {leadStatus && (
                 <p className={`mt-3 ${leadStatus.success ? 'alert-lux-success' : 'alert-lux-error'}`}>

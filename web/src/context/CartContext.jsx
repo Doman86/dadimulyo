@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { BULK_THRESHOLD_KG } from '../config/app';
 
 const STORAGE_KEY = 'cart_items';
 
-// Ambang batas grosir harus sama dengan backend (OrderController::BULK_THRESHOLD_KG).
-export const BULK_THRESHOLD_KG = 50;
+// Re-export supaya consumer tidak perlu import ulang.
+export { BULK_THRESHOLD_KG };
 
 const CartContext = createContext(null);
 

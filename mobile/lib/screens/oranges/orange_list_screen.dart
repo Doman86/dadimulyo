@@ -33,7 +33,8 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
     try {
       final result = await _api.getOrangeCategories();
       setState(() {
-        _categories = (result['data'] as List?)
+        _categories =
+            (result['data'] as List?)
                 ?.map((e) => OrangeCategory.fromJson(e))
                 .toList() ??
             [];
@@ -54,7 +55,8 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
 
       final result = await _api.getOranges(params);
       setState(() {
-        _products = (result['data']?['data'] as List?)
+        _products =
+            (result['data']?['data'] as List?)
                 ?.map((e) => OrangeProduct.fromJson(e))
                 .toList() ??
             [];
@@ -80,8 +82,13 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                   decoration: InputDecoration(
                     hintText: 'Cari produk / lokasi kebun...',
                     prefixIcon: const Icon(Icons.search, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     filled: true,
                     fillColor: Colors.grey[100],
                   ),
@@ -96,15 +103,31 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _categoryId.isEmpty ? null : _categoryId,
-                        hint: const Text('Kategori', style: TextStyle(fontSize: 13)),
+                        hint: const Text(
+                          'Kategori',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(value: '', child: Text('Semua')),
-                          ..._categories.map((c) => DropdownMenuItem(value: c.id.toString(), child: Text(c.name))),
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('Semua'),
+                          ),
+                          ..._categories.map(
+                            (c) => DropdownMenuItem(
+                              value: c.id.toString(),
+                              child: Text(c.name),
+                            ),
+                          ),
                         ],
                         onChanged: (v) {
                           _categoryId = v ?? '';
@@ -116,11 +139,19 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _grade.isEmpty ? null : _grade,
-                        hint: const Text('Grade', style: TextStyle(fontSize: 13)),
+                        hint: const Text(
+                          'Grade',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: const [
                           DropdownMenuItem(value: '', child: Text('Semua')),
@@ -140,13 +171,27 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                         value: _sort,
                         isDense: true,
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'newest', child: Text('Terbaru')),
-                          DropdownMenuItem(value: 'price_asc', child: Text('Harga ↑')),
-                          DropdownMenuItem(value: 'price_desc', child: Text('Harga ↓')),
+                          DropdownMenuItem(
+                            value: 'newest',
+                            child: Text('Terbaru'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'price_asc',
+                            child: Text('Harga ↑'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'price_desc',
+                            child: Text('Harga ↓'),
+                          ),
                         ],
                         onChanged: (v) {
                           _sort = v ?? 'newest';
@@ -167,7 +212,10 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                       },
                       activeColor: Theme.of(context).colorScheme.primary,
                     ),
-                    const Text('Hanya yang tersedia', style: TextStyle(fontSize: 13)),
+                    const Text(
+                      'Hanya yang tersedia',
+                      style: TextStyle(fontSize: 13),
+                    ),
                   ],
                 ),
               ],
@@ -177,33 +225,37 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _products.isEmpty
-                    ? const EmptyState(
-                        emoji: '🍊',
-                        title: 'Tidak ada produk',
-                        subtitle: 'Coba ubah filter pencarian Anda.',
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadProducts,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: _products.length,
-                          itemBuilder: (ctx, i) {
-                            final product = _products[i];
-                            return OrangeProductCard(
-                              imageUrl: product.primaryImageUrl,
-                              name: product.name,
-                              categoryName: product.category?.name,
-                              grade: product.grade,
-                              pricePerKg: product.pricePerKg,
-                              stockKg: product.stockKg,
-                              onTap: () => Navigator.push(
-                                  ctx,
-                                  MaterialPageRoute(
-                                      builder: (_) => OrangeDetailScreen(productId: product.id))),
-                            );
-                          },
-                        ),
-                      ),
+                ? const EmptyState(
+                    emoji: '🍊',
+                    title: 'Tidak ada produk',
+                    subtitle: 'Coba ubah filter pencarian Anda.',
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadProducts,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _products.length,
+                      itemBuilder: (ctx, i) {
+                        final product = _products[i];
+                        return OrangeProductCard(
+                          imageUrl: product.primaryImageUrl,
+                          name: product.name,
+                          categoryName: product.category?.name,
+                          grade: product.grade,
+                          pricePerKg: product.pricePerKg,
+                          stockKg: product.stockKg,
+                          delayMs: (70.0 * i).clamp(0, 500),
+                          onTap: () => Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  OrangeDetailScreen(productId: product.id),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

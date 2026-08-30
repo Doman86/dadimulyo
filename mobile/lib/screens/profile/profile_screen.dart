@@ -30,14 +30,22 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_outline, size: 64, color: AppTheme.textSecondary),
+            const Icon(
+              Icons.person_outline,
+              size: 64,
+              color: AppTheme.textSecondary,
+            ),
             const SizedBox(height: 16),
-            const Text('Silakan login untuk melihat profil',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            const Text(
+              'Silakan login untuk melihat profil',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              ),
               child: const Text('Masuk'),
             ),
           ],
@@ -52,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
     final displayName = roleName == 'admin'
         ? 'Admin'
         : roleName.replaceAll('_', ' ').substring(0, 1).toUpperCase() +
-            roleName.replaceAll('_', ' ').substring(1);
+              roleName.replaceAll('_', ' ').substring(1);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profil Saya')),
@@ -76,15 +84,29 @@ class ProfileScreen extends StatelessWidget {
                     backgroundColor: AppTheme.primary,
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(user.name,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(displayName,
-                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -103,8 +125,13 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _infoRow(Icons.email_outlined, 'Email', user.email),
-                  if (user.phone != null) _infoRow(Icons.phone_outlined, 'Telepon', user.phone!),
-                  _infoRow(Icons.calendar_today_outlined, 'Status', user.status),
+                  if (user.phone != null)
+                    _infoRow(Icons.phone_outlined, 'Telepon', user.phone!),
+                  _infoRow(
+                    Icons.calendar_today_outlined,
+                    'Status',
+                    user.status,
+                  ),
                 ],
               ),
             ),
@@ -116,28 +143,40 @@ class ProfileScreen extends StatelessWidget {
               context,
               Icons.favorite_outline,
               'Truck Tersimpan',
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistScreen())),
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WishlistScreen()),
+              ),
             ),
             const SizedBox(height: 8),
             _actionTile(
               context,
               Icons.receipt_long_outlined,
               'Riwayat Pesanan',
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListScreen())),
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrderListScreen()),
+              ),
             ),
             const SizedBox(height: 8),
             _actionTile(
               context,
               Icons.local_shipping_outlined,
               'Sewa Truck',
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RentalScreen())),
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RentalScreen()),
+              ),
             ),
             const SizedBox(height: 8),
             _actionTile(
               context,
               Icons.history,
               'Riwayat Sewa',
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RentalHistoryScreen())),
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RentalHistoryScreen()),
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -151,7 +190,9 @@ class ProfileScreen extends StatelessWidget {
                   await auth.logout();
                   if (context.mounted) {
                     Navigator.pushReplacement(
-                        context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
                   }
                 },
                 icon: const Icon(Icons.logout),
@@ -171,15 +212,26 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppTheme.textSecondary),
           const SizedBox(width: 12),
-          Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          ),
           const Spacer(),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          ),
         ],
       ),
     );
   }
 
-  Widget _actionTile(BuildContext context, IconData icon, String title, VoidCallback onTap) {
+  Widget _actionTile(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

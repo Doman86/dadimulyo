@@ -4,6 +4,7 @@ import '../../models/truck.dart';
 import '../../services/api_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_theme.dart';
+import '../../config/app_config.dart';
 import 'contact_sales_screen.dart';
 
 class TruckDetailScreen extends StatefulWidget {
@@ -43,21 +44,26 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
     final user = context.read<AuthProvider>().user;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login untuk menyimpan truck')));
+        const SnackBar(content: Text('Login untuk menyimpan truck')),
+      );
       return;
     }
     try {
       final result = await _api.toggleWishlist(widget.truckId);
       setState(() => _wishlisted = result['data']['wishlisted'] ?? false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result['message'] ?? 'Diperbarui')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Diperbarui')),
+      );
     } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
     if (_truck == null) {
       return Scaffold(
@@ -83,8 +89,11 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                   AspectRatio(
                     aspectRatio: 16 / 9,
                     child: images[_activeImage].imageUrl != null
-                        ? Image.network(images[_activeImage].imageUrl!, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _imagePlaceholder())
+                        ? Image.network(
+                            images[_activeImage].imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                          )
                         : _imagePlaceholder(),
                   ),
                   if (images.length > 1)
@@ -102,17 +111,22 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                               width: 80,
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: i == _activeImage
-                                        ? AppTheme.primary
-                                        : Colors.grey[300]!,
-                                    width: i == _activeImage ? 2 : 1),
+                                  color: i == _activeImage
+                                      ? AppTheme.primary
+                                      : Colors.grey[300]!,
+                                  width: i == _activeImage ? 2 : 1,
+                                ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(5),
                                 child: images[i].imageUrl != null
-                                    ? Image.network(images[i].imageUrl!, fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => _thumbPlaceholder())
+                                    ? Image.network(
+                                        images[i].imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            _thumbPlaceholder(),
+                                      )
                                     : _thumbPlaceholder(),
                               ),
                             ),
@@ -133,23 +147,44 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                   // Title & Price
                   Text(
                     '${truck.year != null ? '${truck.year} · ' : ''}${truck.category?.name ?? 'Truck'} · ${truck.condition ?? ''}',
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text('${truck.brand} ${truck.model}',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    '${truck.brand} ${truck.model}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text(AppTheme.formatRupiah(truck.price),
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                  Text(
+                    AppTheme.formatRupiah(truck.price),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       if (truck.isForRent)
-                        _badge('Bisa Disewa', AppTheme.accent, AppTheme.primary),
+                        _badge(
+                          'Bisa Disewa',
+                          AppTheme.accent,
+                          AppTheme.primary,
+                        ),
                       if (truck.status == 'available') ...[
                         const SizedBox(width: 8),
-                        _badge('Tersedia', Colors.green[100]!, Colors.green[700]!),
+                        _badge(
+                          'Tersedia',
+                          Colors.green[100]!,
+                          Colors.green[700]!,
+                        ),
                       ],
                     ],
                   ),
@@ -165,7 +200,12 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                     children: [
-                      _specTile('Jarak Tempuh', truck.mileage != null ? '${AppTheme.formatNumber(truck.mileage!)} km' : '-'),
+                      _specTile(
+                        'Jarak Tempuh',
+                        truck.mileage != null
+                            ? '${AppTheme.formatNumber(truck.mileage!)} km'
+                            : '-',
+                      ),
                       _specTile('Mesin', truck.engine ?? '-'),
                       _specTile('Transmisi', truck.transmission ?? '-'),
                       _specTile('Bahan Bakar', truck.fuelType ?? '-'),
@@ -181,38 +221,78 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: _toggleWishlist,
-                      icon: Icon(_wishlisted ? Icons.favorite : Icons.favorite_border, color: AppTheme.primary),
-                      label: Text(_wishlisted ? 'Tersimpan' : 'Simpan ke Wishlist'),
+                      icon: Icon(
+                        _wishlisted ? Icons.favorite : Icons.favorite_border,
+                        color: AppTheme.primary,
+                      ),
+                      label: Text(
+                        _wishlisted ? 'Tersimpan' : 'Simpan ke Wishlist',
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
                   // Description
-                  if (truck.description != null && truck.description!.isNotEmpty) ...[
-                    const Text('Deskripsi',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                  if (truck.description != null &&
+                      truck.description!.isNotEmpty) ...[
+                    const Text(
+                      'Deskripsi',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text(truck.description!, style: const TextStyle(color: AppTheme.textSecondary, height: 1.5)),
+                    Text(
+                      truck.description!,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
 
                   // Specifications
                   if (specs.isNotEmpty) ...[
-                    const Text('Spesifikasi',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    const Text(
+                      'Spesifikasi',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    ...specs.map((spec) => Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[200]!))),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(spec.key, style: const TextStyle(color: AppTheme.textSecondary)),
-                              Text(spec.value, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            ],
+                    ...specs.map(
+                      (spec) => Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey[200]!),
                           ),
-                        )),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              spec.key,
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              spec.value,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
 
@@ -226,16 +306,26 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Tertarik dengan truck ini?',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text(
+                          'Tertarik dengan truck ini?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        const Text('Hubungi tim sales Dadi Mulyo untuk informasi lebih lanjut.',
-                            style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text(
+                          'Hubungi tim sales ${AppConfig.companyName} untuk informasi lebih lanjut.',
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.secondary),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.secondary,
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -281,8 +371,14 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
   Widget _badge(String text, Color bg, Color fg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+      ),
     );
   }
 
@@ -298,9 +394,17 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+          ),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

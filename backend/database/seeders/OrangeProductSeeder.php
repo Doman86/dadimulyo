@@ -12,11 +12,14 @@ class OrangeProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $seller = User::where('email', 'orangeseller@dadimulyo.com')->first()
+        $sellerEmail = env('DEMO_ORANGE_SELLER_EMAIL', 'orangeseller@dadimulyo.com');
+        $defaultPassword = env('DEMO_DEFAULT_PASSWORD', 'password');
+
+        $seller = User::where('email', $sellerEmail)->first()
             ?? User::create([
                 'name' => 'Seller Jeruk Citra',
-                'email' => 'orangeseller@dadimulyo.com',
-                'password' => 'password',
+                'email' => $sellerEmail,
+                'password' => $defaultPassword,
                 'role_id' => Role::where('name', 'orange_seller')->first()?->id,
                 'status' => 'active',
             ]);

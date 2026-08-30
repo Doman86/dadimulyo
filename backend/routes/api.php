@@ -8,18 +8,19 @@ use App\Http\Controllers\Api\OrangeCategoryController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrangeProductController;
 use App\Http\Controllers\Api\RentalController;
+use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SiteStatsController;
 use App\Http\Controllers\Api\TruckCategoryController;
 use App\Http\Controllers\Api\TruckController;
-use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
-// Authentication
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Authentication — rate limited (60 requests per minute)
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:60,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:60,1');
 
 // Named 'login' route required by Sanctum middleware for unauthenticated redirects.
 // Returns JSON 401 instead of redirect for API consumers.
@@ -45,6 +46,9 @@ Route::post('/leads', [LeadController::class, 'store']);
 Route::get('/trucks/{truck}/availability', [RentalController::class, 'availability']);
 Route::get('/trucks/{truck}/availability/calendar', [RentalController::class, 'calendar']);
 Route::get('/reviews', [ReviewController::class, 'index']);
+
+// Public: landing page stats
+Route::get('/site-stats', [SiteStatsController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

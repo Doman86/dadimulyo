@@ -12,14 +12,22 @@ class TruckSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('email', 'admin@dadimulyo.com')->first()
+        $sellerRole = Role::where('name', 'truck_seller')->first()?->id;
+
+        $sellerEmail = env('DEMO_SELLER_EMAIL', 'seller@dadimulyo.com');
+        $adminEmail = env('DEMO_ADMIN_EMAIL', 'admin@dadimulyo.com');
+        $defaultPassword = env('DEMO_DEFAULT_PASSWORD', 'password');
+
+        $seller = User::where('email', $sellerEmail)->first()
             ?? User::create([
-                'name' => 'Admin Dadi Mulyo',
-                'email' => 'admin@dadimulyo.com',
-                'password' => 'password',
-                'role_id' => Role::where('name', 'admin')->first()?->id,
+                'name' => 'Seller Truck Budi',
+                'email' => $sellerEmail,
+                'password' => $defaultPassword,
+                'role_id' => $sellerRole,
                 'status' => 'active',
             ]);
+
+        $admin = User::where('email', $adminEmail)->first();
 
         $trucks = [
             [
@@ -170,7 +178,7 @@ class TruckSeeder extends Seeder
                 [
                     ...$data,
                     'category_id' => $category?->id,
-                    'seller_id' => $admin->id,
+                    'seller_id' => $seller?->id ?? $admin?->id,
                     'status' => 'available',
                 ]
             );

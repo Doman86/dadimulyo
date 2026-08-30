@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/app_config.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
@@ -52,10 +53,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       final payload = <String, dynamic>{
         'items': cart.items
-            .map((item) => {
-                  'orange_product_id': item.productId,
-                  'quantity_kg': item.quantityKg,
-                })
+            .map(
+              (item) => {
+                'orange_product_id': item.productId,
+                'quantity_kg': item.quantityKg,
+              },
+            )
             .toList(),
         'address': {
           'recipient_name': _recipientName,
@@ -110,12 +113,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                    color: Colors.red[50], borderRadius: BorderRadius.circular(8)),
-                child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red, fontSize: 13),
+                ),
               ),
 
             // Address
-            const Text('Alamat Pengiriman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Alamat Pengiriman',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             TextFormField(
               initialValue: _recipientName,
@@ -162,7 +173,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Expanded(
                   child: TextFormField(
                     decoration: const InputDecoration(labelText: 'Kota *'),
-                    validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Wajib diisi' : null,
                     onChanged: (v) => _city = v,
                   ),
                 ),
@@ -185,34 +197,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 24),
 
             // Delivery
-            const Text('Pengiriman', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Pengiriman',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Saya butuh pengiriman menggunakan truck Dadi Mulyo',
-                  style: TextStyle(fontSize: 13)),
+              title: const Text(                 'Saya butuh pengiriman menggunakan truck ${AppConfig.companyName}',
+                style: TextStyle(fontSize: 13),
+              ),
               value: _needDelivery,
               onChanged: (v) => setState(() => _needDelivery = v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
             ),
             if (_needDelivery) ...[
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Estimasi Ongkir (Rp)'),
+                decoration: const InputDecoration(
+                  labelText: 'Estimasi Ongkir (Rp)',
+                ),
                 keyboardType: TextInputType.number,
                 onChanged: (v) => setState(() => _shippingCost = v),
               ),
               const SizedBox(height: 4),
-              const Text('Biaya dikonfirmasi oleh admin.',
-                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              const Text(
+                'Biaya dikonfirmasi oleh admin.',
+                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+              ),
             ],
 
             const SizedBox(height: 24),
 
             // Notes
-            const Text('Catatan (opsional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Catatan (opsional)',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             TextFormField(
-              decoration: const InputDecoration(labelText: 'Catatan untuk penjual'),
+              decoration: const InputDecoration(
+                labelText: 'Catatan untuk penjual',
+              ),
               maxLines: 2,
               onChanged: (v) => _notes = v,
             ),
@@ -230,47 +255,89 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Ringkasan Pesanan',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Ringkasan Pesanan',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
-                  ...cart.items.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                  child: Text('${item.name} × ${AppTheme.formatNumber(item.quantityKg)} kg',
-                                      style: const TextStyle(fontSize: 13),
-                                      maxLines: 1, overflow: TextOverflow.ellipsis)),
-                              Text(AppTheme.formatRupiah(item.effectivePrice * item.quantityKg),
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                            ]),
-                      )),
+                  ...cart.items.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${item.name} × ${AppTheme.formatNumber(item.quantityKg)} kg',
+                              style: const TextStyle(fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            AppTheme.formatRupiah(
+                              item.effectivePrice * item.quantityKg,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const Divider(height: 20),
                   Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Subtotal', style: labelCls),
-                        Text(AppTheme.formatRupiah(cart.subtotal), style: labelCls),
-                      ]),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Subtotal', style: labelCls),
+                      Text(
+                        AppTheme.formatRupiah(cart.subtotal),
+                        style: labelCls,
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Ongkir', style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-                        Text(
-                            _needDelivery ? AppTheme.formatRupiah(shippingCost) : 'Tanpa pengiriman',
-                            style: const TextStyle(fontSize: 13)),
-                      ]),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Ongkir',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        _needDelivery
+                            ? AppTheme.formatRupiah(shippingCost)
+                            : 'Tanpa pengiriman',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
                   const Divider(height: 20),
                   Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text(AppTheme.formatRupiah(total),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary)),
-                      ]),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        AppTheme.formatRupiah(total),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -285,7 +352,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Buat Pesanan'),
               ),
             ),

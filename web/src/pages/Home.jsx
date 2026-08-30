@@ -1,10 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchTrucks } from '../api/trucks';
-import { fetchOranges } from '../api/oranges';
+import { fetchTrucks, fetchCategories } from '../api/trucks';
+import { fetchOranges, fetchOrangeCategories } from '../api/oranges';
+import { fetchSiteStats } from '../api/stats';
 import { formatRupiah, formatNumber } from '../utils/format';
 import Reveal from '../components/Reveal';
 import useCountUp, { useInViewOnce } from '../hooks/useCountUp';
+import siteConfig from '../config/site';
 
 function StatCounter({ target, suffix = '', label }) {
   const [ref, inView] = useInViewOnce();
@@ -20,17 +22,18 @@ function StatCounter({ target, suffix = '', label }) {
   );
 }
 
-function TrustMarquee() {
-  const items = [
-    'Truck Terpercaya', 'Jeruk Segar Langsung Kebun', 'Pengiriman Seluruh Jawa Timur',
-    'Harga Transparan', 'Harga Grosir Aktif', 'Tim Sales Profesional',
-    'Booking Online Mudah', 'Foto Asli Produk', 'Truck Baru & Bekas',
-    'Jeruk Grade A, B, C', 'Sewa Truck Harian', 'Custumer Service 24/7',
-  ];
+const FALLBACK_MARQUEE = [
+  'Truck Terpercaya', 'Jeruk Segar Langsung Kebun', 'Pengiriman Seluruh Jawa Timur',
+  'Harga Transparan', 'Booking Online Mudah', 'Foto Asli Produk',
+  'Sewa Truck Harian', 'Customer Service 24/7',
+];
+
+function TrustMarquee({ items }) {
+  const marqueeItems = items.length > 0 ? items : FALLBACK_MARQUEE;
   return (
     <div className="overflow-hidden border-y border-white/[0.06] bg-white/[0.02] py-4">
       <div className="marquee-track">
-        {[...items, ...items].map((item, i) => (
+        {[...marqueeItems, ...marqueeItems].map((item, i) => (
           <span key={i} className="mx-6 flex items-center gap-2 whitespace-nowrap text-sm text-white/40 font-medium">
             <span className="h-1 w-1 rounded-full bg-gold/50" />
             {item}
@@ -44,6 +47,8 @@ function TrustMarquee() {
 export default function Home() {
   const [trucks, setTrucks] = useState([]);
   const [oranges, setOranges] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [marqueeItems, setMarqueeItems] = useState([]);
 
   useEffect(() => {
     fetchTrucks({ per_page: 6, sort: 'newest' })
@@ -51,6 +56,17 @@ export default function Home() {
       .catch(() => {});
     fetchOranges({ per_page: 6, in_stock: 1 })
       .then((result) => setOranges(result.data || []))
+      .catch(() => {});
+    fetchSiteStats()
+      .then((data) => setStats(data))
+      .catch(() => {});
+
+    Promise.allSettled([fetchCategories(), fetchOrangeCategories()])
+      .then(([truckCats, orangeCats]) => {
+        const truckItems = (truckCats.value || []).map((c) => c.name);
+        const orangeItems = (orangeCats.value || []).map((c) => c.name);
+        setMarqueeItems([...truckItems, ...orangeItems, siteConfig.serviceArea]);
+      })
       .catch(() => {});
   }, []);
 
@@ -72,7 +88,7 @@ export default function Home() {
             <Reveal variant="up" delay={100}>
               <span className="badge-lux mb-6 inline-flex">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold-light animate-pulse" />
-                Wagir, Kabupaten Malang — Jawa Timur
+                {siteConfig.address.short}
               </span>
             </Reveal>
 
@@ -80,14 +96,14 @@ export default function Home() {
               <h1 className="font-display text-5xl font-extrabold leading-[1.1] text-white md:text-7xl">
                 Showroom Truck &{' '}
                 <span className="text-gold-gradient">Jeruk Segar</span>{' '}
-                dari Malang
+                dari {siteConfig.address.city}
               </h1>
             </Reveal>
 
             <Reveal variant="up" delay={400}>
               <p className="mt-6 max-w-xl text-lg text-white/60 leading-relaxed">
-                Dadi Mulyo melayani penjualan dan penyewaan truck serta marketplace jeruk
-                berkualitas dari Wagir, Kabupaten Malang. Harga transparan, foto asli, pengiriman
+                {siteConfig.company.name} melayani penjualan dan penyewaan truck serta marketplace jeruk
+                berkualitas dari {siteConfig.address.full}. Harga transparan, foto asli, pengiriman
                 terpercaya.
               </p>
             </Reveal>
@@ -115,17 +131,17 @@ export default function Home() {
       </section>
 
       {/* ============ TRUST MARQUEE ============ */}
-      <TrustMarquee />
+      <TrustMarquee items={marqueeItems} />
 
       {/* ============ STATS ============ */}
       <section className="relative bg-gradient-to-b from-forest to-primary-dark py-16">
         <div className="mx-auto max-w-6xl px-4">
           <Reveal>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <StatCounter target={150} suffix="+" label="Truck Terjual" />
-              <StatCounter target={500} suffix="+" label="Klien Puas" />
-              <StatCounter target={50} suffix="+" label="Produk Jeruk" />
-              <StatCounter target={10} suffix="+" label="Tahun Pengalaman" />
+              <StatCounter target={stats?.trucks_for_sale ?? 0} suffix="+" label="Truck Siap Jual" />
+              <StatCounter target={stats?.trucks_for_rent ?? 0} suffix="+" label="Truck Bisa Disewa" />
+              <StatCounter target={stats?.oranges_in_stock ?? 0} suffix="+" label="Produk Jeruk Stok Ada" />
+              <StatCounter target={stats?.orange_stock_kg_total ?? 0} suffix=" kg" label="Stok Jeruk Tersedia" />
             </div>
           </Reveal>
         </div>
@@ -223,9 +239,9 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 relative">
           <Reveal>
             <div className="section-header">
-              <span className="section-label centered">Fresh from Wagir</span>
+              <span className="section-label centered">Fresh from {siteConfig.address.city}</span>
               <h2 className="mt-3">Jeruk Pilihan</h2>
-              <p>Jeruk segar langsung dari kebun Wagir, Malang. Tersedia dalam berbagai grade dengan harga eceran dan grosir.</p>
+              <p>Jeruk segar langsung dari kebun {siteConfig.address.city}. Tersedia dalam berbagai grade dengan harga eceran dan grosir.</p>
             </div>
           </Reveal>
 
@@ -311,7 +327,7 @@ export default function Home() {
           <Reveal>
             <div className="section-header">
               <span className="section-label centered">Keunggulan Kami</span>
-              <h2 className="mt-3">Kenapa Dadi Mulyo?</h2>
+              <h2 className="mt-3">Kenapa {siteConfig.company.name}?</h2>
               <p>Kami memberikan layanan terbaik dengan harga transparan dan proses yang sederhana.</p>
             </div>
           </Reveal>
@@ -334,7 +350,7 @@ export default function Home() {
                   </svg>
                 ),
                 title: 'Jeruk dari Kebun',
-                desc: 'Jeruk segar langsung dari kebun Wagir, Malang. Tersedia dalam berbagai grade (A, B, C) dengan harga grosir.',
+                desc: `Jeruk segar langsung dari kebun ${siteConfig.address.city}. Tersedia dalam berbagai grade (A, B, C) dengan harga grosir.`,
               },
               {
                 icon: (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import siteConfig from '../config/site';
 
 const links = [
   { to: '/', label: 'Beranda' },
@@ -52,7 +53,7 @@ export default function Navbar() {
             <span className="absolute inset-0 rounded-xl ring-1 ring-white/40" />
           </span>
           <span className="font-display text-xl tracking-tight text-white">
-            Dadi<span className="text-gold-gradient"> Mulyo</span>
+            {siteConfig.company.name.split(' ')[0]}<span className="text-gold-gradient"> {siteConfig.company.name.split(' ')[1]}</span>
           </span>
         </Link>
 

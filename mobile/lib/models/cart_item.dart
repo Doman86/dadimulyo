@@ -1,3 +1,5 @@
+import '../config/app_config.dart';
+
 class CartItem {
   final int productId;
   final String name;
@@ -8,7 +10,8 @@ class CartItem {
   final double stockKg;
   double quantityKg;
 
-  static const double bulkThresholdKg = 50;
+  /// Ambang batas grosir — konsisten dengan backend.
+  static double get bulkThresholdKg => AppConfig.bulkThresholdKg;
 
   CartItem({
     required this.productId,
@@ -29,19 +32,18 @@ class CartItem {
 
   double get subtotal => effectivePrice * quantityKg;
 
-  bool get isBulk =>
-      quantityKg >= bulkThresholdKg && wholesalePrice != null;
+  bool get isBulk => quantityKg >= bulkThresholdKg && wholesalePrice != null;
 
   Map<String, dynamic> toJson() => {
-        'product_id': productId,
-        'name': name,
-        'image_url': imageUrl,
-        'price_per_kg': pricePerKg,
-        'wholesale_price': wholesalePrice,
-        'minimum_order_kg': minimumOrderKg,
-        'stock_kg': stockKg,
-        'quantity_kg': quantityKg,
-      };
+    'product_id': productId,
+    'name': name,
+    'image_url': imageUrl,
+    'price_per_kg': pricePerKg,
+    'wholesale_price': wholesalePrice,
+    'minimum_order_kg': minimumOrderKg,
+    'stock_kg': stockKg,
+    'quantity_kg': quantityKg,
+  };
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(

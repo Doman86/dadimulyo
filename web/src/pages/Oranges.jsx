@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { fetchOrangeCategories, fetchOranges } from '../api/oranges';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function Oranges() {
   const [categories, setCategories] = useState([]);
@@ -61,14 +62,14 @@ export default function Oranges() {
         <div className="orb orb-3 bottom-[-50px] left-20 opacity-20" />
         <div className="relative z-10">
           <Reveal>
-            <span className="section-label centered text-gold-light/80">Fresh from Wagir</span>
+            <span className="section-label centered text-gold-light/80">Fresh from {siteConfig.address.city}</span>
           </Reveal>
           <Reveal variant="up" delay={150}>
             <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Marketplace Jeruk</h1>
           </Reveal>
           <Reveal variant="up" delay={250}>
             <p className="mt-3 text-white/50 max-w-lg mx-auto">
-              Jeruk segar langsung dari kebun Wagir &amp; sekitarnya, Malang.
+              Jeruk segar langsung dari kebun {siteConfig.address.city} &amp; sekitarnya.
             </p>
           </Reveal>
         </div>

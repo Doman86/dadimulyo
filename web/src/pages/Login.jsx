@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Reveal from '../components/Reveal';
+import siteConfig from '../config/site';
 
 export default function Login() {
   const { login, loading } = useAuth();
@@ -33,7 +34,7 @@ export default function Login() {
               </span>
             </Link>
             <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Masuk</h1>
-            <p className="mt-1 text-sm text-gray-400">Selamat datang kembali di Dadi Mulyo</p>
+            <p className="mt-1 text-sm text-gray-400">Selamat datang kembali di {siteConfig.company.name}</p>
           </div>
 
           {error && (

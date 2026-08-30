@@ -27,7 +27,8 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
     try {
       final result = await _api.getRentals({'per_page': 20});
       setState(() {
-        _rentals = (result['data']?['data'] as List?)
+        _rentals =
+            (result['data']?['data'] as List?)
                 ?.map((e) => Rental.fromJson(e))
                 .toList() ??
             [];
@@ -79,22 +80,22 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
       body: _loading
           ? const LoadingWidget(message: 'Memuat riwayat sewa...')
           : _rentals.isEmpty
-              ? const EmptyState(
-                  emoji: '📋',
-                  title: 'Belum Ada Riwayat Sewa',
-                  subtitle: 'Anda belum pernah melakukan booking sewa truck.',
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadRentals,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: _rentals.length,
-                    itemBuilder: (ctx, i) {
-                      final rental = _rentals[i];
-                      return _rentalCard(rental);
-                    },
-                  ),
-                ),
+          ? const EmptyState(
+              emoji: '📋',
+              title: 'Belum Ada Riwayat Sewa',
+              subtitle: 'Anda belum pernah melakukan booking sewa truck.',
+            )
+          : RefreshIndicator(
+              onRefresh: _loadRentals,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _rentals.length,
+                itemBuilder: (ctx, i) {
+                  final rental = _rentals[i];
+                  return _rentalCard(rental);
+                },
+              ),
+            ),
     );
   }
 
@@ -116,11 +117,15 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
                 Text(
                   'Booking #${rental.id}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -128,9 +133,10 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
                   child: Text(
                     statusLabel,
                     style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
                   ),
                 ),
               ],
@@ -138,16 +144,25 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
             const SizedBox(height: 12),
 
             // Rental details
-            _detailRow(Icons.calendar_today, 'Tanggal',
-                '${rental.startDate} - ${rental.endDate}'),
+            _detailRow(
+              Icons.calendar_today,
+              'Tanggal',
+              '${rental.startDate} - ${rental.endDate}',
+            ),
             const SizedBox(height: 8),
             _detailRow(Icons.timer, 'Durasi', '${rental.days ?? 0} hari'),
             const SizedBox(height: 8),
             _detailRow(
-                Icons.attach_money, 'Harga/Hari', AppTheme.formatRupiah(rental.pricePerDay ?? 0)),
+              Icons.attach_money,
+              'Harga/Hari',
+              AppTheme.formatRupiah(rental.pricePerDay ?? 0),
+            ),
             const SizedBox(height: 8),
-            _detailRow(Icons.monetization_on, 'Total',
-                AppTheme.formatRupiah(rental.totalPrice ?? 0)),
+            _detailRow(
+              Icons.monetization_on,
+              'Total',
+              AppTheme.formatRupiah(rental.totalPrice ?? 0),
+            ),
 
             // Notes
             if (rental.notes != null && rental.notes!.isNotEmpty) ...[
@@ -160,13 +175,19 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.note, size: 16, color: AppTheme.textSecondary),
+                    const Icon(
+                      Icons.note,
+                      size: 16,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         rental.notes!,
                         style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -184,9 +205,15 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
       children: [
         Icon(icon, size: 16, color: AppTheme.textSecondary),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+        ),
         const Spacer(),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+        ),
       ],
     );
   }

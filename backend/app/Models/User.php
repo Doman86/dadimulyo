@@ -58,6 +58,16 @@ class User extends Authenticatable
         return $this->hasRole('truck_seller');
     }
 
+    public function isOrangeSeller(): bool
+    {
+        return $this->hasRole('orange_seller');
+    }
+
+    public function isDriver(): bool
+    {
+        return $this->hasRole('driver');
+    }
+
     public function trucks(): HasMany
     {
         return $this->hasMany(Truck::class, 'seller_id');

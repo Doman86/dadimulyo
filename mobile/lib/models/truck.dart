@@ -26,10 +26,18 @@ class TruckSpecification {
   final String key;
   final String value;
 
-  TruckSpecification({required this.id, required this.key, required this.value});
+  TruckSpecification({
+    required this.id,
+    required this.key,
+    required this.value,
+  });
 
   factory TruckSpecification.fromJson(Map<String, dynamic> json) {
-    return TruckSpecification(id: json['id'], key: json['key'], value: json['value']);
+    return TruckSpecification(
+      id: json['id'],
+      key: json['key'],
+      value: json['value'],
+    );
   }
 }
 
@@ -41,7 +49,11 @@ class TruckCategory {
   TruckCategory({required this.id, required this.name, this.description});
 
   factory TruckCategory.fromJson(Map<String, dynamic> json) {
-    return TruckCategory(id: json['id'], name: json['name'], description: json['description']);
+    return TruckCategory(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+    );
   }
 }
 
@@ -53,7 +65,11 @@ class TruckSeller {
   TruckSeller({required this.id, required this.name, this.phone});
 
   factory TruckSeller.fromJson(Map<String, dynamic> json) {
-    return TruckSeller(id: json['id'], name: json['name'], phone: json['phone']);
+    return TruckSeller(
+      id: json['id'],
+      name: json['name'],
+      phone: json['phone'],
+    );
   }
 }
 
@@ -129,25 +145,31 @@ class Truck {
       isForSale: json['is_for_sale'] ?? true,
       isForRent: json['is_for_rent'] ?? false,
       rentalPricePerDay: json['rental_price_per_day']?.toDouble(),
-      images: (json['images'] as List?)
+      images:
+          (json['images'] as List?)
               ?.map((e) => TruckImage.fromJson(e))
               .toList() ??
           [],
-      specifications: (json['specifications'] as List?)
+      specifications:
+          (json['specifications'] as List?)
               ?.map((e) => TruckSpecification.fromJson(e))
               .toList() ??
           [],
       category: json['category'] != null
           ? TruckCategory.fromJson(json['category'])
           : null,
-      seller: json['seller'] != null ? TruckSeller.fromJson(json['seller']) : null,
+      seller: json['seller'] != null
+          ? TruckSeller.fromJson(json['seller'])
+          : null,
     );
   }
 
-  String get primaryImageUrl =>
-      images.isNotEmpty
-          ? (images.firstWhere((img) => img.isPrimary, orElse: () => images.first).imageUrl ?? '')
-          : '';
+  String get primaryImageUrl => images.isNotEmpty
+      ? (images
+                .firstWhere((img) => img.isPrimary, orElse: () => images.first)
+                .imageUrl ??
+            '')
+      : '';
 
   String get displayName => '$brand $model';
 }

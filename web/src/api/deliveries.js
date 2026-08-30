@@ -2,7 +2,7 @@ import client from './client';
 
 export async function fetchDeliveries(params = {}) {
   const { data } = await client.get('/deliveries', { params });
-  return data.data;
+  return data; // { data: [...], meta }
 }
 
 export async function fetchDelivery(id) {

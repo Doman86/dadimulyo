@@ -40,7 +40,7 @@ class UserTest extends TestCase
             ->getJson('/api/users?role=sales')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.role', 'sales');
+            ->assertJsonPath('data.0.role.name', 'sales');
     }
 
     public function test_non_admin_cannot_list_users(): void

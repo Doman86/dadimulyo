@@ -11,8 +11,7 @@ class CartProvider extends ChangeNotifier {
   int get count => _items.fold(0, (sum, i) => sum + i.quantityKg.toInt());
   int get itemCount => _items.length;
 
-  double get subtotal =>
-      _items.fold(0, (sum, item) => sum + item.subtotal);
+  double get subtotal => _items.fold(0, (sum, item) => sum + item.subtotal);
 
   CartProvider() {
     _loadFromStorage();
@@ -33,7 +32,9 @@ class CartProvider extends ChangeNotifier {
   Future<void> _saveToStorage() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-        _storageKey, jsonEncode(_items.map((e) => e.toJson()).toList()));
+      _storageKey,
+      jsonEncode(_items.map((e) => e.toJson()).toList()),
+    );
   }
 
   void addItem(CartItem item) {

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLeadRequest;
 use App\Http\Resources\LeadResource;
 use App\Models\Lead;
-use App\Models\Notification;
+use App\Services\PushNotificationService;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,14 +23,14 @@ class LeadController extends Controller
         ]);
 
         $recipientIds = Role::whereIn('name', ['admin', 'sales'])->first()?->users()->pluck('id') ?? collect();
-        foreach ($recipientIds as $recipientId) {
-            Notification::create([
-                'user_id' => $recipientId,
-                'title' => 'Lead baru masuk',
-                'message' => "Lead dari {$lead->name} perlu ditindaklanjuti.",
-                'type' => 'lead',
-            ]);
-        }
+
+        app(PushNotificationService::class)->notifyMany(
+            $recipientIds,
+            'Lead baru masuk',
+            "Lead dari {$lead->name} perlu ditindaklanjuti.",
+            'lead',
+            ['id' => $lead->id],
+        );
 
         return new LeadResource($lead->load('truck'));
     }

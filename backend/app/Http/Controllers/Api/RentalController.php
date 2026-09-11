@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\RentalResource;
 use App\Models\Rental;
 use App\Models\Truck;
-use App\Models\Notification;
+use App\Services\PushNotificationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,14 +77,13 @@ class RentalController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        foreach (\App\Models\Role::where('name', 'admin')->first()?->users ?? [] as $admin) {
-            Notification::create([
-                'user_id' => $admin->id,
-                'title' => 'Booking rental baru',
-                'message' => "Booking {$rental->id} menunggu konfirmasi.",
-                'type' => 'rental',
-            ]);
-        }
+        app(PushNotificationService::class)->notifyMany(
+            \App\Models\Role::where('name', 'admin')->first()?->users->pluck('id') ?? collect(),
+            'Booking rental baru',
+            "Booking {$rental->id} menunggu konfirmasi.",
+            'rental',
+            ['id' => $rental->id],
+        );
 
         return new RentalResource($rental->load(['truck.images', 'customer']));
     }

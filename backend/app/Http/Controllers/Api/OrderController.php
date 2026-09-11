@@ -9,7 +9,7 @@ use App\Models\Address;
 use App\Models\Delivery;
 use App\Models\Order;
 use App\Models\OrangeProduct;
-use App\Models\Notification;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -141,12 +141,13 @@ class OrderController extends Controller
                 $order->items()->create($orderItem);
             }
 
-            Notification::create([
-                'user_id' => $user->id,
-                'title' => 'Pesanan dibuat',
-                'message' => "Pesanan {$order->order_number} berhasil dibuat.",
-                'type' => 'order',
-            ]);
+            app(PushNotificationService::class)->notify(
+                $user->id,
+                'Pesanan dibuat',
+                "Pesanan {$order->order_number} berhasil dibuat.",
+                'order',
+                ['id' => $order->id, 'order_number' => $order->order_number],
+            );
 
             // Buat delivery bila diminta dan sopir tersedia
             if ($deliveryData = $request->input('delivery')) {
@@ -216,12 +217,13 @@ class OrderController extends Controller
 
         $order->update($validated);
 
-        Notification::create([
-            'user_id' => $order->customer_id,
-            'title' => 'Status pesanan berubah',
-            'message' => "Pesanan {$order->order_number} sekarang berstatus {$order->status}.",
-            'type' => 'order',
-        ]);
+        app(PushNotificationService::class)->notify(
+            $order->customer_id,
+            'Status pesanan berubah',
+            "Pesanan {$order->order_number} sekarang berstatus {$order->status}.",
+            'order',
+            ['id' => $order->id, 'order_number' => $order->order_number, 'status' => $order->status],
+        );
 
         return new OrderResource($order->load(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver']));
     }

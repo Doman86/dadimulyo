@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Firebase Cloud Messaging (push notification mobile)
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'service_account' => env('FIREBASE_SERVICE_ACCOUNT'),
+    ],
+
 ];

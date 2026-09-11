@@ -4,8 +4,10 @@ import '../../models/truck.dart';
 import '../../services/api_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_theme.dart';
+import '../../widgets/whatsapp_button.dart';
 import '../../config/app_config.dart';
 import 'contact_sales_screen.dart';
+import '../shared/review_screen.dart';
 
 class TruckDetailScreen extends StatefulWidget {
   final int truckId;
@@ -41,6 +43,7 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
   }
 
   Future<void> _toggleWishlist() async {
+    if (!mounted) return;
     final user = context.read<AuthProvider>().user;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -50,6 +53,7 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
     }
     try {
       final result = await _api.toggleWishlist(widget.truckId);
+      if (!mounted) return;
       setState(() => _wishlisted = result['data']['wishlisted'] ?? false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['message'] ?? 'Diperbarui')),
@@ -92,7 +96,7 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                         ? Image.network(
                             images[_activeImage].imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                            errorBuilder: (_, _, _) => _imagePlaceholder(),
                           )
                         : _imagePlaceholder(),
                   ),
@@ -124,7 +128,7 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                                     ? Image.network(
                                         images[i].imageUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        errorBuilder: (_, _, _) =>
                                             _thumbPlaceholder(),
                                       )
                                     : _thumbPlaceholder(),
@@ -296,7 +300,7 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  // Contact Sales
+                  // WhatsApp & Contact Sales
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -320,6 +324,11 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                           style: const TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                         const SizedBox(height: 12),
+                        WhatsAppButton.truck(
+                          truckName: '${truck.brand} ${truck.model}',
+                          price: AppTheme.formatRupiah(truck.price),
+                        ),
+                        const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -341,6 +350,27 @@ class _TruckDetailScreenState extends State<TruckDetailScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Reviews button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReviewScreen(
+                              truckId: truck.id,
+                              productName: '${truck.brand} ${truck.model}',
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.star_outline),
+                      label: const Text('Lihat & Tulis Ulasan'),
                     ),
                   ),
                   const SizedBox(height: 24),

@@ -7,6 +7,10 @@ import '../orders/order_list_screen.dart';
 import '../rental/rental_screen.dart';
 import '../rental/rental_history_screen.dart';
 import '../wishlist/wishlist_screen.dart';
+import '../drivers/driver_list_screen.dart';
+import 'edit_profile_screen.dart';
+import 'address_screen.dart';
+import '../notifications/notification_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -59,8 +63,13 @@ class ProfileScreen extends StatelessWidget {
     final roleName = user.role?.name ?? 'customer';
     final displayName = roleName == 'admin'
         ? 'Admin'
-        : roleName.replaceAll('_', ' ').substring(0, 1).toUpperCase() +
-              roleName.replaceAll('_', ' ').substring(1);
+        : roleName
+              .replaceAll('_', ' ')
+              .split(' ')
+              .map((w) => w.isNotEmpty
+                  ? w[0].toUpperCase() + w.substring(1)
+                  : w)
+              .join(' ');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profil Saya')),
@@ -141,6 +150,36 @@ class ProfileScreen extends StatelessWidget {
             // Action buttons
             _actionTile(
               context,
+              Icons.notifications_outlined,
+              'Notifikasi',
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _actionTile(
+              context,
+              Icons.location_on_outlined,
+              'Alamat Saya',
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddressScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _actionTile(
+              context,
+              Icons.edit_outlined,
+              'Edit Profil',
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _actionTile(
+              context,
               Icons.favorite_outline,
               'Truck Tersimpan',
               () => Navigator.push(
@@ -176,6 +215,16 @@ class ProfileScreen extends StatelessWidget {
               () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const RentalHistoryScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _actionTile(
+              context,
+              Icons.people_outlined,
+              'Manajemen Driver',
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DriverListScreen()),
               ),
             ),
 

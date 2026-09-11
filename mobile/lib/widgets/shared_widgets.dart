@@ -342,8 +342,8 @@ class TruckCard extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         fit: BoxFit.cover,
-        placeholder: (_, __) => const _ImagePlaceholder('🚛'),
-        errorWidget: (_, __, ___) => const _ImagePlaceholder('🚛'),
+        placeholder: (_, _) => const _ImagePlaceholder('🚛'),
+        errorWidget: (_, _, _) => const _ImagePlaceholder('🚛'),
       );
     }
     return const _ImagePlaceholder('🚛');
@@ -511,8 +511,8 @@ class OrangeProductCard extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         fit: BoxFit.cover,
-        placeholder: (_, __) => const _ImagePlaceholder('🍊'),
-        errorWidget: (_, __, ___) => const _ImagePlaceholder('🍊'),
+        placeholder: (_, _) => const _ImagePlaceholder('🍊'),
+        errorWidget: (_, _, _) => const _ImagePlaceholder('🍊'),
       );
     }
     return const _ImagePlaceholder('🍊');

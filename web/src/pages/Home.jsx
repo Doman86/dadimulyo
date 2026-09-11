@@ -116,6 +116,9 @@ export default function Home() {
                 <Link to="/oranges" className="btn-ghost-lux rounded-full px-8 py-3.5 text-sm font-bold text-white tracking-wide">
                   Beli Jeruk Segar
                 </Link>
+                <Link to="/dadi-mulyo.apk" className="btn-lux rounded-full px-8 py-3.5 text-sm font-bold tracking-wide" target="_blank" rel="noopener noreferrer">
+                  Download APK
+                </Link>
                 <Link to="/rental" className="btn-ghost-lux rounded-full px-8 py-3.5 text-sm font-bold text-white tracking-wide">
                   Sewa Truck
                 </Link>

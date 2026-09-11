@@ -21,6 +21,9 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
   String _grade = '';
   String _sort = 'newest';
   bool _inStock = false;
+  double? _minPrice;
+  double? _maxPrice;
+  bool _showFilters = false;
 
   @override
   void initState() {
@@ -51,6 +54,8 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
       if (_grade.isNotEmpty) params['grade'] = _grade;
       if (_inStock) params['in_stock'] = 1;
       if (_sort.isNotEmpty) params['sort'] = _sort;
+      if (_minPrice != null) params['min_price'] = _minPrice;
+      if (_maxPrice != null) params['max_price'] = _maxPrice;
       params['per_page'] = 50;
 
       final result = await _api.getOranges(params);
@@ -98,11 +103,48 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                   },
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _categoryId.isEmpty ? null : _categoryId,
+                // Toggle advanced filters
+                GestureDetector(
+                  onTap: () => setState(() => _showFilters = !_showFilters),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _showFilters ? 'Sembunyikan Filter' : 'Filter Lanjut',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_hasActiveFilters())
+                        GestureDetector(
+                          onTap: _clearFilters,
+                          child: const Text(
+                            'Reset',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (_showFilters) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _categoryId.isEmpty ? null : _categoryId,
                         hint: const Text(
                           'Kategori',
                           style: TextStyle(fontSize: 13),
@@ -201,23 +243,109 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _inStock,
-                      onChanged: (v) {
-                        setState(() => _inStock = v ?? false);
-                        _loadProducts();
-                      },
-                      activeColor: Theme.of(context).colorScheme.primary,
-                    ),
-                    const Text(
-                      'Hanya yang tersedia',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                  ],
-                ),
+                ],
+                if (_showFilters) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'Harga Min (/kg)',
+                            prefixIcon: const Icon(Icons.money_off, size: 18),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            isDense: true,
+                          ),
+                          onChanged: (v) {
+                            _minPrice = double.tryParse(v);
+                            _loadProducts();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'Harga Max (/kg)',
+                            prefixIcon: const Icon(Icons.money, size: 18),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            isDense: true,
+                          ),
+                          onChanged: (v) {
+                            _maxPrice = double.tryParse(v);
+                            _loadProducts();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _inStock,
+                        onChanged: (v) {
+                          setState(() => _inStock = v ?? false);
+                          _loadProducts();
+                        },
+                        activeColor: Theme.of(context).colorScheme.primary,
+                      ),
+                      const Text(
+                        'Hanya yang tersedia',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ],
+                // Active filter chips
+                if (_hasActiveFilters()) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      if (_categoryId.isNotEmpty)
+                        _filterChip(
+                          'Kategori: ${_categories.firstWhere((c) => c.id.toString() == _categoryId, orElse: () => OrangeCategory(id: 0, name: '')).name}',
+                          () { _categoryId = ''; _loadProducts(); },
+                        ),
+                      if (_grade.isNotEmpty)
+                        _filterChip(
+                          'Grade $_grade',
+                          () { _grade = ''; _loadProducts(); },
+                        ),
+                      if (_minPrice != null)
+                        _filterChip(
+                          'Min: Rp${_minPrice!.toInt()}/kg',
+                          () { _minPrice = null; _loadProducts(); },
+                        ),
+                      if (_maxPrice != null)
+                        _filterChip(
+                          'Max: Rp${_maxPrice!.toInt()}/kg',
+                          () { _maxPrice = null; _loadProducts(); },
+                        ),
+                      if (_inStock)
+                        _filterChip(
+                          'Stok tersedia',
+                          () { _inStock = false; _loadProducts(); },
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -256,6 +384,44 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                       },
                     ),
                   ),
+          ),
+        ],
+      ),
+    );
+  bool _hasActiveFilters() {
+    return _categoryId.isNotEmpty ||
+        _grade.isNotEmpty ||
+        _inStock ||
+        _minPrice != null ||
+        _maxPrice != null;
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _categoryId = '';
+      _grade = '';
+      _inStock = false;
+      _minPrice = null;
+      _maxPrice = null;
+    });
+    _loadProducts();
+  }
+
+  Widget _filterChip(String label, VoidCallback onRemove) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(Icons.close, size: 14),
           ),
         ],
       ),

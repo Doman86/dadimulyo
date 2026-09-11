@@ -37,10 +37,13 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request): OrderResource|JsonResponse
     {
-        $user = $request->user();
-        $items = $request->input('items');
+        return DB::transaction(function () use ($request) {
+            $user = $request->user();
+            $items = $request->input('items');
+            $needDriver = $request->boolean('need_driver', false);
 
-        return DB::transaction(function () use ($request, $user, $items) {
+            // Hitung total quantity kg dari semua items
+            $totalQty = 0;
             $orderItems = [];
             $subtotal = 0;
 
@@ -71,6 +74,8 @@ class OrderController extends Controller
                         'message' => "Stok {$product->name} tidak mencukupi (tersisa {$product->stock_kg} kg).",
                     ], 422);
                 }
+
+                $totalQty += $qty;
 
                 // Harga grosir berlaku untuk pembelian di atas ambang batas.
                 $price = $qty >= self::BULK_THRESHOLD_KG && $product->wholesale_price !== null
@@ -143,10 +148,32 @@ class OrderController extends Controller
                 'type' => 'order',
             ]);
 
-            // Buat delivery bila diminta.
+            // Buat delivery bila diminta dan sopir tersedia
             if ($deliveryData = $request->input('delivery')) {
+                $truckId = $deliveryData['truck_id'] ?? null;
+
+                // Jika butuh sopir, tentukan truck_id berdasarkan ketersediaan
+                $showDriverOption = $needDriver && $totalQty >= 700; // 7 kuwintal
+
+                if ($showDriverOption && !$truckId) {
+                    // Cari truck yang available untuk rental
+                    $truck = \App\Models\Truck::where('is_for_rent', true)
+                        ->where('status', 'available')
+                        ->first();
+
+                    if ($truck) {
+                        $truckId = $truck->id;
+                    }
+                }
+
+                $deliveryNotes = $deliveryData['notes'] ?? null;
+                // Tambahkan catatan tentang butuh sopir
+                if ($showDriverOption) {
+                    $deliveryNotes = ($deliveryNotes ?? '') . ' | Sopir dibutuhkan (min 7 kuwintal)';
+                }
+
                 $order->delivery()->create([
-                    'truck_id' => $deliveryData['truck_id'] ?? null,
+                    'truck_id' => $truckId,
                     'pickup_address' => $deliveryData['pickup_address'] ?? 'Kebun Dadi Mulyo, Wagir, Malang',
                     'destination_address' => $address
                         ? collect([$address->address, $address->city, $address->province])->filter()->implode(', ')
@@ -154,7 +181,7 @@ class OrderController extends Controller
                     'shipping_cost' => $shippingCost,
                     'status' => 'pending',
                     'scheduled_at' => $deliveryData['scheduled_at'] ?? null,
-                    'notes' => $deliveryData['notes'] ?? null,
+                    'notes' => $deliveryNotes,
                 ]);
             }
 

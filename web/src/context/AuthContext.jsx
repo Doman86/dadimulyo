@@ -74,6 +74,17 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await client.post('/login', { email, password });
 
+      // Login kini wajib verifikasi OTP yang dikirim ke email asli user.
+      if (data?.data?.needs_otp === true) {
+        return {
+          success: true,
+          needsOtp: true,
+          email: data?.data?.email || email,
+          emailMasked: data?.data?.email_masked || '',
+          message: data?.message || 'Kode verifikasi telah dikirim ke email Anda.',
+        };
+      }
+
       // Defensif: pastikan response structure benar
       const token = data?.data?.token;
       const freshUser = data?.data?.user;
@@ -122,10 +133,88 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function verifyOtp(email, code) {
+    setLoading(true);
+    try {
+      const { data } = await client.post('/login/verify', { email, code });
+
+      const token = data?.data?.token;
+      const freshUser = data?.data?.user;
+
+      if (!token || !freshUser) {
+        return {
+          success: false,
+          message: data?.message || 'Response server tidak valid.',
+        };
+      }
+
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_user', JSON.stringify(freshUser));
+      setUser(freshUser);
+      return { success: true };
+    } catch (error) {
+      const serverMsg = error.response?.data?.message;
+      const status = error.response?.status;
+
+      if (status === 422) {
+        const errors = error.response?.data?.errors;
+        const firstMsg = errors ? Object.values(errors)[0]?.[0] : null;
+        return { success: false, message: firstMsg || serverMsg || 'Kode verifikasi salah.' };
+      }
+      if (status === 429) {
+        return { success: false, message: serverMsg || 'Terlalu banyak percobaan. Silakan minta kode baru.' };
+      }
+      if (status === 500) {
+        return { success: false, message: serverMsg || 'Server sedang bermasalah. Silakan coba lagi.' };
+      }
+      if (!error.response) {
+        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+      }
+      return { success: false, message: serverMsg || 'Verifikasi gagal.' };
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendOtp(email) {
+    try {
+      const { data } = await client.post('/login/resend', { email });
+      return {
+        success: data?.success === true,
+        emailMasked: data?.data?.email_masked || '',
+        message: data?.message || 'Kode verifikasi baru telah dikirim.',
+      };
+    } catch (error) {
+      const serverMsg = error.response?.data?.message;
+      const status = error.response?.status;
+      if (status === 429) {
+        return { success: false, message: serverMsg || 'Terlalu banyak permintaan. Silakan tunggu.' };
+      }
+      if (status === 404) {
+        return { success: false, message: serverMsg || 'Email tidak ditemukan.' };
+      }
+      if (!error.response) {
+        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+      }
+      return { success: false, message: serverMsg || 'Gagal mengirim ulang kode.' };
+    }
+  }
+
   async function register(payload) {
     setLoading(true);
     try {
       const { data } = await client.post('/register', payload);
+
+      // Registrasi wajib verifikasi OTP yang dikirim ke email asli user.
+      if (data?.data?.needs_otp === true) {
+        return {
+          success: true,
+          needsOtp: true,
+          email: data?.data?.email || payload.email,
+          emailMasked: data?.data?.email_masked || '',
+          message: data?.message || 'Kode verifikasi telah dikirim ke email Anda.',
+        };
+      }
 
       // Defensif: pastikan response structure benar
       const token = data?.data?.token;
@@ -178,7 +267,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyOtp, resendOtp, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

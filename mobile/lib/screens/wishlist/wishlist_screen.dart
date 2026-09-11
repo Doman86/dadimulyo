@@ -137,7 +137,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           child: Image.network(
                             truck.primaryImageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (_, _, _) =>
                                 const Center(child: Text('🚛')),
                           ),
                         )

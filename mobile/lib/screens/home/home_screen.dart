@@ -142,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(child: _buildHero()),
-          SliverToBoxAdapter(child: _buildMarquee()),
           _sectionHeader(
             title: 'Truck Terbaru',
             subtitle: 'Pilihan truck berkualitas — baru & bekas.',
@@ -223,143 +222,135 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Hero (band atas + hero dalam satu kanvas animasi) ──
+  // ── Hero (band atas + hero) ──
   Widget _buildHero() {
-    return AnimatedGradientBackground(
-      phases: const [
-        [AppTheme.primaryDark, AppTheme.primary, AppTheme.forest],
-        [Color(0xFF0B2E1F), AppTheme.forest, AppTheme.primary],
-      ],
-      period: const Duration(seconds: 6),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: FloatingOrbs(
-              orbColors: [AppTheme.gold],
-              maxDrift: 22,
-              opacity: 0.28,
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildTopBar(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 30),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RevealFade(
-                        delayMs: 80,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: AppTheme.goldLight.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.eco_outlined,
-                                size: 14,
-                                color: AppTheme.goldLight,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                AppConfig.addressShort.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  letterSpacing: 1.1,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.goldLight,
-                                ),
-                              ),
-                            ],
-                          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primaryDark, AppTheme.primary, AppTheme.forest],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTopBar(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RevealFade(
+                    delayMs: 80,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: AppTheme.goldLight.withValues(alpha: 0.4),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      RevealFade(
-                        delayMs: 160,
-                        offset: const Offset(0, 0.05),
-                        child: const Text.rich(
-                          TextSpan(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.eco_outlined,
+                            size: 14,
+                            color: AppTheme.goldLight,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppConfig.addressShort.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.15,
-                              letterSpacing: -0.4,
+                              fontSize: 10.5,
+                              letterSpacing: 1.1,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.goldLight,
                             ),
-                            children: [
-                              TextSpan(text: 'Showroom Truck &\n'),
-                              TextSpan(
-                                text: 'Jeruk Segar',
-                                style: TextStyle(color: AppTheme.goldLight),
-                              ),
-                              TextSpan(text: ' Premium'),
-                            ],
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      RevealFade(
-                        delayMs: 240,
-                        child: Text(
-                          '${AppConfig.companyName} melayani penjualan & penyewaan truck, plus marketplace jeruk berkualitas langsung dari kebun.',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            color: Colors.white.withValues(alpha: 0.78),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      RevealFade(
-                        delayMs: 320,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _heroGoldButton(
-                                label: 'Lihat Truck',
-                                icon: Icons.local_shipping,
-                                onTap: () => setState(() => _currentIndex = 1),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _heroGlassButton(
-                                label: 'Beli Jeruk',
-                                icon: Icons.shopping_bag_outlined,
-                                onTap: () => setState(() => _currentIndex = 3),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      _heroStats(),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  RevealFade(
+                    delayMs: 160,
+                    offset: const Offset(0, 0.05),
+                    child: const Text.rich(
+                      TextSpan(
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.15,
+                          letterSpacing: -0.4,
+                        ),
+                        children: [
+                          TextSpan(text: 'Showroom Truck &\n'),
+                          TextSpan(
+                            text: 'Jeruk Segar',
+                            style: TextStyle(color: AppTheme.goldLight),
+                          ),
+                          TextSpan(text: ' Premium'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  RevealFade(
+                    delayMs: 240,
+                    child: Text(
+                      '${AppConfig.companyName} melayani penjualan & penyewaan truck, plus marketplace jeruk berkualitas langsung dari kebun.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Colors.white.withValues(alpha: 0.78),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  RevealFade(
+                    delayMs: 320,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _heroGoldButton(
+                            label: 'Lihat Truck',
+                            icon: Icons.local_shipping,
+                            onTap: () => setState(() => _currentIndex = 1),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _heroGlassButton(
+                            label: 'Beli Jeruk',
+                            icon: Icons.shopping_bag_outlined,
+                            onTap: () => setState(() => _currentIndex = 3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  _heroStats(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _heroStats() {
     return Row(
@@ -453,46 +444,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  // ── Marquee ──
-  Widget _buildMarquee() {
-    final items = <String>[
-      'Truck Baru & Bekas',
-      'Foto Asli Produk',
-      'Sewa Truck Harian',
-      'Jeruk Grade A · B · C',
-      'Pengiriman Seluruh Jawa Timur',
-      'Booking Online Mudah',
-      'Customer Service 24/7',
-    ];
-    return Container(
-      height: 54,
-      color: AppTheme.backgroundAlt,
-      child: Marquee(
-        height: 54,
-        itemGap: 44,
-        items: [
-          for (final item in items)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star_rounded, size: 13, color: AppTheme.gold),
-                const SizedBox(width: 8),
-                Text(
-                  item,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
   // ── Section header ──
   Widget _sectionHeader({
     required String title,

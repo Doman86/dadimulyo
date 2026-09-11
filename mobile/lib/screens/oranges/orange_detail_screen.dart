@@ -5,7 +5,9 @@ import '../../models/cart_item.dart';
 import '../../services/api_client.dart';
 import '../../providers/cart_provider.dart';
 import '../../widgets/app_theme.dart';
+import '../../widgets/whatsapp_button.dart';
 import '../../config/app_config.dart';
+import '../shared/review_screen.dart';
 
 class OrangeDetailScreen extends StatefulWidget {
   final int productId;
@@ -99,7 +101,7 @@ class _OrangeDetailScreenState extends State<OrangeDetailScreen> {
                         ? Image.network(
                             images[_activeImage].imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                            errorBuilder: (_, _, _) => _imagePlaceholder(),
                           )
                         : _imagePlaceholder(),
                   ),
@@ -131,7 +133,7 @@ class _OrangeDetailScreenState extends State<OrangeDetailScreen> {
                                     ? Image.network(
                                         images[i].imageUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        errorBuilder: (_, _, _) =>
                                             _thumbPlaceholder(),
                                       )
                                     : _thumbPlaceholder(),
@@ -406,25 +408,32 @@ class _OrangeDetailScreenState extends State<OrangeDetailScreen> {
                           style: const TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.secondary,
-                            ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Hubungi ${AppConfig.contactPhone} untuk pesanan langsung',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text('📞 Hubungi ${AppConfig.contactPhone}'),
-                          ),
+                        WhatsAppButton.product(
+                          productName: product.name,
+                          price: AppTheme.formatRupiah(product.pricePerKg),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Reviews button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReviewScreen(
+                              orangeProductId: product.id,
+                              productName: product.name,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.star_outline),
+                      label: const Text('Lihat & Tulis Ulasan'),
                     ),
                   ),
                   const SizedBox(height: 24),

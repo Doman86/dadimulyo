@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "293288678694",
+    "project_id": "dadimulyo-606ad",
+    "storage_bucket": "dadimulyo-606ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:293288678694:android:1efc5c9195bdbf11035de7",
+        "android_client_info": {
+          "package_name": "com.dadimulyo.dadi_mulyo_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB71duPyj87JBxZxCd-kz6id2DJCD0qxnQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

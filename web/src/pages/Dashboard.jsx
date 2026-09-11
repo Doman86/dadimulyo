@@ -46,6 +46,24 @@ export default function Dashboard() {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white/5 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="bg-white/20 rounded-3xl p-8 backdrop-blur-sm text-center">
+            <h2 className="text-3xl font-bold text-primary mb-4">Silakan Login</h2>
+            <p className="text-gray-600 mb-6">
+              Anda belum terlogin. Silakan login untuk mengakses dashboard.
+            </p>
+            <Link to="/login" className="btn-lux rounded-full px-8 py-3.5 text-sm font-bold tracking-wide">
+              Login Sekarang
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <div className="py-20 text-center"><div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" /><p className="mt-4 text-gray-500">Memuat dashboard...</p></div>;
 
   const summary = stats?.summary || {};

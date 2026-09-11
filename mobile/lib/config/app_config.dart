@@ -9,8 +9,8 @@ class AppConfig {
   static const String companyShortName = 'DM';
 
   // ─── Contact ──────────────────────────────────────────────────
-  static const String contactPhone = '0812-3456-7890';
-  static const String contactPhoneDigits = '6281234567890'; // internasional
+  static const String contactPhone = '0813-1308-5905';
+  static const String contactPhoneDigits = '6281313085905'; // internasional
   static const String contactEmail = 'info@dadimulyo.my.id';
 
   // ─── Address ──────────────────────────────────────────────────

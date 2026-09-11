@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
@@ -21,6 +22,126 @@ use Illuminate\Support\Facades\Route;
 // Authentication — rate limited (60 requests per minute)
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:60,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:60,1');
+Route::post('/login/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:60,1');
+Route::post('/login/resend', [AuthController::class, 'resendOtp'])->middleware('throttle:60,1');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:10,1');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:10,1');
+
+// Chatbot routes using closures
+Route::get('/chatbot/welcome', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Halo 👋 Selamat datang di Dadi Mulyo! Ada yang bisa saya bantu? Ketik "menu" untuk melihat menu.',
+    ]);
+});
+
+Route::get('/chatbot/menu', function () {
+    return response()->json([
+        'success' => true,
+        'menu' => [
+            ['id' => 1, 'label' => 'Produk', 'description' => 'Lihat daftar produk jeruk'],
+            ['id' => 2, 'label' => 'Harga', 'description' => 'Cek harga produk'],
+            ['id' => 3, 'label' => 'Pesanan', 'description' => 'Cari pesanan saya'],
+            ['id' => 4, 'label' => 'Bantuan', 'description' => 'Panduan penggunaan'],
+            ['id' => 5, 'label' => 'Admin', 'description' => 'Kontak admin'],
+        ],
+    ]);
+});
+
+Route::get('/chatbot/products', function (Request $request) {
+    try {
+        $products = App\Models\OrangeProduct::where('status', '!=', 'deleted')
+            ->take($request->integer('per_page', 5))
+            ->get(['id', 'name', 'price_per_kg', 'stock_kg', 'farm_location']);
+
+        return response()->json([
+            'success' => true,
+            'products' => $products->toArray(),
+            'total' => $products->count(),
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Chatbot products error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat mengambil data produk',
+        ], 500);
+    }
+});
+
+Route::get('/chatbot/product/{name}', function ($name) {
+    $product = App\Models\OrangeProduct::where('name', 'like', "%{$name}%")
+        ->where('status', '!=', 'deleted')
+        ->first();
+
+    if (!$product) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Produk tidak ditemukan',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'product' => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price_per_kg' => $product->price_per_kg,
+            'wholesale_price' => $product->wholesale_price,
+            'stock_kg' => $product->stock_kg,
+            'minimum_order_kg' => $product->minimum_order_kg,
+            'grade' => $product->grade,
+            'farm_location' => $product->farm_location,
+            'status' => $product->status,
+        ],
+    ]);
+});
+
+Route::get('/chatbot/user/{whatsapp}', function ($whatsapp) {
+    // Normalize WhatsApp number: remove leading 0, add 62
+    $normalized = ltrim($whatsapp, '0');
+    $normalized = '62' . $normalized;
+
+    $user = App\Models\User::where('phone', $whatsapp)->first();
+    if (!$user) {
+        // Try normalized
+        $user = App\Models\User::where('phone', $normalized)->first();
+    }
+
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nomor WhatsApp belum terdaftar di sistem Dadi Mulyo.',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+        ],
+    ]);
+});
+
+Route::get('/chatbot/order/{userId}', function ($userId) {
+    $order = App\Models\Order::where('customer_id', $userId)
+        ->latest('created_at')
+        ->first();
+
+    if (!$order) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Anda belum memiliki pesanan.',
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'order' => $order,
+    ]);
+});
 
 // Named 'login' route required by Sanctum middleware for unauthenticated redirects.
 // Returns JSON 401 instead of redirect for API consumers.
@@ -55,7 +176,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
-    Route::get('/notifications', [NotificationController::class, 'index']);
+
+// Midtrans Notification Endpoints
+Route::post('/midtrans/payment-notification', [MidtransNotificationController::class, 'handlePaymentNotification']);
+Route::post('/midtrans/recurring-notification', [MidtransNotificationController::class, 'handleRecurringNotification']);
+Route::post('/midtrans/gopay-linking', [MidtransNotificationController::class, 'handleGoPayLinking']);
+
+Route::get('/notifications', [NotificationController::class, 'index']);
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'read']);
 
     // Dashboard (role-aware summary)

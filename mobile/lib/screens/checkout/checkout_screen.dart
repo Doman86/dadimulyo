@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../models/address.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../widgets/app_theme.dart';
 import '../orders/order_detail_screen.dart';
+import '../profile/address_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -28,9 +30,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _postalCode = '';
   String _notes = '';
   bool _needDelivery = false;
+  bool _needDriver = false;
   String _shippingCost = '';
   bool _submitting = false;
   String? _error;
+  Address? _selectedAddress;
+  List<Address> _savedAddresses = [];
 
   @override
   void initState() {
@@ -40,6 +45,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _recipientName = user.name;
       _phone = user.phone ?? '';
     }
+    _loadAddresses();
+  }
+
+  Future<void> _loadAddresses() async {
+    try {
+      final result = await _api.getAddresses();
+      final addresses = (result['data'] as List?)
+              ?.map((e) => Address.fromJson(e))
+              .toList() ?? [];
+      setState(() {
+        _savedAddresses = addresses;
+        // Auto-select default address
+        final defaultAddr = addresses.where((a) => a.isDefault).firstOrNull;
+        if (defaultAddr != null) _selectAddress(defaultAddr);
+      });
+    } catch (_) {}
+  }
+
+  void _selectAddress(Address addr) {
+    setState(() {
+      _selectedAddress = addr;
+      _recipientName = addr.recipientName;
+      _phone = addr.phone;
+      _address = addr.address;
+      _village = addr.village ?? '';
+      _district = addr.district ?? '';
+      _city = addr.city;
+      _province = addr.province ?? '';
+      _postalCode = addr.postalCode ?? '';
+    });
   }
 
   Future<void> _submit() async {
@@ -51,6 +86,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final cart = context.read<CartProvider>();
     try {
+      // Validate stock first
+      final stockCheck = await _api.validateCartStock(
+        cart.items
+            .map((item) => {
+              'orange_product_id': item.productId,
+              'quantity_kg': item.quantityKg,
+            })
+            .toList(),
+      );
+
+      if (stockCheck['success'] == false) {
+        setState(() => _error = stockCheck['message'] ?? 'Stok tidak cukup untuk beberapa produk.');
+        return;
+      }
+
+      // Check individual stock issues
+      final issues = stockCheck['data']?['issues'] as List?;
+      if (issues != null && issues.isNotEmpty) {
+        final msg = issues.map((e) => '${e['product_name']}: diminta ${e['requested']} kg, stok ${e['available']} kg').join('\n');
+        setState(() => _error = 'Stok tidak cukup:\n$msg');
+        return;
+      }
+
       final payload = <String, dynamic>{
         'items': cart.items
             .map(
@@ -76,6 +134,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (_needDelivery && _shippingCost.isNotEmpty) {
         payload['shipping_cost'] = double.tryParse(_shippingCost) ?? 0;
       }
+      payload['need_driver'] = _needDriver;
 
       final result = await _api.createOrder(payload);
       cart.clear();
@@ -99,6 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartProvider>();
     final shippingCost = double.tryParse(_shippingCost) ?? 0;
     final total = cart.subtotal + (_needDelivery ? shippingCost : 0);
+    final totalQtyKg = cart.items.fold(0, (sum, item) => sum + item.quantityKg.toInt());
     const labelCls = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
 
     return Scaffold(
@@ -123,11 +183,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
 
             // Address
-            const Text(
-              'Alamat Pengiriman',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Alamat Pengiriman',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddressScreen()),
+                    );
+                    _loadAddresses();
+                  },
+                  child: const Text('Kelola Alamat', style: TextStyle(fontSize: 12)),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+
+            // Saved addresses
+            if (_savedAddresses.isNotEmpty) ...[
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _savedAddresses.length,
+                  itemBuilder: (ctx, i) {
+                    final addr = _savedAddresses[i];
+                    final selected = _selectedAddress?.id == addr.id;
+                    return GestureDetector(
+                      onTap: () => _selectAddress(addr),
+                      child: Container(
+                        width: 200,
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: selected ? AppTheme.primary : Colors.grey[300]!,
+                            width: selected ? 2 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: selected ? AppTheme.primary.withValues(alpha: 0.05) : null,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              addr.recipientName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                color: selected ? AppTheme.primary : null,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              addr.fullAddress,
+                              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            const SizedBox(height: 8),
             TextFormField(
               initialValue: _recipientName,
               decoration: const InputDecoration(labelText: 'Nama Penerima *'),
@@ -223,6 +354,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const Text(
                 'Biaya dikonfirmasi oleh admin.',
                 style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+              ),
+            ],
+
+            // Butuh sopir (hanya tampil jika total >= 7 kuwintal / 700 kg)
+            if (_totalQtyKg >= 700) ...[
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'Sopir dikirim dari kebun (biaya sopir ditambahkan)',
+                  style: TextStyle(fontSize: 13),
+                ),
+                value: _needDriver,
+                onChanged: (v) => setState(() => _needDriver = v ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
               ),
             ],
 

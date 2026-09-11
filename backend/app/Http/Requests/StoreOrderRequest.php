@@ -32,6 +32,7 @@ class StoreOrderRequest extends FormRequest
             'address.postal_code' => ['nullable', 'string', 'max:10'],
             'shipping_cost' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'need_driver' => ['nullable', 'boolean'],
             'delivery' => ['nullable', 'array'],
             'delivery.truck_id' => ['nullable', 'integer', 'exists:trucks,id'],
             'delivery.pickup_address' => ['nullable', 'string'],

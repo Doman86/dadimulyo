@@ -114,4 +114,22 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email OTP Verification
+    |--------------------------------------------------------------------------
+    |
+    | Login/registrasi wajib diverifikasi dengan kode OTP yang dikirim ke
+    | email asli user. Config ini bisa dimatikan untuk keperluan development.
+    |
+    */
+
+    'otp' => [
+        'required' => env('AUTH_OTP_REQUIRED', true),
+        // NOTE: di localhost gunakan AUTH_OTP_REQUIRED=false agar bisa login langsung tanpa OTP.
+        'digits' => 6,
+        'expiry_minutes' => env('AUTH_OTP_EXPIRY_MINUTES', 10),
+        'max_attempts' => 5,
+    ],
+
 ];

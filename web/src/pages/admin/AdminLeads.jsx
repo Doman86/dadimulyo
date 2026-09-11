@@ -51,7 +51,10 @@ export default function AdminLeads() {
     setSaving(true); setError(null);
     try {
       await updateLead(lead.id, { status: draft.status, notes: draft.notes, sales_id: draft.sales_id ? Number(draft.sales_id) : undefined });
-      setEditingId(null); load();
+      setEditingId(null);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      load();
+      setStatusFilter('');
     } catch (err) { setError(err.response?.data?.message || 'Gagal menyimpan perubahan.'); } finally { setSaving(false); }
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/order.dart';
 import '../../services/api_client.dart';
 import '../../widgets/app_theme.dart';
+import 'payment_screen.dart';
+import 'invoice_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -78,6 +80,56 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return 'Dikembalikan';
       default:
         return status;
+    }
+  }
+
+  Future<void> _showCancelDialog() async {
+    final reasonCtrl = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Batalkan Pesanan?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Alasan pembatalan:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: reasonCtrl,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                hintText: 'Masukkan alasan...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        await _api.cancelOrder(_order!.id, reasonCtrl.text.trim());
+        _loadOrder();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pesanan berhasil dibatalkan.')),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal membatalkan pesanan.')),
+          );
+        }
+      }
     }
   }
 
@@ -204,6 +256,60 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+            ],
+
+            // Payment Button
+            if (order.paymentStatus == 'unpaid' && order.status != 'cancelled') ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentScreen(order: order),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.payment, size: 20),
+                  label: const Text('Bayar Sekarang'),
+                ),
+              ),
+            ],
+
+            // Cancel Button
+            if (order.status == 'pending') ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                  onPressed: () => _showCancelDialog(),
+                  icon: const Icon(Icons.cancel_outlined, size: 20),
+                  label: const Text('Batalkan Pesanan'),
+                ),
+              ),
+            ],
+
+            // Invoice Button
+            if (order.status == 'completed' || order.status == 'confirmed' || order.status == 'processing') ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => InvoiceScreen(order: order),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long, size: 20),
+                  label: const Text('Lihat Invoice'),
+                ),
+              ),
             ],
 
             // Notes

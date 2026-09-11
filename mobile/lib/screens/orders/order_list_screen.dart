@@ -142,12 +142,22 @@ class _OrderListScreenState extends State<OrderListScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${order.items.length} item',
+                                    '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: AppTheme.textSecondary,
                                     ),
                                   ),
+                                  if (order.createdAt.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _formatDate(order.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -213,5 +223,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
               ),
             ),
     );
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 }

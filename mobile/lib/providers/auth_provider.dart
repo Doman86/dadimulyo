@@ -97,22 +97,22 @@ class AuthProvider extends ChangeNotifier {
       final response = await _api.login(email, password);
 
       if (response['success'] == true && response['data'] != null) {
-        final token = response['data']['token'];
-        final userData = response['data']['user'];
+        final data = response['data'] as Map<String, dynamic>;
 
-        if (token == null || userData == null) {
+        // Login perlu verifikasi OTP yang dikirim ke email asli user.
+        if (data['needs_otp'] == true) {
           _loading = false;
           notifyListeners();
-          return {'success': false, 'message': 'Response server tidak valid.'};
+          return {
+            'success': true,
+            'needsOtp': true,
+            'email': data['email'] ?? email,
+            'emailMasked': data['email_masked'] ?? '',
+            'message': response['message'] ?? 'Kode verifikasi telah dikirim.',
+          };
         }
 
-        _user = User.fromJson(userData);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_tokenKey, token);
-        await prefs.setString(_userKey, jsonEncode(_user!.toJson()));
-        _loading = false;
-        notifyListeners();
-        return {'success': true};
+        return _completeSession(response);
       }
 
       _loading = false;
@@ -169,22 +169,22 @@ class AuthProvider extends ChangeNotifier {
       final response = await _api.register(data);
 
       if (response['success'] == true && response['data'] != null) {
-        final token = response['data']['token'];
-        final userData = response['data']['user'];
+        final respData = response['data'] as Map<String, dynamic>;
 
-        if (token == null || userData == null) {
+        // Registrasi wajib diverifikasi via kode yang dikirim ke email asli.
+        if (respData['needs_otp'] == true) {
           _loading = false;
           notifyListeners();
-          return {'success': false, 'message': 'Response server tidak valid.'};
+          return {
+            'success': true,
+            'needsOtp': true,
+            'email': respData['email'] ?? data['email'],
+            'emailMasked': respData['email_masked'] ?? '',
+            'message': response['message'] ?? 'Kode verifikasi telah dikirim.',
+          };
         }
 
-        _user = User.fromJson(userData);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_tokenKey, token);
-        await prefs.setString(_userKey, jsonEncode(_user!.toJson()));
-        _loading = false;
-        notifyListeners();
-        return {'success': true};
+        return _completeSession(response);
       }
 
       _loading = false;
@@ -223,6 +223,106 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return {'success': false, 'message': 'Registrasi gagal. Periksa koneksi.'};
     }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp(String email, String code) async {
+    if (_loading) return {'success': false, 'message': 'Sedang memproses...'};
+
+    _loading = true;
+    notifyListeners();
+
+    try {
+      final response = await _api.verifyOtp(email, code.trim());
+
+      if (response['success'] == true && response['data'] != null) {
+        return _completeSession(response);
+      }
+
+      _loading = false;
+      notifyListeners();
+      return {
+        'success': false,
+        'message': response['message'] ?? 'Kode verifikasi salah.',
+      };
+    } on DioException catch (e) {
+      _loading = false;
+      notifyListeners();
+
+      if (e.response?.statusCode == 422) {
+        final errors = e.response?.data?['errors'];
+        final firstMsg = errors != null
+            ? (errors as Map).values.first.first?.toString()
+            : null;
+        return {'success': false, 'message': firstMsg ?? 'Kode verifikasi salah.'};
+      }
+      if (e.response?.statusCode == 429) {
+        return {'success': false, 'message': 'Terlalu banyak percobaan. Silakan minta kode baru.'};
+      }
+      if (e.response?.statusCode == 500) {
+        return {'success': false, 'message': 'Server bermasalah. Silakan coba lagi.'};
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return {'success': false, 'message': 'Koneksi timeout. Periksa jaringan Anda.'};
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        return {'success': false, 'message': 'Tidak dapat terhubung ke server.'};
+      }
+      return {'success': false, 'message': 'Verifikasi gagal. Periksa koneksi.'};
+    } catch (_) {
+      _loading = false;
+      notifyListeners();
+      return {'success': false, 'message': 'Verifikasi gagal. Periksa koneksi.'};
+    }
+  }
+
+  Future<Map<String, dynamic>> resendOtp(String email) async {
+    try {
+      final response = await _api.resendOtp(email);
+      final data = response['data'] as Map<String, dynamic>?;
+
+      return {
+        'success': response['success'] == true,
+        'message': response['message'] ?? 'Gagal mengirim ulang kode.',
+        'email': data?['email'] ?? email,
+        'emailMasked': data?['email_masked'] ?? '',
+      };
+    } on DioException catch (e) {
+      String message;
+      if (e.response?.statusCode == 429) {
+        message = 'Terlalu banyak permintaan. Silakan tunggu.';
+      } else if (e.response?.statusCode == 404) {
+        message = 'Email tidak ditemukan.';
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        message = 'Tidak dapat terhubung ke server.';
+      } else {
+        message = 'Gagal mengirim ulang kode. Silakan coba lagi.';
+      }
+      return {'success': false, 'message': message};
+    } catch (_) {
+      return {'success': false, 'message': 'Gagal mengirim ulang kode. Silakan coba lagi.'};
+    }
+  }
+
+  Future<Map<String, dynamic>> _completeSession(Map<String, dynamic> response) async {
+    final data = response['data'] as Map<String, dynamic>?;
+    final token = data?['token'];
+    final userData = data?['user'];
+
+    if (token == null || userData == null || userData is! Map<String, dynamic>) {
+      _loading = false;
+      notifyListeners();
+      return {'success': false, 'message': 'Response server tidak valid.'};
+    }
+
+    _user = User.fromJson(userData);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_userKey, jsonEncode(_user!.toJson()));
+    _loading = false;
+    notifyListeners();
+    return {'success': true};
   }
 
   Future<void> logout() async {

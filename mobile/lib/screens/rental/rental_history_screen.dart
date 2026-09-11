@@ -99,6 +99,56 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
     );
   }
 
+  Future<void> _cancelRental(Rental rental) async {
+    final reasonCtrl = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Batalkan Sewa?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Alasan pembatalan:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: reasonCtrl,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                hintText: 'Masukkan alasan...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        await _api.cancelRental(rental.id, reasonCtrl.text.trim());
+        _loadRentals();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sewa berhasil dibatalkan.')),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal membatalkan sewa.')),
+          );
+        }
+      }
+    }
+  }
+
   Widget _rentalCard(Rental rental) {
     final statusColor = _statusColor(rental.status);
     final statusLabel = _statusLabel(rental.status);
@@ -191,6 +241,22 @@ class _RentalHistoryScreenState extends State<RentalHistoryScreen> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ],
+
+            // Cancel button
+            if (rental.status == 'pending' || rental.status == 'approved') ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                  onPressed: () => _cancelRental(rental),
+                  child: const Text('Batalkan Sewa', style: TextStyle(fontSize: 12)),
                 ),
               ),
             ],

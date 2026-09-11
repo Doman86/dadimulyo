@@ -3,17 +3,25 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'services/api_client.dart';
+import 'services/notification_service.dart';
 import 'widgets/app_theme.dart';
 import 'widgets/animations.dart';
 import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Initialize Notification Service
+  await NotificationService.initialize();
 
   // Jalankan app langsung — splash screen tampil duluan
   runApp(const DadiMulyoApp());
@@ -24,9 +32,31 @@ Future<void> initializeApp() async {
   await _configureBaseUrl();
 }
 
+// Base URL produksi. Dipakai saat build release tanpa dart-define API_BASE_URL.
+const String _productionApiUrl = 'https://dadimulyo.my.id/api';
+
 Future<void> _configureBaseUrl() async {
+  // Prioritas utk memilih base URL:
+  //   1. API_BASE_URL dart-define (paling fleksibel)
+  //      flutter build apk --dart-define=API_BASE_URL=https://...
+  //   2. Build release tanpa define -> pakai URL produksi
+  //   3. Build debug -> deteksi device (localhost/emulator) seperti sebelumnya
+  const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+  if (apiBaseUrl.isNotEmpty) {
+    ApiClient.setBaseUrl(apiBaseUrl);
+    return;
+  }
+
   // SERVER_IP bisa diisi via: flutter run --dart-define=SERVER_IP=192.168.1.x
   final serverIp = const String.fromEnvironment('SERVER_IP');
+  final isRelease = const bool.fromEnvironment('dart.vm.product');
+
+  // Release build (tanpa API_BASE_URL) -> produksi
+  if (isRelease && serverIp.isEmpty) {
+    ApiClient.setBaseUrl(_productionApiUrl);
+    return;
+  }
 
   try {
     final deviceInfo = DeviceInfoPlugin();

@@ -203,7 +203,7 @@ class _RentalScreenState extends State<RentalScreen> {
                                       child: Image.network(
                                         truck.primaryImageUrl,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        errorBuilder: (_, _, _) =>
                                             const Center(child: Text('🚛')),
                                       ),
                                     )

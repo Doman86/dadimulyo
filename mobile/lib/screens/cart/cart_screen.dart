@@ -81,7 +81,7 @@ class CartScreen extends StatelessWidget {
                                       child: Image.network(
                                         item.imageUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        errorBuilder: (_, _, _) =>
                                             const Center(
                                               child: Text(
                                                 '🍊',

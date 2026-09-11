@@ -140,3 +140,79 @@ dan MIME `text/javascript` untuk `.js`.
 ### Storage/Image tidak tampil
 - `php artisan storage:link`
 - `ls -la public/storage`
+
+---
+
+## Mobile (Flutter APK) — Rilis & Deploy
+
+> **Status: LIVE** — `https://dadimulyo.my.id/dadi-mulyo.apk`
+
+### Arsitektur API Mobile
+
+APK memakai API produksi `https://dadimulyo.my.id/api` (satu domain dengan web, tanpa CORS).
+Penentuan base URL diatur di `mobile/lib/main.dart` → `_configureBaseUrl()` dengan prioritas:
+
+1. `--dart-define=API_BASE_URL=...` → dipakai apa adanya (paling fleksibel)
+2. Build **release** tanpa define → otomatis `https://dadimulyo.my.id/api`
+3. Build **debug** → deteksi device (localhost / emulator / adb reverse)
+
+> Jangan hardcode URL produksi di tempat lain. Selalu lewat mekanisme di atas.
+
+### Build APK Release
+
+```bash
+cd mobile
+
+# Opsi A: default produksi (paling umum)
+flutter build apk --release
+
+# Opsi B: custom API backend (jarang dipakai, mis. staging)
+flutter build apk --release --dart-define=API_BASE_URL=https://staging.example.com/api
+```
+
+Hasil: `mobile/build/app/outputs/flutter-apk/app-release.apk` (~52 MB)
+
+### Upload APK ke Hostinger
+
+```bash
+# Kerja dari folder root repo (D:\laragon\www\dadimulyo)
+scp -i "$HOME\.ssh\dm_deploy" -P 65002 mobile/build/app/outputs/flutter-apk/app-release.apk \
+    u519141514@153.92.11.45:"~/domains/dadimulyo.my.id/public_html/dadi-mulyo.apk"
+
+# Atur permission
+ssh -i "$HOME\.ssh\dm_deploy" -p 65002 u519141514@153.92.11.45 \
+    "chmod 644 ~/domains/dadimulyo.my.id/public_html/dadi-mulyo.apk"
+```
+
+Link universal untuk user install:
+```
+https://dadimulyo.my.id/dadi-mulyo.apk
+```
+
+> **Install di HP:** user membuka link di browser HP → download → pilih "Open" /
+> izinkan "Install from unknown sources". Pastikan user mengizinkan sumber tidak dikenal.
+
+### Signing: Debug vs Release Keystore
+
+Saat ini `mobile/android/app/build.gradle.kts` memakai **debug keystore** untuk build release
+(`signingConfig = signingConfigs.getByName("debug")`). Ini aman untuk distribusi awal/instal
+langsung, TAPI **tidak bisa** dipakai untuk upload ke Google Play.
+
+Jika ingin rilis ke Google Play, siapkan keystore release:
+1. Generate keystore: `keytool -genkey -v -keystore upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000`
+2. Simpan keystore di lokasi aman (jangan commit ke git).
+3. Buat `android/key.properties` (jangan commit):
+   ```properties
+   storePassword=<PASSWORD>
+   keyPassword=<PASSWORD>
+   keyAlias=upload
+   storeFile=<path-keystore-jks>
+   ```
+4. Update `build.gradle.kts` agar memakai keystore release (bukan debug).
+   Setelah ini, `flutter build apk --release` akan menandatangani dengan keystore release.
+
+### Verify (Selesai Deploy APK)
+
+1. `Invoke-WebRequest https://dadimulyo.my.id/dadi-mulyo.apk -Method Head` → `200`, size match.
+2. Install APK di HP fisik → splash → data (trucks/jeruk) load dari `https://dadimulyo.my.id/api`.
+3. Pastikan **tidak** memakai `localhost`/`10.0.2.2` di APK produksi.

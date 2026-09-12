@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../config/app_config.dart';
 import '../../models/order.dart';
 import '../../services/api_client.dart';
 import '../../widgets/app_theme.dart';

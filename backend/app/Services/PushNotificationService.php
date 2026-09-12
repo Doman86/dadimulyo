@@ -2,17 +2,23 @@
 
 namespace App\Services;
 
+use App\Jobs\SendPushNotification;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Menyimpan notifikasi ke database sekaligus mengirim
  * push notification FCM ke semua device milik user.
+ *
+ * Push dikirim asynchronously via queue — request API
+ * tidak menunggu respons FCM. Jalankan `php artisan queue:work`
+ * (atau queue:work --queue=push) untuk memproses job.
  */
 class PushNotificationService
 {
+    public const QUEUE_NAME = 'push';
+
     public function __construct(private readonly FcmService $fcm)
     {
     }
@@ -40,7 +46,7 @@ class PushNotificationService
     }
 
     /**
-     * Kirim push ke semua device milik seorang user.
+     * Dispatch push job ke queue untuk semua device milik seorang user.
      */
     public function push(
         int $userId,
@@ -59,15 +65,10 @@ class PushNotificationService
             return;
         }
 
-        $result = $this->fcm->sendToTokens($tokens, $title, $message, [
+        SendPushNotification::dispatch($tokens, $title, $message, [
             ...$data,
             'type' => $type,
-        ]);
-
-        // Bersihkan token yang sudah tidak valid (app di-uninstall, dsb).
-        if ($result['invalidTokens'] !== []) {
-            DeviceToken::whereIn('token', $result['invalidTokens'])->delete();
-        }
+        ])->onQueue(self::QUEUE_NAME)->afterCommit();
     }
 
     /**

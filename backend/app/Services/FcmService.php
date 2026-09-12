@@ -58,49 +58,82 @@ class FcmService
         $tokens = array_values(array_unique(array_filter($tokens)));
 
         foreach ($tokens as $token) {
-            $payload = [
-                'message' => [
-                    'token' => $token,
-                    'notification' => [
-                        'title' => $title,
-                        'body' => $body,
-                    ],
-                    'data' => $this->stringifyData($data),
-                    'android' => [
-                        'priority' => 'high',
-                    ],
-                    'apns' => [
-                        'payload' => [
-                            'aps' => [
-                                'sound' => 'default',
-                            ],
-                        ],
-                    ],
-                ],
-            ];
+            $sendResult = $this->sendToToken($token, $title, $body, $data);
 
-            try {
-                $response = Http::withToken($this->accessToken())
-                    ->acceptJson()
-                    ->post(sprintf(self::FCM_SEND_URL, config('services.firebase.project_id')), $payload);
-
-                if ($response->successful()) {
-                    $result['sent']++;
-                } elseif (in_array($response->status(), [404, 410], true)) {
-                    // Token tidak lagi valid (app di-uninstall dsb.) — tandai untuk dihapus.
-                    $result['invalidTokens'][] = $token;
-                } else {
-                    Log::warning('FCM send gagal', [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
-                    ]);
-                }
-            } catch (ConnectionException $e) {
-                Log::warning('FCM connection error: ' . $e->getMessage());
+            if ($sendResult['ok']) {
+                $result['sent']++;
+            } elseif ($sendResult['invalid']) {
+                $result['invalidTokens'][] = $token;
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Kirim push ke satu token dan laporkan hasil detail.
+     *
+     * @return array{ok: bool, invalid: bool, status: ?int, error: ?string}
+     */
+    public function sendToToken(
+        string $token,
+        string $title,
+        string $body,
+        array $data = [],
+    ): array {
+        $failure = fn (int $status, string $error): array => [
+            'ok' => false,
+            'invalid' => $status === 404 || $status === 410,
+            'status' => $status,
+            'error' => $error,
+        ];
+
+        $payload = [
+            'message' => [
+                'token' => $token,
+                'notification' => [
+                    'title' => $title,
+                    'body' => $body,
+                ],
+                'data' => $this->stringifyData($data),
+                'android' => [
+                    'priority' => 'high',
+                ],
+                'apns' => [
+                    'payload' => [
+                        'aps' => [
+                            'sound' => 'default',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        try {
+            $response = Http::withToken($this->accessToken())
+                ->acceptJson()
+                ->post(sprintf(self::FCM_SEND_URL, config('services.firebase.project_id')), $payload);
+
+            if ($response->successful()) {
+                return ['ok' => true, 'invalid' => false, 'status' => $response->status(), 'error' => null];
+            }
+
+            if (in_array($response->status(), [404, 410], true)) {
+                // Token tidak lagi valid (app di-uninstall dsb.).
+                return $failure($response->status(), 'Token tidak valid / sudah tidak terdaftar di FCM.');
+            }
+
+            Log::warning('FCM send gagal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return $failure($response->status(), $response->json('error.message') ?? $response->body());
+        } catch (ConnectionException $e) {
+            Log::warning('FCM connection error: ' . $e->getMessage());
+
+            return $failure(0, 'Connection error: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
 import 'providers/admin_provider.dart';
-import 'services/admin_api.dart';
 
 void main() {
   runApp(const AdminApp());

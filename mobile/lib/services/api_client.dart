@@ -333,9 +333,9 @@ class ApiClient {
       {String? bankName, String? accountName, String? notes}) async {
     final formData = FormData.fromMap({
       'proof': await MultipartFile.fromFile(filePath),
-      if (bankName != null) 'bank_name': bankName,
-      if (accountName != null) 'account_name': accountName,
-      if (notes != null) 'notes': notes,
+      'bank_name': ?bankName,
+      'account_name': ?accountName,
+      'notes': ?notes,
     });
     final response = await _dio.post(
       '/orders/$orderId/payment',
@@ -435,14 +435,14 @@ class ApiClient {
 
   Future<Map<String, dynamic>> payDriverSalary(dynamic driverId, dynamic salaryId, {String? paymentMethod}) async {
     final response = await _dio.post('/drivers/$driverId/salaries/$salaryId/pay', data: {
-      if (paymentMethod != null) 'payment_method': paymentMethod,
+      'payment_method': ?paymentMethod,
     });
     return _extractData(response);
   }
 
   Future<Map<String, dynamic>> getDriverSalarySummary(dynamic driverId, [String? period]) async {
     final response = await _dio.get('/drivers/$driverId/salary-summary', queryParameters: {
-      if (period != null) 'period': period,
+      'period': ?period,
     });
     return _extractData(response);
   }

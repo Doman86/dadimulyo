@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
-import '../widgets/app_theme.dart';
 
 /// Tombol "Chat via WhatsApp" yang bisa dipakai di mana saja.
 ///

@@ -143,7 +143,7 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _categoryId.isEmpty ? null : _categoryId,
+                          initialValue: _categoryId.isEmpty ? null : _categoryId,
                         hint: const Text(
                           'Kategori',
                           style: TextStyle(fontSize: 13),
@@ -179,7 +179,7 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _condition.isEmpty ? null : _condition,
+                        initialValue: _condition.isEmpty ? null : _condition,
                         hint: const Text(
                           'Kondisi',
                           style: TextStyle(fontSize: 13),
@@ -211,7 +211,7 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _sort,
+                        initialValue: _sort,
                         isDense: true,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
@@ -248,6 +248,7 @@ class _TruckListScreenState extends State<TruckListScreen> {
                     ),
                   ],
                 ),
+                ],
                 if (_showFilters) ...[
                   const SizedBox(height: 8),
                   Row(
@@ -374,6 +375,8 @@ class _TruckListScreenState extends State<TruckListScreen> {
         ],
       ),
     );
+  }
+
   bool _hasActiveFilters() {
     return _categoryId.isNotEmpty ||
         _condition.isNotEmpty ||

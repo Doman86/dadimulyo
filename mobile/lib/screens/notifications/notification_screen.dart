@@ -270,8 +270,87 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     padding: const EdgeInsets.all(12),
                     itemCount: _showPush ? _pushNotifications.length : _notifications.length,
                     itemBuilder: (ctx, i) {
-                      final notif = _showPush ? null : _notifications[i];
-                      final pushNotif = _showPush ? _pushNotifications[i] : null;
+                      if (_showPush) {
+                        final push = _pushNotifications[i];
+                        final isRead = push['read'] == true;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isRead ? Colors.white : Colors.orange[50],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isRead ? Colors.grey[200]! : Colors.orange[100]!,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.notifications_active,
+                                  color: Colors.orange,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            (push['title'] as String?)?.isNotEmpty == true
+                                                ? push['title'] as String
+                                                : 'Push Notification',
+                                            style: TextStyle(
+                                              fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        if (!isRead)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.orange,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      (push['body'] as String?) ?? '',
+                                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (push['timestamp'] != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _formatDate(push['timestamp'] as String),
+                                        style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final notif = _notifications[i];
                       final color = _colorForType(notif.type);
                       return GestureDetector(
                         onTap: () => _markAsRead(notif),
@@ -284,22 +363,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             border: Border.all(
                               color: notif.isRead ? Colors.grey[200]! : Colors.blue[100]!,
                             ),
-                          ),                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: color.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Icon(
-                                      _showPush ? Icons.notifications : _iconForType(notif!.type),
-                                      color: color,
-                                      size: 20,
-                                    ),
-                                  ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  _iconForType(notif.type),
+                                  color: color,
+                                  size: 20,
+                                ),
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -351,6 +431,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     },
                   ),
                 ),
+          ),
         ],
       ),
     );

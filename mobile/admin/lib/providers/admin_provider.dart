@@ -68,6 +68,15 @@ class AdminProvider extends ChangeNotifier {
     }
   }
   
+  // Logout
+  Future<void> logout() async {
+    await _api.logout();
+    _isLoggedIn = false;
+    _loading = false;
+    _error = null;
+    notifyListeners();
+  }
+  
   // Load dashboard
   Future<void> loadDashboard() async {
     try {

@@ -140,7 +140,7 @@ class _DriverListScreenState extends State<DriverListScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _statusFilter.isEmpty ? null : _statusFilter,
+                        initialValue: _statusFilter.isEmpty ? null : _statusFilter,
                         hint: const Text(
                           'Status',
                           style: TextStyle(fontSize: 13),
@@ -170,7 +170,7 @@ class _DriverListScreenState extends State<DriverListScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _typeFilter.isEmpty ? null : _typeFilter,
+                        initialValue: _typeFilter.isEmpty ? null : _typeFilter,
                         hint: const Text(
                           'Tipe',
                           style: TextStyle(fontSize: 13),

@@ -144,7 +144,7 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _categoryId.isEmpty ? null : _categoryId,
+                          initialValue: _categoryId.isEmpty ? null : _categoryId,
                         hint: const Text(
                           'Kategori',
                           style: TextStyle(fontSize: 13),
@@ -180,7 +180,7 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _grade.isEmpty ? null : _grade,
+                        initialValue: _grade.isEmpty ? null : _grade,
                         hint: const Text(
                           'Grade',
                           style: TextStyle(fontSize: 13),
@@ -210,7 +210,7 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _sort,
+                        initialValue: _sort,
                         isDense: true,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
@@ -388,6 +388,8 @@ class _OrangeListScreenState extends State<OrangeListScreen> {
         ],
       ),
     );
+  }
+
   bool _hasActiveFilters() {
     return _categoryId.isNotEmpty ||
         _grade.isNotEmpty ||

@@ -40,7 +40,7 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
-storage/firebase-service-account.json
+**/storage/*firebase*.json
 bootstrap/cache/*.php
 
 # WhatsApp bot session credentials (jangan pernah commit!)

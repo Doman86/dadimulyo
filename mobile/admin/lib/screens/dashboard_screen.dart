@@ -153,7 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 onPressed: () async {
                   await admin.logout();
-                  if (context.mounted) {
+                  if (mounted) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const LoginScreen()),

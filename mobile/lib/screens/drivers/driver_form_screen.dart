@@ -189,7 +189,7 @@ class _DriverFormScreenState extends State<DriverFormScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _licenseClass,
+                    initialValue: _licenseClass,
                     decoration: const InputDecoration(labelText: 'Kelas SIM'),
                     items: const [
                       DropdownMenuItem(value: 'A', child: Text('SIM A')),
@@ -203,7 +203,7 @@ class _DriverFormScreenState extends State<DriverFormScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _licenseNumber.isNotEmpty ? _licenseNumber : null,
+                    initialValue: _licenseNumber.isNotEmpty ? _licenseNumber : null,
                     decoration: const InputDecoration(
                       labelText: 'No. SIM',
                     ),
@@ -220,7 +220,7 @@ class _DriverFormScreenState extends State<DriverFormScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _status,
+                    initialValue: _status,
                     decoration: const InputDecoration(labelText: 'Status'),
                     items: const [
                       DropdownMenuItem(value: 'active', child: Text('Aktif')),
@@ -233,7 +233,7 @@ class _DriverFormScreenState extends State<DriverFormScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _driverType,
+                    initialValue: _driverType,
                     decoration: const InputDecoration(labelText: 'Tipe Driver'),
                     items: const [
                       DropdownMenuItem(value: 'tetap', child: Text('Tetap (Gaji + Komisi)')),

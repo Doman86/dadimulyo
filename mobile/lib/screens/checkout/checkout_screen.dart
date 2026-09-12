@@ -358,7 +358,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
 
             // Butuh sopir (hanya tampil jika total >= 7 kuwintal / 700 kg)
-            if (_totalQtyKg >= 700) ...[
+            if (totalQtyKg >= 700) ...[
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text(

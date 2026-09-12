@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -112,7 +111,7 @@ class InvoicePdf {
 
           pw.TableHelper.fromTextArray(
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-            headerDecoration: const pw.BoxDecoration(
+            headerDecoration: pw.BoxDecoration(
               color: PdfColor.fromHex('#f5f5f5'),
             ),
             headerAlignment: pw.Alignment.centerLeft,

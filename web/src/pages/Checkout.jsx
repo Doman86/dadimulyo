@@ -62,7 +62,8 @@ export default function Checkout() {
     try {
       const order = await createOrder(payload);
       clearCart();
-      navigate(`/orders/${order.id}`);
+      // Langsung tawarkan pembayaran setelah pesanan dibuat (popup pilih metode bayar).
+      navigate(`/orders/${order.id}`, { state: { payNow: true } });
     } catch (err) {
       const firstError = err.response?.data?.errors;
       setError(firstError ? Object.values(firstError)[0]?.[0] : err.response?.data?.message || 'Gagal membuat pesanan.');
@@ -156,7 +157,7 @@ export default function Checkout() {
                 <span className="text-xl font-extrabold text-primary">{formatRupiah(total)}</span>
               </div>
               <button type="submit" disabled={submitting} className="mt-5 w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50">
-                {submitting ? 'Memproses...' : 'Buat Pesanan'}
+                {submitting ? 'Memproses...' : 'Buat Pesanan & Bayar'}
               </button>
               <Link to="/cart" className="mt-3 block text-center text-sm font-medium text-secondary hover:underline">← Kembali ke keranjang</Link>
             </aside>

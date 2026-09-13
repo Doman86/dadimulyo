@@ -202,6 +202,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payments
     Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
+    Route::delete('/orders/{order}/payment/{payment}', [PaymentController::class, 'destroy']);
     Route::post('/orders/{order}/midtrans', [PaymentController::class, 'createMidtransTransaction']);
 
     // Midtrans Notification Endpoints

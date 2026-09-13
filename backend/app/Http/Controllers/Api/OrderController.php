@@ -26,7 +26,7 @@ class OrderController extends Controller
         $user = $request->user();
 
         $query = Order::query()
-            ->with(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver'])
+            ->with(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver', 'payments'])
             ->when($user->isAdmin(), fn ($q) => $q, fn ($q) => $q->where('customer_id', $user->id))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->string('payment_status')->toString()))
@@ -196,7 +196,7 @@ class OrderController extends Controller
     {
         $this->authorizeAccess($request, $order);
 
-        return new OrderResource($order->load(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver']));
+        return new OrderResource($order->load(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver', 'payments']));
     }
 
     public function updateStatus(Request $request, Order $order): OrderResource

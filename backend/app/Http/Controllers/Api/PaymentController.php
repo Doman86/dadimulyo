@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateMidtransRequest;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Services\MidtransService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,29 @@ class PaymentController extends Controller
         return response()->json(['success' => true, 'message' => 'Pembayaran dikirim untuk verifikasi.', 'data' => [
             'payment' => [...$payment->toArray(), 'proof_url' => $path ? Storage::disk('public')->url($path) : null],
         ]], 201);
+    }
+
+    /**
+     * Hapus pembayaran (bukti transfer) yang masih pending — misal bukti salah unggah.
+     */
+    public function destroy(Request $request, Order $order, Payment $payment): JsonResponse
+    {
+        abort_unless($order->customer_id === $request->user()->id, 403);
+        abort_unless($payment->order_id === $order->id, 404);
+
+        if ($payment->status === 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran yang sudah diverifikasi tidak dapat dihapus.',
+            ], 422);
+        }
+
+        if ($payment->proof_path) {
+            Storage::disk('public')->delete($payment->proof_path);
+        }
+        $payment->delete();
+
+        return response()->json(['success' => true, 'message' => 'Bukti pembayaran dihapus.']);
     }
 
     /**

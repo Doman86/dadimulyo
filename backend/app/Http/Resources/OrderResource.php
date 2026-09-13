@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class OrderResource extends JsonResource
 {
@@ -47,6 +48,15 @@ class OrderResource extends JsonResource
                 'subtotal' => $item->subtotal !== null ? (float) $item->subtotal : null,
             ])),
             'delivery' => $this->whenLoaded('delivery', fn () => $this->delivery ? new DeliveryResource($this->delivery) : null),
+            'payments' => $this->whenLoaded('payments', fn () => $this->payments->map(fn ($payment) => [
+                'id' => $payment->id,
+                'payment_method' => $payment->payment_method,
+                'amount' => $payment->amount !== null ? (float) $payment->amount : null,
+                'status' => $payment->status,
+                'paid_at' => $payment->paid_at,
+                'created_at' => $payment->created_at,
+                'proof_url' => $payment->proof_path ? Storage::disk('public')->url($payment->proof_path) : null,
+            ])),
         ];
     }
 }

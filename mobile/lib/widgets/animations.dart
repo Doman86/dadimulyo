@@ -263,6 +263,11 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
         : widget.phases;
     return AnimatedBuilder(
       animation: _controller,
+      // child diteruskan ke AnimatedBuilder agar tidak dibangun ulang
+      // pada setiap tick animasi (best practice + bug fix: sebelumnya
+      // child tidak pernah dipass sehingga konten di dalamnya HILANG —
+      // layar cuma menampilkan gradient = blank).
+      child: widget.child,
       builder: (context, child) {
         final t = _controller.value * phases.length;
         final idx = t.floor();

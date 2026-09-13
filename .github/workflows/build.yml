@@ -38,7 +38,7 @@ jobs:
 
       - name: Check routes
         working-directory: backend
-        run: php artisan route:list --columns=method,uri --compact
+        run: php artisan route:list 
 
   frontend:
     name: Frontend (React)

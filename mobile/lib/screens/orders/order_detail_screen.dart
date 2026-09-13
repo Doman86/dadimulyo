@@ -36,6 +36,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  /// Refresh status pembayaran (misal: setelah kembali dari Snap Midtrans).
+  Future<void> _refreshPaymentStatus() async {
+    setState(() => _loading = true);
+    await _loadOrder();
+
+    if (!mounted) return;
+
+    // Jika setelah refresh status pembayaran berubah jadi lunas, tampilkan notifikasi.
+    if (_order != null && _order!.paymentStatus == 'paid') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pembayaran berhasil ditemukan.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   Color _statusColor(String status) {
     switch (status) {
       case 'pending':
@@ -167,6 +185,41 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // Informasi pembayaran Midtrans (jika ada)
+            if (_order != null && _order!.midtransOrderId != null) ...[
+              const Text(
+                'Transaksi Midtrans',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _infoRow('Order ID', _order!.midtransOrderId!),
+                      if (_order!.midtransTransactionId != null)
+                        _infoRow('Transaction ID', _order!.midtransTransactionId!),
+                      if (_order!.paymentType != null)
+                        _infoRow('Metode', _order!.paymentType!),
+                      const Divider(height: 20),
+                      if (_order!.paymentStatus != 'paid')
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _loading ? null : _refreshPaymentStatus,
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Cek Status Pembayaran'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Items
             const Text(
@@ -373,6 +426,38 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               fontWeight: bold ? FontWeight.bold : FontWeight.w500,
               color: bold ? AppTheme.primary : AppTheme.textPrimary,
               fontSize: bold ? 16 : 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

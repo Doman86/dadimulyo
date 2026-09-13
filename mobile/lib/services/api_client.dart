@@ -357,6 +357,23 @@ class ApiClient {
     return _extractData(response);
   }
 
+  /// Buat Snap transaksi Midtrans untuk order.
+  /// Endpoint: POST /orders/:orderId/midtrans
+  Future<Map<String, dynamic>> createMidtransTransaction(
+    dynamic orderId, {
+    List<Map<String, dynamic>>? enabledPayments,
+    Map<String, dynamic>? customer,
+    List<Map<String, dynamic>>? items,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (enabledPayments != null) payload['enabled_payments'] = enabledPayments;
+    if (customer != null) payload['customer'] = customer;
+    if (items != null) payload['items'] = items;
+
+    final response = await _dio.post('/orders/$orderId/midtrans', data: payload);
+    return _extractData(response);
+  }
+
   // ════════════════════════════════════════════════════════════════
   //  LEADS (Contact Sales)
   // ════════════════════════════════════════════════════════════════

@@ -72,6 +72,11 @@ class Order {
   final List<OrderItem> items;
   final OrderAddress? shippingAddress;
 
+  // Data transaksi Midtrans (jika pembayaran menggunakan Snap/CoreAPI).
+  final String? midtransOrderId;
+  final String? midtransTransactionId;
+  final String? paymentType;
+
   Order({
     required this.id,
     required this.orderNumber,
@@ -84,6 +89,9 @@ class Order {
     required this.createdAt,
     this.items = const [],
     this.shippingAddress,
+    this.midtransOrderId,
+    this.midtransTransactionId,
+    this.paymentType,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -105,6 +113,9 @@ class Order {
       shippingAddress: json['shipping_address'] != null
           ? OrderAddress.fromJson(json['shipping_address'])
           : null,
+      midtransOrderId: json['midtrans_order_id'],
+      midtransTransactionId: json['midtrans_transaction_id'],
+      paymentType: json['payment_type'],
     );
   }
 }

@@ -30,7 +30,7 @@ class TruckController extends Controller
         }
 
         // Filters
-        $query->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->integer('category_id')))
+        $query->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->input('category_id')))
             ->when($request->filled('condition'), fn ($q) => $q->where('condition', $request->string('condition')->toString()))
             ->when($request->filled('fuel_type'), fn ($q) => $q->where('fuel_type', $request->string('fuel_type')->toString()))
             ->when($request->filled('transmission'), fn ($q) => $q->where('transmission', $request->string('transmission')->toString()))
@@ -50,7 +50,7 @@ class TruckController extends Controller
             };
         }, fn ($q) => $q->orderBy('created_at', 'desc'));
 
-        return TruckResource::collection($query->paginate($request->integer('per_page', 12))->withQueryString());
+        return TruckResource::collection($query->paginate($request->input('per_page', 12))->withQueryString());
     }
 
     public function show(Truck $truck): TruckResource

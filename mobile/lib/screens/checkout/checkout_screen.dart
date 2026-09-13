@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_config.dart';
 import '../../models/address.dart';
 import '../../providers/cart_provider.dart';
@@ -61,6 +62,84 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (defaultAddr != null) _selectAddress(defaultAddr);
       });
     } catch (_) {}
+  }
+
+  /// Bayar pesanan menggunakan Snap Midtrans (redirect ke snap.midtrans.com).
+  /// Setelah pembayaran selesai, pengguna biasanya kembali ke aplikasi dan status
+  /// pembayaran akan diperbarui melalui webhook di sisi server.
+  Future<void> _payWithMidtrans(dynamic orderId) async {
+    try {
+      final result = await _api.createMidtransTransaction(orderId);
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        final transaction = result['transaction'] ?? <String, dynamic>{};
+        final redirectUrl = transaction['redirect_url'] ?? '';
+
+        if (redirectUrl.isNotEmpty) {
+          final uri = Uri.tryParse(redirectUrl);
+          if (uri != null) {
+            final canLaunch = await canLaunchUrl(uri);
+            if (canLaunch) {
+              await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Tidak dapat membuka halaman pembayaran.'),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('URL pembayaran tidak valid.'),
+                ),
+              );
+            }
+          }
+        } else {
+          final snapToken = transaction['snap_token'] ?? '';
+          if (snapToken.isNotEmpty) {
+            // Snap token tersedia tapi redirect_url tidak dikembalikan.
+            // Anda dapat menampilkannya di halaman pembayaran kustom.
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Snap siap. Silakan lanjutkan pembayaran di halaman berikutnya.'),
+                ),
+              );
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Transaksi Midtrans dibuat, silakan cek halaman pesanan.'),
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        final message = result['message'] ?? 'Gagal membuat transaksi Midtrans.';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Error jaringan atau server — lanjutkan ke halaman pesanan.
+      debugPrint('Midtrans checkout error: $e');
+    }
   }
 
   void _selectAddress(Address addr) {
@@ -141,6 +220,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
 
       final orderId = result['data']['id'];
+
+      // Coba bayar pakai Midtrans (Snap redirected) secara otomatis.
+      // Jika Midtrans gagal atau user tidak ingin bayar lewat Snap, lanjut ke halaman detail pesanan.
+      await _payWithMidtrans(orderId);
+      if (!mounted) return;
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: orderId)),

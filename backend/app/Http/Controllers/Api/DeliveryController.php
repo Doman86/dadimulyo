@@ -19,10 +19,10 @@ class DeliveryController extends Controller
         $query = Delivery::query()
             ->with(['truck', 'driver', 'order'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
-            ->when($request->filled('order_id'), fn ($q) => $q->where('order_id', $request->integer('order_id')))
+            ->when($request->filled('order_id'), fn ($q) => $q->where('order_id', $request->input('order_id')))
             ->orderByDesc('created_at');
 
-        return DeliveryResource::collection($query->paginate($request->integer('per_page', 20))->withQueryString());
+        return DeliveryResource::collection($query->paginate($request->input('per_page', 20))->withQueryString());
     }
 
     public function store(Request $request): DeliveryResource

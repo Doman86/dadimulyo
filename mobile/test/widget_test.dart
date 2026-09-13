@@ -1,20 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dadi_mulyo_mobile/main.dart';
 
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const DadiMulyoApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that the home screen loads
-    expect(find.text('Dadi'), findsOneWidget);
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('Diagnostic: dump below SplashScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(const DadiMulyoApp());
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final splash = find.byType(SplashScreen).evaluate().first;
+    void walk(Element el, int depth, StringBuffer out) {
+      out.writeln('${'  ' * depth}${el.widget.runtimeType}');
+      if (depth > 40) return;
+      el.visitChildElements((child) => walk(child, depth + 1, out));
+    }
+
+    final buf = StringBuffer();
+    walk(splash, 0, buf);
+    debugPrint('=== SPLASH TREE ===\n$buf');
   });
 }

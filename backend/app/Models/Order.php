@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'payment_status',
     'shipping_address_id',
     'notes',
+    'midtrans_order_id',
+    'midtrans_transaction_id',
+    'payment_type',
 ])]
 class Order extends Model
 {

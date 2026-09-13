@@ -1,10 +1,8 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'firebase_options.dart';
 import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
@@ -17,11 +15,23 @@ import 'screens/home/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Inisialisasi Firebase (opsional). KRUSIAL: error apapun di sini TIDAK boleh
+  // mencegah runApp() — kalau init gagal sebelum runApp, halaman web tampil
+  // blank/putih total. Semua kegagalan ditangkap dan dicatat saja.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Initialize Notification Service
-  await NotificationService.initialize();
+    // FCM (push notification) butuh service worker & JS SDK di web —
+    // jalankan hanya di platform non-web agar tidak error di Chrome.
+    if (!kIsWeb) {
+      await NotificationService.initialize();
+    }
+  } catch (e) {
+    // Firebase gagal (mis. konfigurasi belum lengkap) — app tetap jalan.
+    debugPrint('Firebase/Notification init skipped: $e');
+  }
 
   // Jalankan app langsung — splash screen tampil duluan
   runApp(const DadiMulyoApp());
@@ -32,15 +42,14 @@ Future<void> initializeApp() async {
   await _configureBaseUrl();
 }
 
-// Base URL produksi. Dipakai saat build release tanpa dart-define API_BASE_URL.
-const String _productionApiUrl = 'https://dadimulyo.my.id/api';
-
 Future<void> _configureBaseUrl() async {
   // Prioritas utk memilih base URL:
   //   1. API_BASE_URL dart-define (paling fleksibel)
-  //      flutter build apk --dart-define=API_BASE_URL=https://...
-  //   2. Build release tanpa define -> pakai URL produksi
-  //   3. Build debug -> deteksi device (localhost/emulator) seperti sebelumnya
+  //      flutter run --dart-define=API_BASE_URL=https://...
+  //   2. SERVER_IP dari environment variable
+  //      flutter run --dart-define=SERVER_IP=<IP_LAPTOP>
+  //   3. Fallback ke localhost (127.0.0.1) untuk development lokal
+  //      dan untuk web di mana adb reverse tidak bekerja
   const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   if (apiBaseUrl.isNotEmpty) {
@@ -50,50 +59,21 @@ Future<void> _configureBaseUrl() async {
 
   // SERVER_IP bisa diisi via: flutter run --dart-define=SERVER_IP=192.168.1.x
   final serverIp = const String.fromEnvironment('SERVER_IP');
-  final isRelease = const bool.fromEnvironment('dart.vm.product');
 
-  // Release build (tanpa API_BASE_URL) -> produksi
-  if (isRelease && serverIp.isEmpty) {
-    ApiClient.setBaseUrl(_productionApiUrl);
+  // Jika SERVER_IP di-definikan, gunakan itu
+  if (serverIp.isNotEmpty) {
+    ApiClient.setBaseUrl(
+      'http://$serverIp:8000/api',
+    );
     return;
   }
 
-  try {
-    final deviceInfo = DeviceInfoPlugin();
-
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      final isEmulator = !androidInfo.isPhysicalDevice;
-
-      if (isEmulator) {
-        // Emulator Android: 10.0.2.2 adalah alias untuk localhost PC
-        ApiClient.setBaseUrl('http://10.0.2.2:8000/api');  // dart-define: API_BASE_URL
-      } else {
-        // HP fisik:
-        // - Default 127.0.0.1 -> lewat kabel USB (adb reverse tcp:8000 tcp:8000)
-        //   (script run_hp.bat sudah otomatis menjalankan adb reverse)
-        // - Atau lewat WiFi: flutter run --dart-define=SERVER_IP=<IP_LAPTOP>
-        ApiClient.setBaseUrl(
-          'http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api',
-        );
-      }
-    } else if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      final isEmulator = !iosInfo.isPhysicalDevice;
-
-      if (isEmulator) {
-        ApiClient.setBaseUrl('http://127.0.0.1:8000/api');
-      } else {
-        ApiClient.setBaseUrl(
-          'http://${serverIp.isEmpty ? '127.0.0.1' : serverIp}:8000/api',
-        );
-      }
-    }
-  } catch (_) {
-    ApiClient.setBaseUrl(
-      'http://${serverIp.isEmpty ? '10.0.2.2' : serverIp}:8000/api',
-    );
-  }
+  // Fallback ke localhost untuk semua kasus (local development & web)
+  // Karena adb reverse tidak bekerja di browser/Chrome,
+  // kita selalu gunakan 127.0.0.1 di sini.
+  ApiClient.setBaseUrl(
+    'http://127.0.0.1:8000/api',
+  );
 }
 
 // ─── Splash Screen ───────────────────────────────────────────────

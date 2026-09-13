@@ -15,11 +15,11 @@ class MidtransNotificationController extends Controller
         $data = $request->all();
 
         $orderId = data_get($data, 'order_id');
-        $status = data_get($data, 'payment_type');
-        $fraudStatus = data_get($data, 'fraud_status');
         $transactionStatus = data_get($data, 'transaction_status');
+        $fraudStatus = data_get($data, 'fraud_status');
+        $transId = data_get($data, 'trans_id');
+        $paymentType = data_get($data, 'payment_type');
         $approvalCode = data_get($data, 'approval_code');
-        $merchantId = data_get($data, 'merchant_id');
 
         if (empty($orderId)) {
             return response()->json([
@@ -40,16 +40,32 @@ class MidtransNotificationController extends Controller
         if ($transactionStatus === 'settlement') {
             $order->update([
                 'payment_status' => 'paid',
-                'midtrans_order_id' => data_get($data, 'order_id'),
-                'midtrans_transaction_id' => data_get($data, 'trans_id'),
+                'midtrans_order_id' => $orderId,
+                'midtrans_transaction_id' => $transId,
+                'payment_type' => $paymentType,
             ]);
+
+            // Opsional: konfirmasi pesanan otomatis setelah pembayaran berhasil.
+            // Sesuaikan dengan alur bisnis. Hapus baris ini jika konfirmasi tetap
+            // dilakukan oleh admin.
+            $order->update([
+                'status' => 'confirmed',
+            ]);
+
+            // Jika ada delivery yang belum dikonfirmasi, siapkan untuk proses
+            // pengiriman (status ready) — sesuaikan dengan alur bisnis.
+            if ($order->delivery) {
+                $order->delivery->update([
+                    'status' => 'ready',
+                ]);
+            }
 
             app(PushNotificationService::class)->notify(
                 $order->customer_id,
                 'Pembayaran diterima',
                 "Pembayaran untuk pesanan {$order->order_number} berhasil dikonfirmasi.",
                 'payment',
-                ['id' => $order->id, 'order_number' => $order->order_number],
+                ['id' => $order->id, 'order_number' => $order->order_number, 'midtrans_transaction_id' => $transId],
             );
         } elseif (
             $transactionStatus === 'deny' ||
@@ -58,6 +74,7 @@ class MidtransNotificationController extends Controller
         ) {
             $order->update([
                 'payment_status' => 'failed',
+                'payment_type' => $paymentType,
             ]);
 
             app(PushNotificationService::class)->notify(
@@ -65,11 +82,12 @@ class MidtransNotificationController extends Controller
                 'Pembayaran gagal',
                 "Pembayaran untuk pesanan {$order->order_number} gagal. Silakan coba lagi.",
                 'payment',
-                ['id' => $order->id, 'order_number' => $order->order_number],
+                ['id' => $order->id, 'order_number' => $order->order_number, 'midtrans_transaction_id' => $transId],
             );
         } elseif ($transactionStatus === 'pending') {
             $order->update([
                 'payment_status' => 'pending',
+                'payment_type' => $paymentType,
             ]);
         }
 
@@ -86,6 +104,8 @@ class MidtransNotificationController extends Controller
 
         $orderId = data_get($data, 'order_id');
         $transactionStatus = data_get($data, 'transaction_status');
+        $transId = data_get($data, 'trans_id');
+        $paymentType = data_get($data, 'payment_type');
 
         if (empty($orderId)) {
             return response()->json([
@@ -106,16 +126,32 @@ class MidtransNotificationController extends Controller
         if ($transactionStatus === 'settlement') {
             $order->update([
                 'payment_status' => 'paid',
-                'midtrans_order_id' => data_get($data, 'order_id'),
-                'midtrans_transaction_id' => data_get($data, 'trans_id'),
+                'midtrans_order_id' => $orderId,
+                'midtrans_transaction_id' => $transId,
+                'payment_type' => $paymentType,
             ]);
+
+            // Opsional: konfirmasi pesanan otomatis setelah pembayaran berhasil.
+            // Sesuaikan dengan alur bisnis. Hapus baris ini jika konfirmasi tetap
+            // dilakukan oleh admin.
+            $order->update([
+                'status' => 'confirmed',
+            ]);
+
+            // Jika ada delivery yang belum dikonfirmasi, siapkan untuk proses
+            // pengiriman (status ready) — sesuaikan dengan alur bisnis.
+            if ($order->delivery) {
+                $order->delivery->update([
+                    'status' => 'ready',
+                ]);
+            }
 
             app(PushNotificationService::class)->notify(
                 $order->customer_id,
                 'Pembayaran diterima',
                 "Pembayaran untuk pesanan {$order->order_number} berhasil dikonfirmasi.",
                 'payment',
-                ['id' => $order->id, 'order_number' => $order->order_number],
+                ['id' => $order->id, 'order_number' => $order->order_number, 'midtrans_transaction_id' => $transId],
             );
         } elseif (
             $transactionStatus === 'expire' ||
@@ -123,6 +159,7 @@ class MidtransNotificationController extends Controller
         ) {
             $order->update([
                 'payment_status' => 'failed',
+                'payment_type' => $paymentType,
             ]);
         }
 
@@ -158,7 +195,7 @@ class MidtransNotificationController extends Controller
 
         $order->update([
             'payment_status' => $status ?? 'pending',
-            'midtrans_payment_type' => 'gopay',
+            'payment_type' => 'gopay',
         ]);
 
         return response()->json([

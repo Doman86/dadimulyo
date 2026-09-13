@@ -52,7 +52,7 @@ class LeadController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->orderByDesc('created_at');
 
-        return LeadResource::collection($query->paginate($request->integer('per_page', 20))->withQueryString());
+        return LeadResource::collection($query->paginate($request->input('per_page', 20))->withQueryString());
     }
 
     public function show(Request $request, Lead $lead): LeadResource

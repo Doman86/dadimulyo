@@ -53,8 +53,9 @@ Route::get('/chatbot/menu', function () {
 
 Route::get('/chatbot/products', function (Request $request) {
     try {
+        $perPage = $request->input('per_page', 5);
         $products = App\Models\OrangeProduct::where('status', '!=', 'deleted')
-            ->take($request->integer('per_page', 5))
+            ->take($perPage)
             ->get([
                 'id',
                 'name',
@@ -201,6 +202,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payments
     Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
+    Route::post('/orders/{order}/midtrans', [PaymentController::class, 'createMidtransTransaction']);
 
     // Midtrans Notification Endpoints
     Route::post('/midtrans/payment-notification', [MidtransNotificationController::class, 'handlePaymentNotification']);

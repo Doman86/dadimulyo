@@ -23,11 +23,11 @@ class RentalController extends Controller
         $query = Rental::query()
             ->with(['truck.images', 'customer'])
             ->when($user->isAdmin(), fn ($q) => $q, fn ($q) => $q->where('customer_id', $user->id))
-            ->when($request->filled('truck_id'), fn ($q) => $q->where('truck_id', $request->integer('truck_id')))
+            ->when($request->filled('truck_id'), fn ($q) => $q->where('truck_id', $request->input('truck_id')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->orderByDesc('created_at');
 
-        return RentalResource::collection($query->paginate($request->integer('per_page', 20))->withQueryString());
+        return RentalResource::collection($query->paginate($request->input('per_page', 20))->withQueryString());
     }
 
     public function store(Request $request): RentalResource|JsonResponse

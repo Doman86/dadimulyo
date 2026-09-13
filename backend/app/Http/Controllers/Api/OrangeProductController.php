@@ -28,7 +28,7 @@ class OrangeProductController extends Controller
             });
         }
 
-        $query->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->integer('category_id')))
+        $query->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->input('category_id')))
             ->when($request->filled('grade'), fn ($q) => $q->where('grade', $request->string('grade')->toString()))
             ->when($request->filled('min_price'), fn ($q) => $q->where('price_per_kg', '>=', $request->float('min_price')))
             ->when($request->filled('max_price'), fn ($q) => $q->where('price_per_kg', '<=', $request->float('max_price')))
@@ -44,7 +44,7 @@ class OrangeProductController extends Controller
             };
         }, fn ($q) => $q->orderBy('created_at', 'desc'));
 
-        return OrangeProductResource::collection($query->paginate($request->integer('per_page', 12))->withQueryString());
+        return OrangeProductResource::collection($query->paginate($request->input('per_page', 12))->withQueryString());
     }
 
     public function show(OrangeProduct $orange): OrangeProductResource

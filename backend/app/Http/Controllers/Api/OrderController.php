@@ -32,7 +32,7 @@ class OrderController extends Controller
             ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->string('payment_status')->toString()))
             ->orderByDesc('created_at');
 
-        return OrderResource::collection($query->paginate($request->integer('per_page', 20))->withQueryString());
+        return OrderResource::collection($query->paginate($request->input('per_page', 20))->withQueryString());
     }
 
     public function store(StoreOrderRequest $request): OrderResource|JsonResponse
@@ -98,7 +98,7 @@ class OrderController extends Controller
             // Alamat pengiriman: pakai yang sudah ada atau buat baru.
             $address = null;
             if ($request->filled('shipping_address_id')) {
-                $address = Address::where('id', $request->integer('shipping_address_id'))
+                $address = Address::where('id', $request->input('shipping_address_id'))
                     ->where('user_id', $user->id)
                     ->first();
 

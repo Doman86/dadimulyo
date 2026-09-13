@@ -43,13 +43,12 @@ Future<void> initializeApp() async {
 }
 
 Future<void> _configureBaseUrl() async {
-  // Prioritas utk memilih base URL:
-  //   1. API_BASE_URL dart-define (paling fleksibel)
-  //      flutter run --dart-define=API_BASE_URL=https://...
-  //   2. SERVER_IP dari environment variable
-  //      flutter run --dart-define=SERVER_IP=<IP_LAPTOP>
-  //   3. Fallback ke localhost (127.0.0.1) untuk development lokal
-  //      dan untuk web di mana adb reverse tidak bekerja
+  // Prioritas pemilihan base URL:
+  //   1. API_BASE_URL via dart-define (paling fleksibel)
+  //      flutter build apk --release --dart-define=API_BASE_URL=https://...
+  //   2. SERVER_IP via dart-define (development ke laptop)
+  //      flutter run --dart-define=SERVER_IP=192.168.1.x
+  //   3. Fallback ke server produksi — build release langsung siap pakai.
   const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   if (apiBaseUrl.isNotEmpty) {
@@ -57,23 +56,16 @@ Future<void> _configureBaseUrl() async {
     return;
   }
 
-  // SERVER_IP bisa diisi via: flutter run --dart-define=SERVER_IP=192.168.1.x
+  // SERVER_IP untuk development ke laptop via Wi-Fi (dev only).
   final serverIp = const String.fromEnvironment('SERVER_IP');
 
-  // Jika SERVER_IP di-definikan, gunakan itu
   if (serverIp.isNotEmpty) {
-    ApiClient.setBaseUrl(
-      'http://$serverIp:8000/api',
-    );
+    ApiClient.setBaseUrl('http://$serverIp:8000/api');
     return;
   }
 
-  // Fallback ke localhost untuk semua kasus (local development & web)
-  // Karena adb reverse tidak bekerja di browser/Chrome,
-  // kita selalu gunakan 127.0.0.1 di sini.
-  ApiClient.setBaseUrl(
-    'http://127.0.0.1:8000/api',
-  );
+  // Produksi: HTTPS ke server live.
+  ApiClient.setBaseUrl('https://dadimulyo.my.id/api');
 }
 
 // ─── Splash Screen ───────────────────────────────────────────────

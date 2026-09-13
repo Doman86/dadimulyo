@@ -57,9 +57,11 @@ class InvoiceScreen extends StatelessWidget {
             onPressed: () async {
               try {
                 final file = await InvoicePdf.generateAndSave(order);
-                await Share.shareXFiles(
-                  [XFile(file.path)],
-                  text: 'Invoice ${order.orderNumber} - ${AppConfig.companyName}',
+                await SharePlus.instance.share(
+                  ShareParams(
+                    files: [XFile(file.path)],
+                    text: 'Invoice ${order.orderNumber} - ${AppConfig.companyName}',
+                  ),
                 );
               } catch (e) {
                 if (context.mounted) {
@@ -138,7 +140,7 @@ class InvoiceScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const Text(
-                        'INVOICCE',
+                        'INVOICE',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,

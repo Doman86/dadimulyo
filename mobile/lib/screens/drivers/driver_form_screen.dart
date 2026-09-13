@@ -202,13 +202,11 @@ class _DriverFormScreenState extends State<DriverFormScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _licenseNumber.isNotEmpty ? _licenseNumber : null,
+                  child: TextFormField(
+                    initialValue: _licenseNumber,
                     decoration: const InputDecoration(
                       labelText: 'No. SIM',
                     ),
-                    items: const [],
-                    onChanged: null,
                     onSaved: (v) => _licenseNumber = v ?? '',
                   ),
                 ),

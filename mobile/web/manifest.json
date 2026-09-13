@@ -1,11 +1,11 @@
 {
-    "name": "dadi_mulyo_mobile",
-    "short_name": "dadi_mulyo_mobile",
+    "name": "Dadi Mulyo",
+    "short_name": "Dadi Mulyo",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B3D26",
+    "theme_color": "#0B3D26",
+    "description": "Dadi Mulyo - Showroom Truck & Marketplace Jeruk",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

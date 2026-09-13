@@ -83,7 +83,7 @@ class _SalaryDetailScreenState extends State<SalaryDetailScreen> {
     }
   }
 
-  void _shareSlip() {
+  Future<void> _shareSlip() async {
     final s = widget.salary;
     final text = StringBuffer();
     text.writeln('═══════════════════════════════');
@@ -132,7 +132,9 @@ class _SalaryDetailScreenState extends State<SalaryDetailScreen> {
     text.writeln('Status: ${s.statusLabel}');
     text.writeln('Dari: Dadi Mulyo - Showroom Truck & Jeruk');
 
-    Share.share(text.toString(), subject: 'Slip Gaji ${s.period}');
+    await SharePlus.instance.share(
+      ShareParams(text: text.toString(), subject: 'Slip Gaji ${s.period}'),
+    );
   }
 
   @override

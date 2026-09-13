@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug saja: izinkan HTTP lokal (emulator 10.0.2.2, IP laptop, adb reverse)
+     supaya development tetap nyaman. Build release TIDAK memakai file ini. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

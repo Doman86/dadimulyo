@@ -3,11 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   // Base URL ditentukan saat runtime (lihat main.dart -> _configureBaseUrl).
-  // Nilai default di sini hanya fallback untuk development.
-  // Production harus di-set via SERVER_IP atau --dart-define=SERVER_IP=xxx.
+  // Default = server produksi, sehingga build release langsung siap pakai.
+  // Untuk development, override via --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
   static String _baseUrl = const String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'https://dadimulyo.my.id/api',
   );
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';

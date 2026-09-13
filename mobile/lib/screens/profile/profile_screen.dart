@@ -218,15 +218,17 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _actionTile(
-              context,
-              Icons.people_outlined,
-              'Manajemen Driver',
-              () => Navigator.push(
+            if (roleName == 'admin') ...[
+              _actionTile(
                 context,
-                MaterialPageRoute(builder: (_) => const DriverListScreen()),
+                Icons.people_outlined,
+                'Manajemen Driver',
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DriverListScreen()),
+                ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 24),
 

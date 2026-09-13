@@ -1,3 +1,4 @@
+
 name: Deploy to Hostinger
 
 on:
@@ -12,6 +13,7 @@ jobs:
     concurrency: deploy
 
     steps:
+      # ---------------- CHECKOUT ----------------
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -32,46 +34,142 @@ jobs:
         run: npm run build
 
       - name: Replace .htaccess with production version
-        run: cp scripts/hostinger/public_html.htaccess web/dist/.htaccess
+        run: |
+          cp scripts/hostinger/public_html.htaccess web/dist/.htaccess
 
       # ---------------- SETUP SSH ----------------
       - name: Setup SSH key
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
         run: |
+          set -e
+
+          echo "Checking SSH configuration..."
+
+          test -n "${SSH_HOST}" || {
+            echo "ERROR: HOSTINGER_SSH_HOST is empty"
+            exit 1
+          }
+
+          test -n "${SSH_PORT}" || {
+            echo "ERROR: HOSTINGER_SSH_PORT is empty"
+            exit 1
+          }
+
+          case "${SSH_PORT}" in
+            ''|*[!0-9]*)
+              echo "ERROR: HOSTINGER_SSH_PORT must contain numbers only"
+              exit 1
+              ;;
+          esac
+
           mkdir -p ~/.ssh
+
           echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.HOSTINGER_SSH_PORT }}" "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          ssh-keyscan -p "${SSH_PORT}" "${SSH_HOST}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          echo "SSH configuration OK"
+          echo "Host: ${SSH_HOST}"
+          echo "Port: ${SSH_PORT}"
+
+      # ---------------- TEST SSH CONNECTION ----------------
+      - name: Test SSH connection
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+        run: |
+          set -e
+
+          echo "Testing SSH connection..."
+
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "${SSH_PORT}" \
+            -o StrictHostKeyChecking=no \
+            "${SSH_USER}@${SSH_HOST}" \
+            "echo 'SSH connection successful'"
 
       # ---------------- UPLOAD FRONTEND ----------------
       - name: Deploy frontend (SPA)
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
         run: |
-          H="${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}"
-          P="${{ secrets.HOSTINGER_SSH_PORT }}"
-          DEST="/home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html"
+          set -e
 
-          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
-            web/dist/index.html "$H:$DEST/index.html"
-          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
-            web/dist/favicon.svg "$H:$DEST/favicon.svg"
-          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
-            web/dist/.htaccess "$H:$DEST/.htaccess"
-          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
-            web/dist/assets/ "$H:$DEST/assets/"
+          H="${SSH_USER}@${SSH_HOST}"
+          DEST="/home/${SSH_USER}/domains/dadimulyo.my.id/public_html"
 
-          # Keep a copy of the newest bundle under the old cache alias
-          # so devices holding a stale index.html (referencing index-DFl8US7K.js)
-          # still load a working app.
-          ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no "$H" \
-            "cd $DEST/assets && NEW_JS=\$(ls -t index-*.js | head -1) && cp \"\$NEW_JS\" index-DFl8US7K.js && echo 'alias updated -> '\$NEW_JS"
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -p ${SSH_PORT} -o StrictHostKeyChecking=no"
+
+          echo "Deploying frontend..."
+          echo "Destination: ${DEST}"
+
+          rsync -az \
+            -e "${SSH_CMD}" \
+            web/dist/index.html \
+            "${H}:${DEST}/index.html"
+
+          rsync -az \
+            -e "${SSH_CMD}" \
+            web/dist/favicon.svg \
+            "${H}:${DEST}/favicon.svg"
+
+          rsync -az \
+            -e "${SSH_CMD}" \
+            web/dist/.htaccess \
+            "${H}:${DEST}/.htaccess"
+
+          rsync -az \
+            -e "${SSH_CMD}" \
+            web/dist/assets/ \
+            "${H}:${DEST}/assets/"
+
+          echo "Frontend upload completed"
+
+      # ---------------- UPDATE OLD JS CACHE ALIAS ----------------
+      - name: Update frontend cache alias
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+        run: |
+          set -e
+
+          H="${SSH_USER}@${SSH_HOST}"
+          DEST="/home/${SSH_USER}/domains/dadimulyo.my.id/public_html"
+
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "${SSH_PORT}" \
+            -o StrictHostKeyChecking=no \
+            "${H}" \
+            "cd '${DEST}/assets' && NEW_JS=\$(ls -t index-*.js | head -1) && cp \"\$NEW_JS\" index-DFl8US7K.js && echo \"alias updated -> \$NEW_JS\""
 
       # ---------------- UPLOAD BACKEND ----------------
       - name: Deploy backend (Laravel source only)
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
         run: |
-          H="${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}"
-          P="${{ secrets.HOSTINGER_SSH_PORT }}"
-          DEST="/home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html/api_backend"
+          set -e
 
-          rsync -az -e "ssh -i ~/.ssh/deploy_key -p $P -o StrictHostKeyChecking=no" \
+          H="${SSH_USER}@${SSH_HOST}"
+          DEST="/home/${SSH_USER}/domains/dadimulyo.my.id/public_html/api_backend"
+
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -p ${SSH_PORT} -o StrictHostKeyChecking=no"
+
+          echo "Deploying backend..."
+          echo "Destination: ${DEST}"
+
+          rsync -az \
+            -e "${SSH_CMD}" \
             --exclude 'vendor/' \
             --exclude 'node_modules/' \
             --exclude '.env' \
@@ -85,9 +183,12 @@ jobs:
             --exclude 'storage/framework/views/' \
             --exclude 'public/storage/' \
             --exclude 'tests/' \
-            backend/ "$H:$DEST/"
+            backend/ \
+            "${H}:${DEST}/"
 
-      # ---------------- POST-DEPLOY (server side) ----------------
+          echo "Backend upload completed"
+
+      # ---------------- POST-DEPLOY ----------------
       - name: Refresh caches & run migrations on server
         uses: appleboy/ssh-action@v1
         with:
@@ -98,23 +199,63 @@ jobs:
           command_timeout: 5m
           script: |
             set -e
+
             cd /home/${{ secrets.HOSTINGER_SSH_USER }}/domains/dadimulyo.my.id/public_html/api_backend
 
-            # Install any new dependencies (no-op if unchanged)
-            composer install --no-dev --optimize-autoloader --no-interaction
+            echo "Installing Composer dependencies..."
+
+            composer install \
+              --no-dev \
+              --optimize-autoloader \
+              --no-interaction
+
+            echo "Clearing Laravel cache..."
 
             php artisan optimize:clear
+
+            echo "Running database migrations..."
+
             php artisan migrate --force
+
+            echo "Creating storage link..."
+
             php artisan storage:link --force
+
+            echo "Caching routes..."
+
             php artisan route:cache
+
+            echo "Caching configuration..."
+
             php artisan config:cache
 
             echo "--- verify ---"
+
             php artisan route:list --path=site-stats
+
             echo "DEPLOY OK"
 
+      # ---------------- SMOKE TEST ----------------
       - name: Smoke test
         run: |
+          set -e
+
           sleep 2
-          echo "site: $(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/)"
-          echo "api : $(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/api/site-stats)"
+
+          SITE_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/)
+          API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://dadimulyo.my.id/api/site-stats)
+
+          echo "site: ${SITE_STATUS}"
+          echo "api : ${API_STATUS}"
+
+          if [ "${SITE_STATUS}" = "200" ]; then
+            echo "Frontend OK"
+          else
+            echo "WARNING: Frontend returned HTTP ${SITE_STATUS}"
+          fi
+
+          if [ "${API_STATUS}" = "200" ]; then
+            echo "API OK"
+          else
+            echo "WARNING: API returned HTTP ${API_STATUS}"
+          fi

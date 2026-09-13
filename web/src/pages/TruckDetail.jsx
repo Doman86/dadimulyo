@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchTruck, submitLead, toggleWishlist } from '../api/trucks';
+import { createTruckOrder } from '../api/payments';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import PaymentModal from '../components/PaymentModal';
 import siteConfig from '../config/site';
 
 export default function TruckDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [truck, setTruck] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -16,6 +19,10 @@ export default function TruckDetail() {
   const [wishlisted, setWishlisted] = useState(false);
   const [leadForm, setLeadForm] = useState({ name: '', phone: '', message: '' });
   const [leadStatus, setLeadStatus] = useState(null);
+  const [buyForm, setBuyForm] = useState({ recipient_name: '', phone: '', notes: '' });
+  const [buying, setBuying] = useState(false);
+  const [buyError, setBuyError] = useState(null);
+  const [payable, setPayable] = useState(null); // { id, label, total } untuk popup pembayaran
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +75,34 @@ export default function TruckDetail() {
       setLeadForm({ name: '', phone: '', message: '' });
     } catch {
       setLeadStatus({ success: false, message: 'Gagal mengirim. Silakan coba lagi.' });
+    }
+  }
+
+  async function handleBuySubmit(e) {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login', { state: { from: `/trucks/${id}` } });
+      return;
+    }
+    setBuyError(null);
+    setBuying(true);
+    try {
+      const order = await createTruckOrder({
+        truck_id: truck.id,
+        recipient_name: buyForm.recipient_name || user?.name || '',
+        phone: buyForm.phone || user?.phone || '',
+        notes: buyForm.notes || undefined,
+      });
+      setPayable({
+        id: order.id,
+        label: `Beli ${truck.brand} ${truck.model}`,
+        order_number: order.order_number,
+        total: order.amount ?? truck.price,
+      });
+    } catch (err) {
+      setBuyError(err.response?.data?.message || 'Gagal membuat pesanan truck. Silakan coba lagi.');
+    } finally {
+      setBuying(false);
     }
   }
 
@@ -129,6 +164,76 @@ export default function TruckDetail() {
               <div className="mt-4 text-3xl font-extrabold text-primary">
                 {formatRupiah(truck.price)}
               </div>
+
+              {truck.is_for_sale && truck.status === 'available' && (
+                <form onSubmit={handleBuySubmit} className="mt-5 space-y-3 rounded-2xl border border-gold/40 bg-gold/5 p-4">
+                  <div className="font-display text-sm font-bold text-charcoal">🚛 Beli truck ini sekarang</div>
+                  {buyError && <div className="alert-lux-error !text-xs">{buyError}</div>}
+                  <input
+                    required
+                    placeholder="Nama penerima"
+                    value={buyForm.recipient_name || user?.name || ''}
+                    onChange={(e) => setBuyForm({ ...buyForm, recipient_name: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <input
+                    required
+                    type="tel"
+                    placeholder="No. HP / WA"
+                    value={buyForm.phone || user?.phone || ''}
+                    onChange={(e) => setBuyForm({ ...buyForm, phone: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="Catatan (opsional)"
+                    value={buyForm.notes}
+                    onChange={(e) => setBuyForm({ ...buyForm, notes: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <button type="submit" disabled={buying} className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50">
+                    {buying ? 'Memproses...' : 'Buat Pesanan & Bayar'}
+                  </button>
+                  <p className="text-[11px] leading-relaxed text-gray-400">
+                    Pesanan langsung masuk ke riwayat & bisa dibayar online (Midtrans), transfer manual, atau COD.
+                  </p>
+                </form>
+              )}
+
+              {truck.is_for_sale && truck.status === 'available' && (
+                <form onSubmit={handleBuySubmit} className="mt-5 space-y-3 rounded-2xl border border-gold/40 bg-gold/5 p-4">
+                  <div className="font-display text-sm font-bold text-charcoal">🚛 Beli truck ini sekarang</div>
+                  {buyError && <div className="alert-lux-error !text-xs">{buyError}</div>}
+                  <input
+                    required
+                    placeholder="Nama penerima"
+                    value={buyForm.recipient_name || user?.name || ''}
+                    onChange={(e) => setBuyForm({ ...buyForm, recipient_name: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <input
+                    required
+                    type="tel"
+                    placeholder="No. HP / WA"
+                    value={buyForm.phone || user?.phone || ''}
+                    onChange={(e) => setBuyForm({ ...buyForm, phone: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="Catatan (opsional)"
+                    value={buyForm.notes}
+                    onChange={(e) => setBuyForm({ ...buyForm, notes: e.target.value })}
+                    className="input-lux !py-2.5 text-sm"
+                  />
+                  <button type="submit" disabled={buying} className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50">
+                    {buying ? 'Memproses...' : 'Buat Pesanan & Bayar'}
+                  </button>
+                  <p className="text-[11px] leading-relaxed text-gray-400">
+                    Pesanan langsung masuk ke riwayat & bisa dibayar online (Midtrans), transfer manual, atau COD.
+                  </p>
+                </form>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {truck.is_for_rent && (
@@ -258,6 +363,15 @@ export default function TruckDetail() {
           </section>
         </Reveal>
       </div>
+
+      {payable && (
+        <PaymentModal
+          payable={payable}
+          type="truck_order"
+          onClose={() => setPayable(null)}
+          onPaid={() => navigate('/dashboard')}
+        />
+      )}
     </div>
   );
 }

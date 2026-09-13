@@ -222,7 +222,8 @@ export default function OrderDetail() {
 
       {showPayModal && (
         <PaymentModal
-          order={order}
+          payable={{ id: order.id, order_number: order.order_number, total: order.total }}
+          type="order"
           onClose={() => setShowPayModal(false)}
           onPaid={(_id, opts) => {
             fetchOrder(id).then(setOrder).catch(() => {});

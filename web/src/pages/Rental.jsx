@@ -4,6 +4,7 @@ import { checkAvailability, createRental, fetchTrucks } from '../api/trucks';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import PaymentModal from '../components/PaymentModal';
 
 export default function Rental() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function Rental() {
   const [availability, setAvailability] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
+  const [payable, setPayable] = useState(null); // { id, label, total } untuk popup pembayaran
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -80,11 +82,17 @@ export default function Rental() {
       });
       setMessage({
         type: 'success',
-        text: `Booking berhasil! Kode booking ${rental.id} berstatus "${rental.status}". Tim kami akan mengonfirmasi segera.`,
+        text: `Booking berhasil! Kode booking #${rental.id}. Silakan selesaikan pembayaran di popup berikut — status sewa otomatis dikonfirmasi setelah dibayar.`,
       });
       setDates({ start_date: '', end_date: '' });
       setNotes('');
       setAvailability(null);
+      // Tawarkan pembayaran langsung (Midtrans / transfer / COD).
+      setPayable({
+        id: rental.id,
+        label: `Sewa ${selected.brand} ${selected.model}`,
+        total: rental.total_price ?? estimate?.total ?? 0,
+      });
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.message || 'Gagal membuat booking.' });
     } finally {
@@ -292,6 +300,17 @@ export default function Rental() {
           </Reveal>
         </div>
       </div>
+
+      {payable && (
+        <PaymentModal
+          payable={payable}
+          type="rental"
+          onClose={() => setPayable(null)}
+          onPaid={() => {
+            setMessage({ type: 'success', text: 'Pembayaran sewa diterima! Booking kamu akan segera dikonfirmasi.' });
+          }}
+        />
+      )}
     </div>
   );
 }

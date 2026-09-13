@@ -1,30 +1,78 @@
 import client from './client';
 
+/**
+ * Endpoint path per jenis transaksi.
+ * type: 'order' (jeruk) | 'rental' (sewa truck) | 'truck_order' (beli truck)
+ */
+function basePath(type, id) {
+  if (type === 'rental') return `/rentals/${id}`;
+  if (type === 'truck_order') return `/truck-orders/${id}`;
+  return `/orders/${id}`;
+}
+
 export async function submitPayment(orderId, { payment_method, amount, proof }) {
+  return submitPaymentFor('order', orderId, { payment_method, amount, proof });
+}
+
+export async function submitPaymentFor(type, id, { payment_method, amount, proof }) {
   const form = new FormData();
   form.append('payment_method', payment_method);
   form.append('amount', amount);
   if (proof) form.append('proof', proof);
-  const { data } = await client.post(`/orders/${orderId}/payment`, form, {
+  const { data } = await client.post(`${basePath(type, id)}/payment`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data.data;
 }
 
 /**
- * Buat transaksi Midtrans Snap untuk order.
- * Endpoint: POST /orders/:orderId/midtrans
+ * Buat transaksi Midtrans Snap untuk transaksi apapun.
+ * type: 'order' | 'rental' | 'truck_order'
  */
-export async function createMidtransTransaction(orderId, payload = {}) {
-  const { data } = await client.post(`/orders/${orderId}/midtrans`, payload);
+export async function createMidtransTransaction(id, type = 'order') {
+  const { data } = await client.post(`${basePath(type, id)}/midtrans`);
   return data; // { success, transaction: { snap_token, redirect_url, client_key, ... } }
 }
 
 /**
  * Hapus pembayaran manual yang masih pending (misal bukti salah unggah).
- * Endpoint: DELETE /orders/:orderId/payment/:paymentId
  */
 export async function deletePayment(orderId, paymentId) {
-  const { data } = await client.delete(`/orders/${orderId}/payment/${paymentId}`);
+  return deletePaymentFor('order', orderId, paymentId);
+}
+
+export async function deletePaymentFor(type, id, paymentId) {
+  const { data } = await client.delete(`${basePath(type, id)}/payment/${paymentId}`);
   return data;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Truck orders (beli truck)
+|--------------------------------------------------------------------------
+*/
+
+export async function createTruckOrder(payload) {
+  const { data } = await client.post('/truck-orders', payload);
+  return data.data;
+}
+
+export async function fetchTruckOrders(params = {}) {
+  const { data } = await client.get('/truck-orders', { params });
+  return data; // { data: [...], meta }
+}
+
+export async function fetchTruckOrder(id) {
+  const { data } = await client.get(`/truck-orders/${id}`);
+  return data.data;
+}
+
+export async function cancelTruckOrder(id) {
+  const { data } = await client.put(`/truck-orders/${id}/cancel`);
+  return data.data;
+}
+
+export async function updateTruckOrderStatus(id, payload) {
+  const { data } = await client.put(`/truck-orders/${id}/status`, payload);
+  return data.data;
 }

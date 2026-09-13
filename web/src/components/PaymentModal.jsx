@@ -50,7 +50,15 @@ const METHODS = [
   },
 ];
 
-export default function PaymentModal({ order, onClose, onPaid }) {
+/**
+ * Modal pembayaran serbaguna untuk semua jenis transaksi.
+ *
+ * @param {object}   props.payable  Entitas yang dibayar: { id, order_number|label, total }
+ * @param {'order'|'rental'|'truck_order'} props.type  Jenis transaksi — menentukan endpoint API
+ * @param {Function} props.onClose  Tutup modal
+ * @param {Function} props.onPaid   Callback setelah pembayaran terkirim (payableId, { keepOpen })
+ */
+export default function PaymentModal({ payable, type, onClose, onPaid }) {
   const [selected, setSelected] = useState('midtrans');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
@@ -64,22 +72,22 @@ export default function PaymentModal({ order, onClose, onPaid }) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  // Prefill nominal saat order berubah / metode transfer dipilih.
+  // Prefill nominal saat payable berubah / metode transfer dipilih.
   useEffect(() => {
-    if (order && !amount) setAmount(String(Number(order.total) || 0));
+    if (payable && !amount) setAmount(String(Number(payable.total) || 0));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order]);
+  }, [payable]);
 
-  if (!order) return null;
+  if (!payable) return null;
 
-  const total = Number(order.total) || 0;
+  const total = Number(payable.total) || 0;
   const isManual = selected === 'transfer' || selected === 'cod';
 
   async function payWithMidtrans() {
     setProcessing(true);
     setError(null);
     try {
-      const result = await createMidtransTransaction(order.id);
+      const result = await createMidtransTransaction(payable.id, type);
       const tx = result?.transaction || {};
       const clientKey = tx.client_key;
       const snapToken = tx.snap_token;
@@ -91,11 +99,11 @@ export default function PaymentModal({ order, onClose, onPaid }) {
 
       window.snap.pay(snapToken, {
         onSuccess: () => {
-          onPaid?.(order.id);
+          onPaid?.(payable.id);
           onClose?.();
         },
         onPending: () => {
-          onPaid?.(order.id);
+          onPaid?.(payable.id);
           onClose?.();
         },
         onError: () => {
@@ -128,15 +136,15 @@ export default function PaymentModal({ order, onClose, onPaid }) {
 
     setProcessing(true);
     try {
-      await submitPayment(order.id, { payment_method: selected, amount: numericAmount, proof });
+      await submitPayment(payable.id, type, { payment_method: selected, amount: numericAmount, proof });
       setDone(
         selected === 'transfer'
-          ? 'Bukti transfer terkirim dan menunggu verifikasi admin. Kamu bisa memantau statusnya di halaman ini.'
-          : 'Pesanan dicatat untuk pembayaran di tempat (COD).'
+          ? 'Bukti pembayaran terkirim dan menunggu verifikasi admin. Kamu bisa memantau statusnya di halaman pesanan.'
+          : 'Pembayaran dicatat untuk dibayar di tempat (COD).'
       );
-      // Refresh data order di belakang modal, tapi biarkan modal terbuka
+      // Refresh data di belakang modal, tapi biarkan modal terbuka
       // supaya user sempat membaca pesan konfirmasinya.
-      onPaid?.(order.id, { keepOpen: true });
+      onPaid?.(payable.id, { keepOpen: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal mengirim pembayaran. Silakan coba lagi.');
     } finally {
@@ -149,6 +157,8 @@ export default function PaymentModal({ order, onClose, onPaid }) {
     if (selected === 'midtrans') payWithMidtrans();
     else submitManual();
   }
+
+  const entityLabel = payable.order_number || `#${payable.id}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={onClose}>
@@ -172,7 +182,7 @@ export default function PaymentModal({ order, onClose, onPaid }) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-lg font-extrabold text-charcoal">Pilih Cara Bayar</h2>
-                <p className="mt-0.5 text-xs text-gray-400">Pesanan {order.order_number}</p>
+                <p className="mt-0.5 text-xs text-gray-400">{payable.label ? `${payable.label} · ${entityLabel}` : entityLabel}</p>
               </div>
               <button onClick={onClose} aria-label="Tutup" className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-charcoal">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -225,7 +235,7 @@ export default function PaymentModal({ order, onClose, onPaid }) {
                     className="input-lux mt-1"
                     placeholder={String(total)}
                   />
-                  <p className="mt-1 text-[11px] text-gray-400">Default: total pesanan. Ubah jika kamu membayar sebagian dulu.</p>
+                  <p className="mt-1 text-[11px] text-gray-400">Default: total tagihan. Ubah jika kamu membayar sebagian dulu.</p>
                 </div>
                 <div>
                   <label className="label-lux">Bukti Transfer *</label>
@@ -251,8 +261,8 @@ export default function PaymentModal({ order, onClose, onPaid }) {
             </button>
             <p className="mt-2.5 text-center text-[11px] leading-relaxed text-gray-400">
               {isManual
-                ? 'Pembayaran manual diverifikasi manual oleh admin, biasanya kurang dari 1×24 jam.'
-                : 'Pembayaran diproses aman oleh Midtrans. Status pesanan otomatis diperbarui setelah pembayaran berhasil.'}
+                ? 'Pembayaran manual diverifikasi oleh admin, biasanya kurang dari 1×24 jam.'
+                : 'Pembayaran diproses aman oleh Midtrans. Status otomatis diperbarui setelah pembayaran berhasil.'}
             </p>
           </>
         )}

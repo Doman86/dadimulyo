@@ -10,30 +10,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'truck_id',
     'customer_id',
-    'start_date',
-    'end_date',
-    'price_per_day',
-    'total_price',
-    'status',
+    'order_number',
+    'recipient_name',
+    'phone',
     'notes',
+    'amount',
+    'status',
     'payment_status',
     'midtrans_order_id',
     'midtrans_transaction_id',
     'payment_type',
 ])]
-class Rental extends Model
+class TruckOrder extends Model
 {
-    /**
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-        ];
-    }
-
     public function truck(): BelongsTo
     {
         return $this->belongsTo(Truck::class);

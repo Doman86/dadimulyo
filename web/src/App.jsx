@@ -21,6 +21,7 @@ import TruckForm from './pages/admin/TruckForm';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminRentals from './pages/admin/AdminRentals';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminTruckOrders from './pages/admin/AdminTruckOrders';
 import AdminDeliveries from './pages/admin/AdminDeliveries';
 import AdminOranges from './pages/admin/AdminOranges';
 import OrangeForm from './pages/admin/OrangeForm';
@@ -139,6 +140,14 @@ export default function App() {
               element={
                 <RequireAdmin>
                   <AdminOrders />
+                </RequireAdmin>
+              }
+            />
+            <Route
+              path="truck-orders"
+              element={
+                <RequireAdmin>
+                  <AdminTruckOrders />
                 </RequireAdmin>
               }
             />

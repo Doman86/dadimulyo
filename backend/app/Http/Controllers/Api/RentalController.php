@@ -21,7 +21,7 @@ class RentalController extends Controller
         $user = $request->user();
 
         $query = Rental::query()
-            ->with(['truck.images', 'customer'])
+            ->with(['truck.images', 'customer', 'payments'])
             ->when($user->isAdmin(), fn ($q) => $q, fn ($q) => $q->where('customer_id', $user->id))
             ->when($request->filled('truck_id'), fn ($q) => $q->where('truck_id', $request->input('truck_id')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
@@ -92,7 +92,7 @@ class RentalController extends Controller
     {
         $this->authorizeAccess($request, $rental);
 
-        return new RentalResource($rental->load(['truck.images', 'customer']));
+        return new RentalResource($rental->load(['truck.images', 'customer', 'payments']));
     }
 
     public function update(Request $request, Rental $rental): RentalResource|JsonResponse

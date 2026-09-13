@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\MidtransNotificationController;
+use App\Http\Controllers\Api\TruckOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -200,10 +201,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
 
-    // Payments
+    // Payments — jeruk (order)
     Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
     Route::delete('/orders/{order}/payment/{payment}', [PaymentController::class, 'destroy']);
     Route::post('/orders/{order}/midtrans', [PaymentController::class, 'createMidtransTransaction']);
+
+    // Payments — sewa truck (rental)
+    Route::post('/rentals/{rental}/payment', [PaymentController::class, 'storeRentalPayment']);
+    Route::delete('/rentals/{rental}/payment/{payment}', [PaymentController::class, 'destroyRentalPayment']);
+    Route::post('/rentals/{rental}/midtrans', [PaymentController::class, 'createRentalMidtrans']);
+
+    // Payments — beli truck (truck order)
+    Route::post('/truck-orders', [TruckOrderController::class, 'store']);
+    Route::get('/truck-orders', [TruckOrderController::class, 'index']);
+    Route::get('/truck-orders/{truck_order}', [TruckOrderController::class, 'show']);
+    Route::put('/truck-orders/{truck_order}/cancel', [TruckOrderController::class, 'cancel']);
+    Route::put('/truck-orders/{truck_order}/status', [TruckOrderController::class, 'updateStatus']);
+    Route::post('/truck-orders/{truck_order}/payment', [PaymentController::class, 'storeTruckOrderPayment']);
+    Route::delete('/truck-orders/{truck_order}/payment/{payment}', [PaymentController::class, 'destroyTruckOrderPayment']);
+    Route::post('/truck-orders/{truck_order}/midtrans', [PaymentController::class, 'createTruckOrderMidtrans']);
 
     // Midtrans Notification Endpoints
     Route::post('/midtrans/payment-notification', [MidtransNotificationController::class, 'handlePaymentNotification']);

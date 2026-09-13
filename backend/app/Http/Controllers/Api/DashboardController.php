@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\LeadResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\RentalResource;
+use App\Http\Resources\TruckOrderResource;
 use App\Http\Resources\TruckResource;
 use App\Models\Lead;
 use App\Models\OrangeProduct;
 use App\Models\Order;
 use App\Models\Rental;
 use App\Models\Truck;
+use App\Models\TruckOrder;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -168,6 +170,14 @@ class DashboardController extends Controller
             'recent_wishlists' => TruckResource::collection(
                 Truck::whereIn('id', $user->wishlists()->pluck('truck_id'))
                     ->with(['category', 'images', 'seller'])
+                    ->orderByDesc('created_at')
+                    ->limit(5)
+                    ->get()
+            ),
+            'truck_orders_total' => TruckOrder::where('customer_id', $user->id)->count(),
+            'recent_truck_orders' => TruckOrderResource::collection(
+                TruckOrder::with(['truck.images', 'customer', 'payments'])
+                    ->where('customer_id', $user->id)
                     ->orderByDesc('created_at')
                     ->limit(5)
                     ->get()

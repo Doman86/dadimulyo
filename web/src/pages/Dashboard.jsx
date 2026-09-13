@@ -4,6 +4,7 @@ import { fetchDashboard } from '../api/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import PaymentModal from '../components/PaymentModal';
 import siteConfig from '../config/site';
 
 const ORDER_STATUS = {
@@ -20,6 +21,20 @@ const RENTAL_STATUS = {
   completed: { label: 'Selesai', cls: 'badge-gold' },
   cancelled: { label: 'Dibatalkan', cls: 'badge-orange' },
 };
+const TRUCK_ORDER_STATUS = {
+  pending: { label: 'Pending', cls: 'badge-orange' },
+  confirmed: { label: 'Dikonfirmasi', cls: 'badge-green' },
+  processing: { label: 'Diproses', cls: 'badge-gold' },
+  completed: { label: 'Selesai', cls: 'badge-green' },
+  cancelled: { label: 'Dibatalkan', cls: 'badge-orange' },
+};
+const PAYMENT_BADGE = {
+  unpaid: { label: 'Belum Bayar', cls: 'badge-orange' },
+  pending: { label: 'Menunggu Verifikasi', cls: 'badge-gold' },
+  failed: { label: 'Gagal', cls: 'badge-orange' },
+  paid: { label: 'Lunas', cls: 'badge-green' },
+  refunded: { label: 'Dikembalikan', cls: 'badge-gold' },
+};
 
 function StatusBadge({ map, value }) {
   const s = map[value] || { label: value, cls: 'badge-gold' };
@@ -32,6 +47,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [payable, setPayable] = useState(null); // { id, label, total } untuk popup bayar
 
   // Redirect admin/seller roles to admin panel — but AFTER all hooks are declared
   const isAdminOrSeller = ['admin', 'sales', 'truck_seller', 'orange_seller'].includes(role);
@@ -69,6 +85,7 @@ export default function Dashboard() {
   const summary = stats?.summary || {};
   const orders = stats?.recent_orders || [];
   const rentals = stats?.recent_rentals || [];
+  const truckOrders = stats?.recent_truck_orders || [];
   const wishlists = stats?.recent_wishlists || [];
 
   return (
@@ -133,6 +150,48 @@ export default function Dashboard() {
           </section>
 
           <section>
+            <Reveal><h2 className="font-display text-xl font-bold text-primary mb-4">Pesanan Truck</h2></Reveal>
+            {truckOrders.length === 0 ? (
+              <Reveal delay={100}><p className="text-sm text-gray-400">Belum ada pembelian truck. <Link to="/trucks" className="font-bold text-secondary hover:underline">Lihat katalog truck</Link></p></Reveal>
+            ) : (
+              <div className="space-y-3">
+                {truckOrders.map((to, i) => {
+                  const canPay = to.payment_status !== 'paid' && to.status !== 'cancelled';
+                  return (
+                    <Reveal key={to.id} variant="up" delay={i * 60}>
+                      <div className="card-lux p-4 !rounded-xl">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-bold text-charcoal text-sm truncate">{to.truck?.brand} {to.truck?.model} <span className="font-normal text-gray-400">· {to.order_number}</span></div>
+                            <div className="text-xs text-gray-400">{new Date(to.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                              <StatusBadge map={TRUCK_ORDER_STATUS} value={to.status} />
+                              <span className={(PAYMENT_BADGE[to.payment_status] || {}).cls || 'badge-gold'}>{(PAYMENT_BADGE[to.payment_status] || { label: to.payment_status }).label}</span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="font-extrabold text-primary text-sm">{formatRupiah(to.amount)}</div>
+                            {canPay && (
+                              <button
+                                onClick={() => setPayable({ id: to.id, label: `Beli ${to.truck?.brand} ${to.truck?.model}`, order_number: to.order_number, total: to.amount })}
+                                className="mt-2 btn-lux rounded-xl px-4 py-2 text-xs font-bold"
+                              >
+                                Bayar Sekarang
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Reveal>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          <section>
             <Reveal><h2 className="font-display text-xl font-bold text-primary mb-4">Sewa Truck Terbaru</h2></Reveal>
             {rentals.length === 0 ? (
               <Reveal delay={100}><p className="text-sm text-gray-400">Belum ada sewa. <Link to="/rental" className="font-bold text-secondary hover:underline">Sewa truck sekarang</Link></p></Reveal>
@@ -187,6 +246,20 @@ export default function Dashboard() {
           </section>
         </Reveal>
       </div>
+
+      {payable && (
+        <PaymentModal
+          payable={payable}
+          type="truck_order"
+          onClose={() => {
+            setPayable(null);
+            if (!isAdminOrSeller) fetchDashboard().then(setStats).catch(() => {});
+          }}
+          onPaid={() => {
+            if (!isAdminOrSeller) fetchDashboard().then(setStats).catch(() => {});
+          }}
+        />
+      )}
     </div>
   );
 }

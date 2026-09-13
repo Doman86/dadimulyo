@@ -25,6 +25,7 @@ export default function AdminLayout() {
     { to: '/admin/trucks', label: 'Kelola Truck', icon: '🚛', show: canTrucks },
     { to: '/admin/rentals', label: 'Kelola Rental', icon: '📅', show: isAdmin },
     { to: '/admin/orders', label: 'Pesanan', icon: '🧾', show: isAdmin },
+    { to: '/admin/truck-orders', label: 'Pesanan Truck', icon: '🚛', show: isAdmin },
     { to: '/admin/deliveries', label: 'Pengiriman', icon: '📦', show: isAdmin },
     { to: '/admin/oranges', label: 'Produk Jeruk', icon: '🍊', show: canOranges },
     { to: '/admin/sales', label: 'Dashboard Sales', icon: '📌', show: canLeads },

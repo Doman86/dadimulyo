@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
-class RentalResource extends JsonResource
+class TruckOrderResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -15,19 +15,14 @@ class RentalResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'truck_id' => $this->truck_id,
-            'customer_id' => $this->customer_id,
-            'start_date' => $this->start_date?->format('Y-m-d'),
-            'end_date' => $this->end_date?->format('Y-m-d'),
-            'days' => $this->start_date && $this->end_date
-                ? $this->start_date->diffInDays($this->end_date) + 1
-                : 1,
-            'price_per_day' => $this->price_per_day !== null ? (float) $this->price_per_day : null,
-            'total_price' => $this->total_price !== null ? (float) $this->total_price : null,
+            'order_number' => $this->order_number,
+            'recipient_name' => $this->recipient_name,
+            'phone' => $this->phone,
+            'notes' => $this->notes,
+            'amount' => $this->amount !== null ? (float) $this->amount : null,
             'status' => $this->status,
             'payment_status' => $this->payment_status,
             'payment_type' => $this->payment_type,
-            'notes' => $this->notes,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'truck' => $this->whenLoaded('truck', fn () => [
@@ -35,7 +30,7 @@ class RentalResource extends JsonResource
                 'brand' => $this->truck?->brand,
                 'model' => $this->truck?->model,
                 'year' => $this->truck?->year,
-                'rental_price_per_day' => $this->truck?->rental_price_per_day,
+                'price' => $this->truck?->price !== null ? (float) $this->truck->price : null,
                 'image_url' => $this->truck?->images->first()?->image_path
                     ? url('storage/' . $this->truck->images->first()->image_path)
                     : null,

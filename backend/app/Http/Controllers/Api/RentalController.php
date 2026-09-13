@@ -165,6 +165,48 @@ class RentalController extends Controller
         return response()->json(['success' => true, 'message' => 'Booking dibatalkan.']);
     }
 
+    /**
+     * Pembatalan rental via POST /rentals/{rental}/cancel (dipakai aplikasi mobile).
+     */
+    public function cancel(Request $request, Rental $rental): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->isAdmin() && $rental->customer_id !== $user->id) {
+            abort(403, 'Anda tidak berhak membatalkan rental ini.');
+        }
+
+        if (! in_array($rental->status, ['pending', 'confirmed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rental dengan status ini tidak dapat dibatalkan.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $rental->update([
+            'status' => 'cancelled',
+            'notes' => trim(($rental->notes ? $rental->notes.' | ' : '').'Dibatalkan: '.($validated['reason'] ?? 'oleh pembeli')),
+        ]);
+
+        app(PushNotificationService::class)->notifyMany(
+            \App\Models\Role::where('name', 'admin')->first()?->users->pluck('id') ?? collect(),
+            'Rental dibatalkan',
+            "Booking {$rental->id} dibatalkan oleh penyewa.",
+            'rental',
+            ['id' => $rental->id, 'status' => 'cancelled'],
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking berhasil dibatalkan.',
+            'data' => ['id' => $rental->id, 'status' => 'cancelled'],
+        ]);
+    }
+
     public function availability(Request $request, Truck $truck): JsonResponse
     {
         $request->validate([

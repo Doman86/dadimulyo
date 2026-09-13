@@ -228,6 +228,103 @@ class OrderController extends Controller
         return new OrderResource($order->load(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver']));
     }
 
+    /**
+     * Pembatalan pesanan oleh pembeli.
+     * Hanya pending/confirmed yang boleh dibatalkan; stok produk dikembalikan.
+     */
+    public function cancel(Request $request, Order $order): JsonResponse
+    {
+        $this->authorizeAccess($request, $order);
+
+        if (! in_array($order->status, ['pending', 'confirmed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan dengan status ini tidak dapat dibatalkan.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        return DB::transaction(function () use ($order, $validated) {
+            // Kembalikan stok setiap item produk.
+            foreach ($order->items as $item) {
+                if ($item->orange_product_id) {
+                    OrangeProduct::where('id', $item->orange_product_id)
+                        ->increment('stock_kg', (float) $item->quantity_kg);
+                }
+            }
+
+            $order->update([
+                'status' => 'cancelled',
+                'notes' => trim(($order->notes ? $order->notes.' | ' : '').'Dibatalkan: '.($validated['reason'] ?? 'oleh pembeli')),
+            ]);
+
+            app(PushNotificationService::class)->notify(
+                $order->customer_id,
+                'Pesanan dibatalkan',
+                "Pesanan {$order->order_number} telah dibatalkan.",
+                'order',
+                ['id' => $order->id, 'order_number' => $order->order_number, 'status' => 'cancelled'],
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil dibatalkan.',
+                'data' => ['id' => $order->id, 'status' => 'cancelled'],
+            ]);
+        });
+    }
+
+    /**
+     * Validasi stok keranjang sebelum checkout (dipakai mobile).
+     */
+    public function validateCart(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.orange_product_id' => ['required', 'integer'],
+            'items.*.quantity_kg' => ['required', 'numeric', 'min:0.1'],
+        ]);
+
+        $issues = [];
+
+        foreach ($validated['items'] as $item) {
+            $product = OrangeProduct::where('status', '!=', 'deleted')->find($item['orange_product_id']);
+
+            if (! $product) {
+                $issues[] = [
+                    'orange_product_id' => $item['orange_product_id'],
+                    'product_name' => 'Produk #'.$item['orange_product_id'],
+                    'available' => 0,
+                    'requested' => (float) $item['quantity_kg'],
+                    'reason' => 'not_found',
+                ];
+                continue;
+            }
+
+            if ((float) $product->stock_kg < (float) $item['quantity_kg']) {
+                $issues[] = [
+                    'orange_product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'available' => (float) $product->stock_kg,
+                    'requested' => (float) $item['quantity_kg'],
+                    'reason' => 'insufficient_stock',
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $issues === [] ? 'Stok tersedia.' : 'Beberapa produk stoknya tidak mencukupi.',
+            'data' => [
+                'valid' => $issues === [],
+                'issues' => $issues,
+            ],
+        ]);
+    }
+
     private function authorizeAccess(Request $request, Order $order): void
     {
         $user = $request->user();

@@ -21,4 +21,16 @@ class NotificationController extends Controller
         $notification->update(['read_at' => now()]);
         return response()->json(['success' => true, 'message' => 'Notifikasi ditandai sudah dibaca.']);
     }
+
+    /**
+     * Tandai semua notifikasi user sebagai sudah dibaca (dipakai mobile "Baca Semua").
+     */
+    public function readAll(Request $request): JsonResponse
+    {
+        Notification::where('user_id', $request->user()->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['success' => true, 'message' => 'Semua notifikasi ditandai sudah dibaca.']);
+    }
 }

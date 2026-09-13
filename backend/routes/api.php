@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\OrangeCategoryController;
 use App\Http\Controllers\Api\OrderController;
@@ -18,10 +19,12 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\MidtransNotificationController;
 use App\Http\Controllers\Api\TruckOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\DownloadController;
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:60,1');
@@ -194,12 +197,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
+    // Profil (mobile: edit profil & ganti password)
+    Route::put('/user/profile', [UserController::class, 'updateProfile']);
+    Route::put('/user/password', [UserController::class, 'changePassword']);
+
+    // Alamat tersimpan (mobile)
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::put('/addresses/{address}', [AddressController::class, 'update']);
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
+    Route::put('/addresses/{address}/default', [AddressController::class, 'setDefault']);
+
     // FCM device token
     Route::post('/fcm-token', [DeviceTokenController::class, 'store']);
     Route::delete('/fcm-token', [DeviceTokenController::class, 'destroy']);
 
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
 
     // Payments — jeruk (order)
     Route::post('/orders/{order}/payment', [PaymentController::class, 'store']);
@@ -229,6 +245,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'read']);
+    Route::put('/notifications/read-all', [NotificationController::class, 'readAll']);
+
+    // Validasi stok keranjang sebelum checkout (mobile)
+    Route::post('/cart/validate', [OrderController::class, 'validateCart']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'stats']);
@@ -266,12 +286,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/rentals', [RentalController::class, 'store']);
     Route::get('/rentals/{rental}', [RentalController::class, 'show']);
     Route::put('/rentals/{rental}', [RentalController::class, 'update']);
+    Route::post('/rentals/{rental}/cancel', [RentalController::class, 'cancel']);
     Route::delete('/rentals/{rental}', [RentalController::class, 'destroy']);
+
+    // Drivers & gaji (mobile: manajemen driver)
+    Route::get('/drivers', [DriverController::class, 'index']);
+    Route::post('/drivers', [DriverController::class, 'store']);
+    Route::get('/drivers/{driver}', [DriverController::class, 'show']);
+    Route::put('/drivers/{driver}', [DriverController::class, 'update']);
+    Route::delete('/drivers/{driver}', [DriverController::class, 'destroy']);
+    Route::get('/drivers/{driver}/salaries', [DriverController::class, 'salaries']);
+    Route::post('/drivers/{driver}/salaries', [DriverController::class, 'storeSalary']);
+    Route::put('/drivers/{driver}/salaries/{salary}', [DriverController::class, 'updateSalary']);
+    Route::post('/drivers/{driver}/salaries/{salary}/pay', [DriverController::class, 'paySalary']);
+    Route::get('/drivers/{driver}/salary-summary', [DriverController::class, 'salarySummary']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
     Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus']);
 
     // Deliveries
@@ -293,4 +327,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index']);
+
+    // Download APK
+    Route::get('/download/apk', [DownloadController::class, 'apk']);
 });

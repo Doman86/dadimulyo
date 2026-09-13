@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
@@ -68,5 +70,53 @@ class UserController extends Controller
             'message' => 'Pengguna berhasil dibuat.',
             'data' => ['user' => $user],
         ], 201);
+    }
+
+    /**
+     * Update profil user yang sedang login (dipakai aplikasi mobile).
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if (array_key_exists('email', $validated) && $validated['email'] !== $user->email) {
+            $validated['email_verified_at'] = null;
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'data' => ['user' => $user->fresh()->load('role')],
+        ]);
+    }
+
+    /**
+     * Ganti password user yang sedang login (butuh password lama).
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password:sanctum'],
+            'new_password' => ['required', 'confirmed', Password::min(8), 'different:current_password'],
+        ], [
+            'current_password.current_password' => 'Password saat ini tidak sesuai.',
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil diubah.',
+        ]);
     }
 }

@@ -15,6 +15,12 @@ const companyLinks = [
   { to: '/login', label: 'Masuk' },
 ];
 
+const downloadLink = {
+    label: 'Unduh APK Terbaru',
+    href: '/api/download/apk',
+    isDownload: true,
+};
+
 const contactItems = [
   {
     icon: (
@@ -110,6 +116,18 @@ export default function Footer() {
               ))}
             </ul>
           </div>
+        </div>
+
+        {/* Download APK */}
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">Unduh Aplikasi</h3>
+          <a
+            href="https://dadimulyo.my.id/api/download/apk"
+            download="dadi_mulyo_mobile.apk"
+            className="mt-4 block w-full rounded-lg bg-gold text-white text-center py-2.5 font-medium transition-colors hover:bg-gold/90"
+          >
+            Unduh APK Terbaru (55.9MB)
+          </a>
         </div>
 
         <div className="divider-gold mt-12" />

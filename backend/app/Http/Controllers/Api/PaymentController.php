@@ -183,18 +183,31 @@ class PaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => ['required', 'string', 'in:transfer,cod'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            // Mobile mengirim bank_name/account_name/notes + proof; admin dashboard
+            // mengirim payment_method + amount. Terima keduanya.
+            'payment_method' => ['nullable', 'string', 'in:transfer,cod'],
+            'amount' => ['nullable', 'numeric', 'min:0'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
+            'account_name' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
+        // Nominal default = total tagihan payable.
+        $amount = $validated['amount'] ?? (float) $payable->{$config['amount_field']};
+
         $path = $request->file('proof')?->store('payments', 'public');
         $payment = $payable->payments()->create([
-            'payment_method' => $validated['payment_method'],
-            'amount' => $validated['amount'],
+            'payment_method' => $validated['payment_method'] ?? 'transfer',
+            'amount' => $amount,
             'proof_path' => $path,
             'payable_type' => $type,
             'status' => 'pending',
+            'notes' => trim(collect([
+                $validated['bank_name'] ?? null,
+                $validated['account_name'] ?? null,
+                $validated['notes'] ?? null,
+            ])->filter()->implode(' | ')) ?: null,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Pembayaran dikirim untuk verifikasi.', 'data' => [

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'city',
     'province',
     'postal_code',
+    'is_default',
     'latitude',
     'longitude',
 ])]

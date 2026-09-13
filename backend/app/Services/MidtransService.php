@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 
 class MidtransService
 {
@@ -29,7 +28,9 @@ class MidtransService
 
     public function baseUrl(): string
     {
-        return $this->isProduction ? self::PRODUCTION_BASE_URL : self::SANDBOX_BASE_URL;
+        return $this->isProduction
+            ? self::PRODUCTION_BASE_URL
+            : self::SANDBOX_BASE_URL;
     }
 
     public function clientKey(): string
@@ -37,12 +38,6 @@ class MidtransService
         return $this->clientKey;
     }
 
-    /**
-     * Normalisasi item_details untuk Midtrans.
-     *
-     * @param array<int, array<string, mixed>> $items
-     * @return array<int, array<string, mixed>>
-     */
     private function normalizeItems(array $items): array
     {
         $normalized = [];
@@ -64,12 +59,6 @@ class MidtransService
         return $normalized;
     }
 
-    /**
-     * Normalisasi customer_details untuk Midtrans.
-     *
-     * @param array<string, mixed> $customer
-     * @return array<string, mixed>
-     */
     private function normalizeCustomer(array $customer): array
     {
         return [
@@ -80,31 +69,73 @@ class MidtransService
         ];
     }
 
-    /**
-     * Buat Snap transaction dan kembalikan data yang dibutuhkan frontend.
-     *
-     * @param array{order_id: string, gross_amount: int, items?: array, customer?: array, enabled_payments?: string[]} $payload
-     * @return array{success: bool, snap_token?: string, redirect_url?: string, midtrans_order_id?: string, error?: string}
-     */
     public function createSnap(array $payload): array
     {
         if ($this->serverKey === '') {
-            return ['success' => false, 'error' => 'MIDTRANS_SERVER_KEY belum diatur.'];
+            return [
+                'success' => false,
+                'error' => 'MIDTRANS_SERVER_KEY belum diatur.',
+            ];
         }
 
         $orderId = $payload['order_id'] ?? null;
         $grossAmount = (int) ($payload['gross_amount'] ?? 0);
 
         if (empty($orderId) || $grossAmount <= 0) {
-            return ['success' => false, 'error' => 'order_id dan gross_amount wajib diisi'];
+            return [
+                'success' => false,
+                'error' => 'order_id dan gross_amount wajib diisi',
+            ];
+        }
+
+        $items = $this->normalizeItems($payload['items'] ?? []);
+
+        $itemsTotal = 0;
+
+        foreach ($items as $item) {
+            $price = (int) ($item['price'] ?? 0);
+            $quantity = (int) ($item['quantity'] ?? 1);
+
+            $itemsTotal += $price * $quantity;
+        }
+
+        /*
+         * Midtrans mengharuskan:
+         *
+         * transaction_details.gross_amount
+         * =
+         * total item_details
+         *
+         * Kalau data item dari aplikasi tidak cocok,
+         * gunakan satu item pembayaran dengan nominal total order.
+         */
+        if ($itemsTotal !== $grossAmount) {
+            $items = [
+                [
+                    'id' => $orderId,
+                    'name' => 'Pembayaran Dadi Mulyo',
+                    'price' => $grossAmount,
+                    'quantity' => 1,
+                ],
+            ];
         }
 
         $body = [
-            'order_id' => $orderId,
-            'gross_amount' => $grossAmount,
-            'item_details' => $this->normalizeItems($payload['items'] ?? []),
-            'customer_details' => $this->normalizeCustomer($payload['customer'] ?? []),
-            'enabled_payments' => $payload['enabled_payments'] ?? ['gpay', 'shopeepay', 'va_bank', 'bca_va', 'bva'],
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => $grossAmount,
+            ],
+            'item_details' => $items,
+            'customer_details' => $this->normalizeCustomer(
+                $payload['customer'] ?? []
+            ),
+            'enabled_payments' => $payload['enabled_payments'] ?? [
+                'gopay',
+                'shopeepay',
+                'bca_va',
+                'bni_va',
+                'bri_va',
+            ],
         ];
 
         try {
@@ -113,12 +144,15 @@ class MidtransService
                 'Accept' => 'application/json',
                 'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
             ])
-                ->withOptions(['verify' => false])
-                ->post($this->baseUrl() . '/v2/snap', $body);
+                ->post(
+                    $this->baseUrl() . '/snap/v1/transactions',
+                    $body
+                );
 
             if ($response->successful()) {
                 $data = $response->json();
-                $snapToken = $data['snap_token'] ?? null;
+
+                $snapToken = $data['token'] ?? $data['snap_token'] ?? null;
                 $redirectUrl = $data['redirect_url'] ?? null;
 
                 return [
@@ -135,27 +169,38 @@ class MidtransService
                 'body' => $response->body(),
             ]);
 
-            return ['success' => false, 'error' => $response->json('error_message', 'Midtrans snap gagal')];
+            $error = $response->json(
+                'error_messages.0',
+                $response->json(
+                    'error_message',
+                    'Midtrans snap gagal'
+                )
+            );
+
+            return [
+                'success' => false,
+                'error' => $error,
+            ];
         } catch (\Throwable $e) {
             Log::error('Midtrans snap exception', [
                 'order_id' => $orderId,
                 'message' => $e->getMessage(),
             ]);
 
-            return ['success' => false, 'error' => 'Midtrans gagal diakses: ' . $e->getMessage()];
+            return [
+                'success' => false,
+                'error' => 'Midtrans gagal diakses: ' . $e->getMessage(),
+            ];
         }
     }
 
-    /**
-     * CoreAPI charge (opsional), gunakan kalau butuh charge langsung.
-     *
-     * @param array{order_id: string, payment_type: string, amount: int, customer_details?: array, item_details?: array, cc_token?: string, vn_token?: string, mpi?: array, virtual_account?: array} $payload
-     * @return array{success: bool, status_code?: string, transaction_status?: string, fraud_status?: string, order_id?: string, error?: string}
-     */
     public function charge(array $payload): array
     {
         if ($this->serverKey === '') {
-            return ['success' => false, 'error' => 'MIDTRANS_SERVER_KEY belum diatur.'];
+            return [
+                'success' => false,
+                'error' => 'MIDTRANS_SERVER_KEY belum diatur.',
+            ];
         }
 
         $orderId = $payload['order_id'] ?? null;
@@ -163,7 +208,10 @@ class MidtransService
         $amount = (int) ($payload['amount'] ?? 0);
 
         if (empty($orderId) || $amount <= 0) {
-            return ['success' => false, 'error' => 'order_id dan amount wajib diisi'];
+            return [
+                'success' => false,
+                'error' => 'order_id dan amount wajib diisi',
+            ];
         }
 
         $body = [
@@ -178,7 +226,7 @@ class MidtransService
             'credit_card' => $payload['credit_card'] ?? [],
             'echannel' => $payload['echannel'] ?? null,
             'bca_va' => $payload['bca_va'] ?? null,
-            'benni_va' => $payload['benni_va'] ?? null,
+            'bni_va' => $payload['bni_va'] ?? null,
             'bca_mandiri_va' => $payload['bca_mandiri_va'] ?? null,
             'bri_va' => $payload['bri_va'] ?? null,
             'bank_transfer' => $payload['bank_transfer'] ?? null,
@@ -196,7 +244,6 @@ class MidtransService
             'offline' => $payload['offline'] ?? null,
         ];
 
-        // Kompatibilitas kemungkinan payload lama.
         if (isset($payload['cc_token'])) {
             $body['credit_card'] = $payload['cc_token'];
         }
@@ -207,8 +254,10 @@ class MidtransService
                 'Accept' => 'application/json',
                 'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
             ])
-                ->withOptions(['verify' => false])
-                ->post($this->baseUrl() . '/v2/charge', $body);
+                ->post(
+                    $this->baseUrl() . '/v2/charge',
+                    $body
+                );
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -230,14 +279,23 @@ class MidtransService
                 'body' => $response->body(),
             ]);
 
-            return ['success' => false, 'error' => $response->json('error_message', 'Midtrans charge gagal')];
+            return [
+                'success' => false,
+                'error' => $response->json(
+                    'error_message',
+                    'Midtrans charge gagal'
+                ),
+            ];
         } catch (\Throwable $e) {
             Log::error('Midtrans charge exception', [
                 'order_id' => $orderId,
                 'message' => $e->getMessage(),
             ]);
 
-            return ['success' => false, 'error' => 'Midtrans gagal diakses: ' . $e->getMessage()];
+            return [
+                'success' => false,
+                'error' => 'Midtrans gagal diakses: ' . $e->getMessage(),
+            ];
         }
     }
 }

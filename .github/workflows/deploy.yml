@@ -1,4 +1,3 @@
-
 name: Deploy to Hostinger
 
 on:
@@ -219,7 +218,10 @@ jobs:
 
             echo "Creating storage link..."
 
-            php artisan storage:link --force
+            rm -f public/storage
+            ln -s ../storage/app/public public/storage
+
+            echo "Storage link created successfully"
 
             echo "Caching routes..."
 

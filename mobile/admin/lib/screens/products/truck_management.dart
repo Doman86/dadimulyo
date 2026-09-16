@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
+import 'product_form_dialog.dart';
 
 class TruckManagement extends StatefulWidget {
   const TruckManagement({super.key});
@@ -35,9 +36,7 @@ class _TruckManagementState extends State<TruckManagement> {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Open add truck form
-                },
+                onPressed: () => showProductFormDialog(context, kind: 'truck'),
                 icon: const Icon(Icons.add),
                 label: const Text('Tambah Truck'),
               ),
@@ -95,15 +94,11 @@ class _TruckManagementState extends State<TruckManagement> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, size: 18),
-                                  onPressed: () {
-                                    // TODO: Edit truck
-                                  },
+                                  onPressed: () => showProductFormDialog(context, kind: 'truck', existing: truck),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                                  onPressed: () {
-                                    // TODO: Delete truck
-                                  },
+                                  onPressed: () => confirmDeleteProduct(context, kind: 'truck', item: truck),
                                 ),
                               ],
                             ),

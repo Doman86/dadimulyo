@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/admin_provider.dart';
 
+/// Daftar pelanggan — kini memakai endpoint /users (role=customer).
+/// Endpoint /customers tidak ada di backend (dulu selalu 404).
 class CustomerManagement extends StatefulWidget {
   const CustomerManagement({super.key});
 
@@ -10,28 +13,65 @@ class CustomerManagement extends StatefulWidget {
 }
 
 class _CustomerManagementState extends State<CustomerManagement> {
+  final bool _busy = false;
+
   @override
   void initState() {
     super.initState();
-    context.read<AdminProvider>().loadCustomers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AdminProvider>().loadCustomers();
+    });
+  }
+
+  String _formatDate(dynamic value) {
+    if (value == null) return '-';
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return value.toString();
+    return DateFormat('d MMM yyyy', 'id').format(parsed);
   }
 
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminProvider>();
+    final customers = admin.users;
 
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Daftar Pelanggan',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Daftar Pelanggan',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Refresh',
+                onPressed: _busy ? null : () => admin.loadCustomers(),
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
+
+          if (admin.error != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(admin.error!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12)),
+            ),
+
           Expanded(
-            child: admin.customers.isEmpty
+            child: customers.isEmpty
                 ? const Center(child: Text('Belum ada pelanggan'))
                 : SingleChildScrollView(
                     child: DataTable(
@@ -43,33 +83,30 @@ class _CustomerManagementState extends State<CustomerManagement> {
                         DataColumn(label: Text('Status')),
                         DataColumn(label: Text('Bergabung')),
                       ],
-                      rows: admin.customers.map((customer) {
+                      rows: customers.map((customer) {
+                        final status = customer['status']?.toString() ?? 'active';
                         return DataRow(cells: [
                           DataCell(Text('${customer['id']}')),
-                          DataCell(Text(customer['name'] ?? '-')),
-                          DataCell(Text(customer['email'] ?? '-')),
-                          DataCell(Text(customer['phone'] ?? '-')),
+                          DataCell(Text(customer['name']?.toString() ?? '-')),
+                          DataCell(Text(customer['email']?.toString() ?? '-')),
+                          DataCell(Text(customer['phone']?.toString() ?? '-')),
                           DataCell(
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: customer['status'] == 'active'
-                                    ? Colors.green[100]
-                                    : Colors.red[100],
+                                color: (status == 'active' ? Colors.green : Colors.red).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                customer['status'] ?? 'unknown',
+                                status,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: customer['status'] == 'active'
-                                      ? Colors.green[700]
-                                      : Colors.red[700],
+                                  color: status == 'active' ? Colors.green[700] : Colors.red[700],
                                 ),
                               ),
                             ),
                           ),
-                          DataCell(Text(customer['created_at'] ?? '-')),
+                          DataCell(Text(_formatDate(customer['created_at']))),
                         ]);
                       }).toList(),
                     ),

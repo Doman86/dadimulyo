@@ -95,7 +95,9 @@ class ReportController extends Controller
             ->orderBy('month')
             ->get();
 
-        $avgOrderValue = $periodOrders > 0 ? $periodRevenue = Order::where('created_at', '>=', $startDate)->avg('total') : 0;
+        $avgOrderValue = $periodOrders > 0
+            ? (float) Order::where('created_at', '>=', $startDate)->avg('total')
+            : 0;
 
         return [
             'total' => $total,
@@ -271,5 +273,106 @@ class ReportController extends Controller
         if (! $request->user()?->isAdmin()) {
             abort(403, 'Hanya admin yang dapat melihat laporan.');
         }
+    }
+
+    /**
+     * Export laporan sebagai CSV (unduhan).
+     * Row pertama = header, baris berikut = data, sudah termasuk ringkasan total.
+     */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $this->authorizeAdmin($request);
+
+        $period = $request->string('period')->toString();
+
+        $filename = 'laporan-dadimulyo-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () use ($period) {
+            $out = fopen('php://output', 'w');
+
+            // BOM UTF-8 agar Excel membaca karakter non-ASCII dengan benar.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['Laporan Dadi Mulyo', 'Periode', $period, 'Diunduh', now()->format('Y-m-d H:i:s')]);
+            fputcsv($out, []);
+
+            $data = [
+                'Pendapatan' => $this->revenueReport($period),
+                'Pesanan' => $this->ordersReport($period),
+                'Lead' => $this->leadsReport($period),
+                'Sewa' => $this->rentalsReport($period),
+                'Truck' => $this->trucksReport(),
+                'Jeruk' => $this->orangesReport(),
+                'Pengguna' => $this->usersReport(),
+            ];
+
+            foreach ($data as $sectionTitle => $section) {
+                fputcsv($out, [$sectionTitle]);
+
+                foreach ($section as $key => $value) {
+                    $this->writeCsvRow($out, (string) $key, $value);
+                }
+
+                fputcsv($out, []);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Tulis satu baris CSV dari pasangan label-nilai.
+     * Menangani skalar, tanggal, dan koleksi/nested array (dengan sub-header).
+     */
+    private function writeCsvRow($handle, string $label, mixed $value): void
+    {
+        if ($value instanceof \Illuminate\Support\Collection) {
+            $value = $value->all();
+        }
+
+        if (is_array($value)) {
+            if ($value === []) {
+                fputcsv($handle, [$label, '-']);
+
+                return;
+            }
+
+            // Array list = tabel; array assoc = label bersarang.
+            if (array_is_list($value)) {
+                $first = $value[0];
+                $columns = is_array($first)
+                    ? array_keys($first)
+                    : (array) array_keys($value === [] ? [] : $value);
+
+                if (is_array($first)) {
+                    fputcsv($handle, [$label]);
+                    fputcsv($handle, $columns);
+
+                    foreach ($value as $row) {
+                        fputcsv($handle, array_values($row));
+                    }
+
+                    return;
+                }
+
+                fputcsv($handle, [$label, implode('; ', $value)]);
+
+                return;
+            }
+
+            foreach ($value as $subLabel => $subValue) {
+                $this->writeCsvRow($handle, "{$label}.{$subLabel}", $subValue);
+            }
+
+            return;
+        }
+
+        if (is_bool($value)) {
+            $value = $value ? '1' : '0';
+        }
+
+        fputcsv($handle, [$label, $value instanceof \DateTimeInterface ? $value->format('Y-m-d H:i:s') : (string) $value]);
     }
 }

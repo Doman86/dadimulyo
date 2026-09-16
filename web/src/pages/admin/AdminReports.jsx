@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchReports } from '../../api/reports';
+import { exportReportsCsv, fetchReports } from '../../api/reports';
 import { formatNumber, formatRupiah } from '../../utils/format';
 import Reveal from '../../components/Reveal';
 import siteConfig from '../../config/site';
@@ -81,11 +81,23 @@ export default function AdminReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('month');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     fetchReports({ period }).then(setReports).catch(() => setError('Gagal memuat data laporan.')).finally(() => setLoading(false));
   }, [period]);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await exportReportsCsv({ period });
+    } catch {
+      setError('Gagal mengunduh laporan. Coba lagi.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-32">
@@ -113,10 +125,17 @@ export default function AdminReports() {
             <h1 className="font-display text-3xl font-extrabold text-charcoal">Laporan</h1>
             <p className="mt-1 text-sm text-gray-400">Ringkasan data bisnis {siteConfig.company.name}.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {[{ value: 'week', label: 'Minggu Ini' }, { value: 'month', label: 'Bulan Ini' }, { value: 'year', label: 'Tahun Ini' }].map((p) => (
               <button key={p.value} onClick={() => setPeriod(p.value)} className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${period === p.value ? 'bg-forest text-gold-light shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-gold/30'}`}>{p.label}</button>
             ))}
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="rounded-xl bg-gold px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-gold/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {exporting ? 'Mengunduh...' : '⬇ Unduh CSV'}
+            </button>
           </div>
         </div>
       </Reveal>

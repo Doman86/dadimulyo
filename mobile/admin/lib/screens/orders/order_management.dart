@@ -17,16 +17,18 @@ class _OrderManagementState extends State<OrderManagement> {
   @override
   void initState() {
     super.initState();
-    context.read<AdminProvider>().loadOrders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AdminProvider>().loadOrders();
+    });
   }
 
   /// Alur status yang runtut — selaras dengan backend (STATUS_FLOW):
   /// pending -> confirmed -> processing -> shipping -> delivered -> completed.
   static const _nextStatusMap = <String, List<String>>{
-    'pending': ['confirmed'],
-    'confirmed': ['processing'],
-    'processing': ['shipping'],
-    'shipping': ['delivered'],
+    'pending': ['confirmed', 'cancelled'],
+    'confirmed': ['processing', 'cancelled'],
+    'processing': ['shipping', 'cancelled'],
+    'shipping': ['delivered', 'cancelled'],
     'delivered': ['completed'],
     'completed': [],
     'cancelled': [],
@@ -80,25 +82,45 @@ class _OrderManagementState extends State<OrderManagement> {
 
   String _paymentMethodLabel(String? method) {
     switch (method) {
-      case 'online': return 'Online';
-      case 'dp_online': return 'DP 50%';
+      case 'online': return 'Online (Midtrans)';
+      case 'dp_online': return 'DP 50% (Midtrans)';
       case 'cod': return 'COD';
       case 'face_to_face': return 'Face to Face';
+      case 'transfer': return 'Transfer';
       default: return '-';
     }
+  }
+
+  String _customerName(Map<String, dynamic> order) {
+    final customer = order['customer'];
+    if (customer is Map) return customer['name']?.toString() ?? '-';
+    return order['customer_name']?.toString() ?? '-';
+  }
+
+  String _customerPhone(Map<String, dynamic> order) {
+    final customer = order['customer'];
+    if (customer is Map) return customer['phone']?.toString() ?? '-';
+    return '';
+  }
+
+  String _formatDate(dynamic value) {
+    if (value == null) return '-';
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return value.toString();
+    return DateFormat('d MMM yyyy, HH:mm', 'id').format(parsed);
   }
 
   Future<void> _advanceStatus(Map<String, dynamic> order, String next) async {
     setState(() => _busy = true);
     final admin = context.read<AdminProvider>();
-    final ok = await admin.updateOrderStatus(order['id'] as int, next);
+    final ok = await admin.updateOrderStatus(order['id'] as int, {'status': next});
     if (!mounted) return;
     setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok
             ? 'Status pesanan diubah menjadi ${_statusLabel(next)}.'
-            : 'Gagal mengubah status pesanan. Alur harus runtut.'),
+            : (admin.error ?? 'Gagal mengubah status pesanan. Alur harus runtut.')),
         backgroundColor: ok ? Colors.green : Colors.redAccent,
       ),
     );
@@ -114,7 +136,38 @@ class _OrderManagementState extends State<OrderManagement> {
       SnackBar(
         content: Text(ok
             ? (reject ? 'Pembayaran ditolak.' : 'Pembayaran tunai dikonfirmasi — status pesanan tidak berubah.')
-            : 'Gagal memproses konfirmasi pembayaran.'),
+            : (admin.error ?? 'Gagal memproses konfirmasi pembayaran.')),
+        backgroundColor: ok ? Colors.green : Colors.redAccent,
+      ),
+    );
+  }
+
+  Future<void> _cancelOrder(Map<String, dynamic> order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Batalkan Pesanan?'),
+        content: Text('Pesanan ${order['order_number'] ?? ''} akan dibatalkan dan stok dikembalikan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Batalkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final admin = context.read<AdminProvider>();
+    final ok = await admin.updateOrderStatus(order['id'] as int, {'status': 'cancelled'});
+    if (!mounted) return;
+    setState(() => _busy = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Pesanan dibatalkan.' : (admin.error ?? 'Gagal membatalkan pesanan.')),
         backgroundColor: ok ? Colors.green : Colors.redAccent,
       ),
     );
@@ -141,6 +194,11 @@ class _OrderManagementState extends State<OrderManagement> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
+              IconButton(
+                tooltip: 'Refresh',
+                onPressed: _busy ? null : () => admin.loadOrders(),
+                icon: const Icon(Icons.refresh),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -159,6 +217,7 @@ class _OrderManagementState extends State<OrderManagement> {
                     DropdownMenuItem(value: 'shipping', child: Text('Dikirim')),
                     DropdownMenuItem(value: 'delivered', child: Text('Diterima')),
                     DropdownMenuItem(value: 'completed', child: Text('Selesai')),
+                    DropdownMenuItem(value: 'cancelled', child: Text('Dibatalkan')),
                   ],
                   onChanged: (v) => setState(() => _filterStatus = v ?? ''),
                 ),
@@ -201,17 +260,33 @@ class _OrderManagementState extends State<OrderManagement> {
                         final paymentStatus = order['payment_status'] as String?;
                         final nextList = _nextStatusMap[status] ?? const [];
                         final isCash = paymentMethod == 'cod' || paymentMethod == 'face_to_face' || paymentMethod == 'dp_online';
+                        final isDp = paymentMethod == 'dp_online';
+                        final dpAmount = (order['dp_amount'] as num?)?.toDouble() ?? 0;
 
                         return DataRow(cells: [
                           DataCell(Text(
                             order['order_number'] ?? '-',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           )),
-                          DataCell(Text(order['customer_name'] ?? '-')),
                           DataCell(Text(
-                            NumberFormat.currency(locale: 'id', symbol: 'Rp')
-                                .format(order['total'] ?? 0),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            '${_customerName(order)}\n${_customerPhone(order)}',
+                            style: const TextStyle(fontSize: 12),
+                          )),
+                          DataCell(Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0)
+                                    .format(order['total'] ?? 0),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              if (isDp)
+                                Text(
+                                  'DP ${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(dpAmount)}',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                            ],
                           )),
                           DataCell(
                             Container(
@@ -251,23 +326,29 @@ class _OrderManagementState extends State<OrderManagement> {
                               ],
                             ),
                           ),
-                          DataCell(Text(order['created_at'] ?? '-')),
+                          DataCell(Text(_formatDate(order['created_at']), style: const TextStyle(fontSize: 12))),
                           DataCell(
                             Row(
                               children: [
                                 // Langkah status berikutnya (runtut, tanpa lompat).
                                 for (final next in nextList)
-                                  TextButton(
-                                    onPressed: _busy ? null : () => _advanceStatus(order, next),
-                                    child: Text('→ ${_statusLabel(next)}'),
-                                  ),
+                                  if (next == 'cancelled')
+                                    TextButton(
+                                      onPressed: _busy ? null : () => _cancelOrder(order),
+                                      child: const Text('Batalkan', style: TextStyle(color: Colors.red)),
+                                    )
+                                  else
+                                    TextButton(
+                                      onPressed: _busy ? null : () => _advanceStatus(order, next),
+                                      child: Text('→ ${_statusLabel(next)}'),
+                                    ),
                                 // Konfirmasi tunai untuk F2F/COD/pelunasan DP —
                                 // hanya ubah payment_status.
                                 if (isCash && paymentStatus != 'paid') ...[
                                   TextButton(
                                     onPressed: _busy ? null : () => _confirmCash(order),
                                     child: Text(
-                                      paymentMethod == 'dp_online' ? '✓ Lunasi' : '✓ Bayar',
+                                      isDp ? '✓ Lunasi' : '✓ Bayar',
                                       style: const TextStyle(color: Colors.green),
                                     ),
                                   ),

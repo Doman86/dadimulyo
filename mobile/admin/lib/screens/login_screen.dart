@@ -14,22 +14,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _otpCtrl = TextEditingController();
   bool _obscure = true;
+  bool _otpMode = false;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _otpCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final admin = context.read<AdminProvider>();
-    final success = await admin.login(_emailCtrl.text.trim(), _passCtrl.text);
-    
-    if (success && mounted) {
+    final result = await admin.login(_emailCtrl.text.trim(), _passCtrl.text);
+
+    if (!mounted) return;
+    if (result == 'ok') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } else if (result == 'otp') {
+      setState(() => _otpMode = true);
+    }
+  }
+
+  Future<void> _verifyOtp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final admin = context.read<AdminProvider>();
+    final ok = await admin.verifyOtp(_emailCtrl.text.trim(), _otpCtrl.text.trim());
+
+    if (!mounted) return;
+    if (ok == 'ok') {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
@@ -40,127 +61,204 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminProvider>();
-    
+
     return Scaffold(
       body: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Center(
-                    child: Text('🚛', style: TextStyle(fontSize: 40)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Dadi Mulyo Admin',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Dashboard Admin Panel',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 32),
-                
-                // Error message
-                if (admin.error != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      admin.error!,
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
-                    ),
-                  ),
-                
-                // Email
-                TextFormField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 16),
-                
-                // Password
-                TextFormField(
-                  controller: _passCtrl,
-                  obscureText: _obscure,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outlined),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
-                  validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 24),
-                
-                // Login button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: admin.loading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      foregroundColor: Colors.white,
-                    ),
-                    child: admin.loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Masuk',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                  ),
+        child: SingleChildScrollView(
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(
+                      child: Text('🚛', style: TextStyle(fontSize: 40)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Dadi Mulyo Admin',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _otpMode ? 'Masukkan kode verifikasi' : 'Dashboard Admin Panel',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Error message
+                  if (admin.error != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              admin.error!,
+                              style: const TextStyle(color: Colors.red, fontSize: 13),
+                            ),
+                          ),
+                          if (_otpMode)
+                            GestureDetector(
+                              onTap: () => admin.resendOtp(_emailCtrl.text.trim()),
+                              child: const Text(
+                                'Kirim ulang',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                  if (_otpMode) ...[
+                    // Kode OTP
+                    TextFormField(
+                      controller: _otpCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 22, letterSpacing: 8),
+                      decoration: const InputDecoration(
+                        labelText: 'Kode Verifikasi',
+                        hintText: '••••••',
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) =>
+                          v == null || v.trim().length < 6 ? 'Kode 6 digit' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: admin.loading ? null : _verifyOtp,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                        ),
+                        child: admin.loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Verifikasi',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _otpMode = false;
+                          _otpCtrl.clear();
+                          admin.resendOtp(_emailCtrl.text.trim());
+                        });
+                      },
+                      child: const Text('Kembali ke login'),
+                    ),
+                  ] else ...[
+                    // Email
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password
+                    TextFormField(
+                      controller: _passCtrl,
+                      obscureText: _obscure,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outlined),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                        ),
+                      ),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Wajib diisi' : null,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Login button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: admin.loading ? null : _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                        ),
+                        child: admin.loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Masuk',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),

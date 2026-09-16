@@ -9,6 +9,7 @@ use App\Models\TruckOrder;
 use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MidtransNotificationController extends Controller
 {
@@ -36,6 +37,21 @@ class MidtransNotificationController extends Controller
                 'success' => false,
                 'message' => 'Order ID not provided',
             ], 400);
+        }
+
+        // Endpoint ini PUBLIC (tanpa auth), jadi satu-satunya bukti bahwa
+        // request benar-benar dari Midtrans adalah signature_key:
+        // sha512(order_id + status_code + gross_amount + server_key).
+        if (! $this->isSignatureValid($request, (string) $midtransOrderId)) {
+            Log::warning('Midtrans webhook: signature tidak valid', [
+                'order_id' => $midtransOrderId,
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid signature',
+            ], 403);
         }
 
         $payable = $this->resolvePayable($midtransOrderId);
@@ -71,10 +87,6 @@ class MidtransNotificationController extends Controller
                 // Konfirmasi pesanan otomatis setelah DP masuk (alur sama seperti lunas).
                 if (in_array($payable->status, ['pending'])) {
                     $payable->update(['status' => 'confirmed']);
-                }
-
-                if ($payable->delivery) {
-                    $payable->delivery->update(['status' => 'ready']);
                 }
 
                 app(PushNotificationService::class)->notify(
@@ -126,10 +138,6 @@ class MidtransNotificationController extends Controller
             if ($payable instanceof Order) {
                 // Konfirmasi pesanan otomatis setelah pembayaran berhasil.
                 $payable->update(['status' => 'confirmed']);
-
-                if ($payable->delivery) {
-                    $payable->delivery->update(['status' => 'ready']);
-                }
 
                 app(PushNotificationService::class)->notify(
                     $payable->customer_id,
@@ -210,6 +218,34 @@ class MidtransNotificationController extends Controller
     }
 
     /**
+     * Verifikasi signature_key notifikasi Midtrans.
+     *
+     * Rumus resmi: sha512(order_id + status_code + gross_amount + server_key).
+     * gross_amount harus persis seperti yang dikirim (string "90000.00"),
+     * karena Midtrans menghitung signature dari representasi aslinya.
+     */
+    private function isSignatureValid(Request $request, string $orderId): bool
+    {
+        $serverKey = (string) config('services.midtrans.server_key');
+
+        // Tanpa server key, signature tidak bisa diverifikasi — jangan pernah
+        // menerima notifikasi (mencegah pemalsuan saat konfigurasi lupa diisi).
+        if ($serverKey === '') {
+            return false;
+        }
+
+        $expected = hash(
+            'sha512',
+            $orderId
+                . (string) $request->input('status_code', '')
+                . (string) $request->input('gross_amount', '')
+                . $serverKey,
+        );
+
+        return hash_equals($expected, (string) $request->input('signature_key', ''));
+    }
+
+    /**
      * Cari model payable berdasarkan prefix order id Midtrans.
      */
     private function resolvePayable(string $midtransOrderId): Order|Rental|TruckOrder|null
@@ -272,14 +308,6 @@ class MidtransNotificationController extends Controller
             $order->update([
                 'status' => 'confirmed',
             ]);
-
-            // Jika ada delivery yang belum dikonfirmasi, siapkan untuk proses
-            // pengiriman (status ready) — sesuaikan dengan alur bisnis.
-            if ($order->delivery) {
-                $order->delivery->update([
-                    'status' => 'ready',
-                ]);
-            }
 
             app(PushNotificationService::class)->notify(
                 $order->customer_id,

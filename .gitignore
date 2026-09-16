@@ -28,6 +28,7 @@ Thumbs.db
 
 # Archives
 *.zip
+*.tar.gz
 
 # Logs
 *.log
@@ -45,5 +46,3 @@ bootstrap/cache/*.php
 
 # WhatsApp bot session credentials (jangan pernah commit!)
 whatsapp-bot/auth_info/
-
-backend-deploy.tar.gz

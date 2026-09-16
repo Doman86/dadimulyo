@@ -191,6 +191,13 @@ Route::get('/reviews', [ReviewController::class, 'index']);
 // Public: landing page stats
 Route::get('/site-stats', [SiteStatsController::class, 'index']);
 
+// Midtrans Notification Endpoints — PUBLIC, tanpa auth:sanctum.
+// Request datang dari server Midtrans (bukan user login), jadi autentikasi
+// dilakukan lewat verifikasi signature_key di controller.
+Route::post('/midtrans/payment-notification', [MidtransNotificationController::class, 'handlePaymentNotification']);
+Route::post('/midtrans/recurring-notification', [MidtransNotificationController::class, 'handleRecurringNotification']);
+Route::post('/midtrans/gopay-linking', [MidtransNotificationController::class, 'handleGoPayLinking']);
+
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -237,10 +244,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/truck-orders/{truck_order}/payment/{payment}', [PaymentController::class, 'destroyTruckOrderPayment']);
     Route::post('/truck-orders/{truck_order}/midtrans', [PaymentController::class, 'createTruckOrderMidtrans']);
 
-    // Midtrans Notification Endpoints
-    Route::post('/midtrans/payment-notification', [MidtransNotificationController::class, 'handlePaymentNotification']);
-    Route::post('/midtrans/recurring-notification', [MidtransNotificationController::class, 'handleRecurringNotification']);
-    Route::post('/midtrans/gopay-linking', [MidtransNotificationController::class, 'handleGoPayLinking']);
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
@@ -332,6 +335,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index']);
+    Route::get('/reports/export', [ReportController::class, 'export']);
 
     // Download APK
     Route::get('/download/apk', [DownloadController::class, 'apk']);

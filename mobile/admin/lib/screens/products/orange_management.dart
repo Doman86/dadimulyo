@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
+import 'product_form_dialog.dart';
 
 class OrangeManagement extends StatefulWidget {
   const OrangeManagement({super.key});
@@ -34,9 +35,7 @@ class _OrangeManagementState extends State<OrangeManagement> {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Open add orange form
-                },
+                onPressed: () => showProductFormDialog(context, kind: 'orange'),
                 icon: const Icon(Icons.add),
                 label: const Text('Tambah Produk'),
               ),
@@ -92,15 +91,11 @@ class _OrangeManagementState extends State<OrangeManagement> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, size: 18),
-                                  onPressed: () {
-                                    // TODO: Edit orange
-                                  },
+                                  onPressed: () => showProductFormDialog(context, kind: 'orange', existing: orange),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                                  onPressed: () {
-                                    // TODO: Delete orange
-                                  },
+                                  onPressed: () => confirmDeleteProduct(context, kind: 'orange', item: orange),
                                 ),
                               ],
                             ),

@@ -13,6 +13,31 @@ class DpPaymentFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Webhook Midtrans kini PUBLIC dan memverifikasi signature_key
+     * (sha512 dari order_id + status_code + gross_amount + server_key).
+     * Helper ini menyusun payload notifikasi lengkap dengan signature valid.
+     */
+    private function postWebhook(string $midtransOrderId, string $status, array $extra = []): \Illuminate\Testing\TestResponse
+    {
+        $payload = [
+            'order_id' => $midtransOrderId,
+            'transaction_status' => $status,
+            'transaction_id' => 'tx-' . uniqid(),
+            'payment_type' => 'qris',
+            'status_code' => '200',
+            'gross_amount' => '90000.00',
+            ...$extra,
+        ];
+
+        $payload['signature_key'] = hash(
+            'sha512',
+            $payload['order_id'] . $payload['status_code'] . $payload['gross_amount'] . config('services.midtrans.server_key'),
+        );
+
+        return $this->postJson('/api/midtrans/payment-notification', $payload);
+    }
+
     private function userWithRole(string $roleName, string $email): User
     {
         $this->seed(RoleSeeder::class);
@@ -94,12 +119,7 @@ class DpPaymentFlowTest extends TestCase
         [, $orderId] = $this->createDpOrder();
 
         // Tahap 1: DP masuk.
-        $this->postJson('/api/midtrans/payment-notification', [
-            'order_id' => "JERUK-{$orderId}-DP",
-            'transaction_status' => 'settlement',
-            'transaction_id' => 'tx-dp-1',
-            'payment_type' => 'qris',
-        ])->assertOk();
+        $this->postWebhook("JERUK-{$orderId}-DP", 'settlement')->assertOk();
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
@@ -113,12 +133,7 @@ class DpPaymentFlowTest extends TestCase
         ]);
 
         // Tahap 2: pelunasan masuk.
-        $this->postJson('/api/midtrans/payment-notification', [
-            'order_id' => "JERUK-{$orderId}-REMAIN",
-            'transaction_status' => 'settlement',
-            'transaction_id' => 'tx-remain-1',
-            'payment_type' => 'qris',
-        ])->assertOk();
+        $this->postWebhook("JERUK-{$orderId}-REMAIN", 'settlement')->assertOk();
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
@@ -137,24 +152,38 @@ class DpPaymentFlowTest extends TestCase
     {
         [, $orderId] = $this->createDpOrder();
 
-        $this->postJson('/api/midtrans/payment-notification', [
-            'order_id' => "JERUK-{$orderId}-DP",
-            'transaction_status' => 'settlement',
-            'transaction_id' => 'tx-dp-2',
-            'payment_type' => 'qris',
-        ])->assertOk();
+        $this->postWebhook("JERUK-{$orderId}-DP", 'settlement')->assertOk();
 
         // Snap pelunasan gagal — DP tidak boleh ikut turun ke failed.
-        $this->postJson('/api/midtrans/payment-notification', [
-            'order_id' => "JERUK-{$orderId}-REMAIN",
-            'transaction_status' => 'deny',
-            'transaction_id' => 'tx-remain-2',
-            'payment_type' => 'qris',
-        ])->assertOk();
+        $this->postWebhook("JERUK-{$orderId}-REMAIN", 'deny')->assertOk();
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
             'payment_status' => 'dp_paid',
+        ]);
+    }
+
+    public function test_webhook_with_invalid_signature_is_rejected(): void
+    {
+        [, $orderId] = $this->createDpOrder();
+
+        // Signature palsu (bukan hasil sha512 dengan server key asli).
+        $response = $this->postJson('/api/midtrans/payment-notification', [
+            'order_id' => "JERUK-{$orderId}-DP",
+            'transaction_status' => 'settlement',
+            'transaction_id' => 'tx-fake',
+            'payment_type' => 'qris',
+            'status_code' => '200',
+            'gross_amount' => '90000.00',
+            'signature_key' => str_repeat('0', 128),
+        ]);
+
+        $response->assertStatus(403);
+
+        // Order tidak boleh berubah jadi dp_paid oleh request palsu.
+        $this->assertDatabaseHas('orders', [
+            'id' => $orderId,
+            'payment_status' => 'unpaid',
         ]);
     }
 
@@ -163,12 +192,7 @@ class DpPaymentFlowTest extends TestCase
         $admin = $this->userWithRole('admin', 'dp-admin@test.com');
         [, $orderId] = $this->createDpOrder();
 
-        $this->postJson('/api/midtrans/payment-notification', [
-            'order_id' => "JERUK-{$orderId}-DP",
-            'transaction_status' => 'settlement',
-            'transaction_id' => 'tx-dp-3',
-            'payment_type' => 'qris',
-        ])->assertOk();
+        $this->postWebhook("JERUK-{$orderId}-DP", 'settlement')->assertOk();
 
         // Pelunasan tunai dikonfirmasi admin.
         $this->actingAs($admin)

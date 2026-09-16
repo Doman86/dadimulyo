@@ -18,17 +18,26 @@ class ReviewController extends Controller
         $validated = $request->validate([
             'truck_id' => ['nullable', 'integer', 'exists:trucks,id'],
             'orange_product_id' => ['nullable', 'integer', 'exists:orange_products,id'],
-            'status' => ['nullable', 'string', 'in:pending,approved,rejected'],
+            // "all" = admin melihat semua status (untuk moderasi di dashboard).
+            'status' => ['nullable', 'string', 'in:pending,approved,rejected,all'],
         ]);
 
         $query = Review::query()->with('user:id,name')
             ->when(isset($validated['truck_id']), fn ($q) => $q->where('truck_id', $validated['truck_id']))
             ->when(isset($validated['orange_product_id']), fn ($q) => $q->where('orange_product_id', $validated['orange_product_id']))
             // Admin boleh melihat semua status; publik hanya approved.
+            // status=all (admin) => tanpa filter status.
             ->when(
-                $request->user()?->isAdmin() && isset($validated['status']),
-                fn ($q) => $q->where('status', $validated['status']),
-                fn ($q) => $q->where('status', 'approved')
+                isset($validated['status']) && $validated['status'] !== 'all',
+                fn ($q) => $q->when(
+                    $request->user()?->isAdmin(),
+                    fn ($q) => $q->where('status', $validated['status']),
+                    fn ($q) => $q->where('status', 'approved')
+                ),
+                fn ($q) => $q->when(
+                    ! $request->user()?->isAdmin(),
+                    fn ($q) => $q->where('status', 'approved')
+                )
             )
             ->latest();
 

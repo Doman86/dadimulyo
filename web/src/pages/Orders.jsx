@@ -8,12 +8,17 @@ const ORDER_STATUS = {
   pending: { label: 'Pending', cls: 'badge-orange' },
   confirmed: { label: 'Dikonfirmasi', cls: 'badge-green' },
   processing: { label: 'Diproses', cls: 'badge-gold' },
+  shipping: { label: 'Dikirim', cls: 'badge-gold' },
+  delivered: { label: 'Diterima', cls: 'badge-green' },
   completed: { label: 'Selesai', cls: 'badge-green' },
   cancelled: { label: 'Dibatalkan', cls: 'badge-orange' },
 };
 
 const PAYMENT_STATUS = {
   unpaid: { label: 'Belum Bayar', cls: 'badge-orange' },
+  pending: { label: 'Menunggu Pembayaran', cls: 'badge-gold' },
+  dp_paid: { label: 'DP Dibayar (50%)', cls: 'badge-gold' },
+  failed: { label: 'Gagal', cls: 'badge-orange' },
   paid: { label: 'Lunas', cls: 'badge-green' },
   refunded: { label: 'Dikembalikan', cls: 'badge-gold' },
 };

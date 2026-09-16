@@ -30,6 +30,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _province = '';
   String _postalCode = '';
   String _notes = '';
+  // Metode pembayaran — konsisten dengan web & backend:
+  // face_to_face (bayar langsung), cod (bayar di tempat), online (Midtrans),
+  // dp_online (DP 50% via Midtrans + pelunasan).
+  String _paymentMethod = 'online';
   bool _needDelivery = false;
   bool _needDriver = false;
   String _shippingCost = '';
@@ -215,16 +219,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
       payload['need_driver'] = _needDriver;
 
-      final result = await _api.createOrder(payload);
+      final result = await _api.createOrderWithPaymentMethod(payload, _paymentMethod);
       cart.clear();
       if (!mounted) return;
 
       final orderId = result['data']['id'];
 
-      // Coba bayar pakai Midtrans (Snap redirected) secara otomatis.
-      // Jika Midtrans gagal atau user tidak ingin bayar lewat Snap, lanjut ke halaman detail pesanan.
-      await _payWithMidtrans(orderId);
-      if (!mounted) return;
+      // Metode online & dp_online diarahkan ke Midtrans Snap
+      // (dp_online: Snap pertama = DP 50%, pelunasan menyusul).
+      // Face to face & COD tetap unpaid sampai pembayaran tunai dikonfirmasi admin.
+      if (_paymentMethod == 'online' || _paymentMethod == 'dp_online') {
+        await _payWithMidtrans(orderId);
+        if (!mounted) return;
+      }
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -458,6 +465,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             const SizedBox(height: 24),
 
+            // Payment method — konsisten dengan web & backend.
+            const Text(
+              'Metode Pembayaran',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            RadioGroup<String>(
+              groupValue: _paymentMethod,
+              onChanged: (v) => setState(() => _paymentMethod = v ?? 'online'),
+              child: const Column(
+                children: [
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Bayar Online (Midtrans)', style: TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      'QRIS, GoPay, ShopeePay, VA — status otomatis setelah bayar.',
+                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                    value: 'online',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('DP 50% (Midtrans)', style: TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      'Bayar setengah harga dulu via Midtrans, sisanya dilunasi belakangan.',
+                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                    value: 'dp_online',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Bayar di Tempat (COD)', style: TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      "Bayar tunai saat pesanan tiba — status 'Belum Bayar' sampai dikonfirmasi.",
+                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                    value: 'cod',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Face to Face', style: TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      "Bayar langsung saat bertemu penjual — status 'Belum Bayar' sampai dikonfirmasi.",
+                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    ),
+                    value: 'face_to_face',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
             // Notes
             const Text(
               'Catatan (opsional)',
@@ -568,6 +627,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ],
                   ),
+                  if (_paymentMethod == 'dp_online') ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'DP 50% (dibayar sekarang)',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                AppTheme.formatRupiah((total / 2).roundToDouble()),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Sisa dilunasi belakangan',
+                                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                              ),
+                              Text(
+                                AppTheme.formatRupiah(total - (total / 2).roundToDouble()),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

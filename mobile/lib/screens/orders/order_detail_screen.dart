@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/order.dart';
 import '../../services/api_client.dart';
 import '../../widgets/app_theme.dart';
@@ -54,6 +55,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  /// Lunasi sisa tagihan pesanan DP via Snap Midtrans.
+  /// Backend mengarahkan ke Snap "-REMAIN" dengan nominal sisa otomatis.
+  Future<void> _payRemainder(Order order) async {
+    try {
+      final result = await _api.createMidtransTransaction(order.id);
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        final transaction = result['transaction'] ?? <String, dynamic>{};
+        final redirectUrl = transaction['redirect_url'] ?? '';
+        final uri = Uri.tryParse(redirectUrl);
+
+        if (uri != null && await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) _loadOrder();
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tidak dapat membuka halaman pembayaran.')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal membuat transaksi pelunasan.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Terjadi kesalahan. Silakan coba lagi.')),
+        );
+      }
+    }
+  }
+
   Color _statusColor(String status) {
     switch (status) {
       case 'pending':
@@ -62,6 +100,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return Colors.blue;
       case 'processing':
         return Colors.purple;
+      case 'shipping':
+        return Colors.cyan;
+      case 'delivered':
+        return Colors.teal;
       case 'completed':
         return Colors.green;
       case 'cancelled':
@@ -79,6 +121,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return 'Dikonfirmasi';
       case 'processing':
         return 'Diproses';
+      case 'shipping':
+        return 'Dikirim';
+      case 'delivered':
+        return 'Diterima';
       case 'completed':
         return 'Selesai';
       case 'cancelled':
@@ -92,12 +138,48 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     switch (status) {
       case 'unpaid':
         return 'Belum Bayar';
+      case 'pending':
+        return 'Menunggu Pembayaran';
+      case 'dp_paid':
+        return 'DP Dibayar (50%)';
+      case 'failed':
+        return 'Gagal';
       case 'paid':
         return 'Lunas';
       case 'refunded':
         return 'Dikembalikan';
       default:
         return status;
+    }
+  }
+
+  Color _paymentColor(String status) {
+    switch (status) {
+      case 'paid':
+        return Colors.green;
+      case 'pending':
+      case 'dp_paid':
+        return Colors.amber;
+      case 'failed':
+      case 'unpaid':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _paymentMethodLabel(String? method) {
+    switch (method) {
+      case 'online':
+        return 'Online (Midtrans)';
+      case 'dp_online':
+        return 'DP 50% (Midtrans)';
+      case 'cod':
+        return 'Bayar di Tempat (COD)';
+      case 'face_to_face':
+        return 'Face to Face';
+      default:
+        return method ?? '';
     }
   }
 
@@ -176,12 +258,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status badges
-            Row(
+            // Status badges — order_status & payment_status dipisah + metode bayar.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _badge(_statusLabel(order.status), _statusColor(order.status)),
-                const SizedBox(width: 8),
-                _badge(_paymentLabel(order.paymentStatus), Colors.grey),
+                _badge(_paymentLabel(order.paymentStatus), _paymentColor(order.paymentStatus)),
+                if (order.paymentMethod != null)
+                  _badge(_paymentMethodLabel(order.paymentMethod), Colors.blueGrey),
               ],
             ),
             const SizedBox(height: 20),
@@ -265,6 +350,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 12),
             _summaryRow('Subtotal', AppTheme.formatRupiah(order.subtotal)),
             _summaryRow('Ongkir', AppTheme.formatRupiah(order.shippingCost)),
+            if (order.isDp) ...[
+              _summaryRow('DP 50% (dibayar)', AppTheme.formatRupiah(order.dpAmount)),
+              _summaryRow('Sisa (belum dibayar)', AppTheme.formatRupiah(order.remainingAmount)),
+            ],
             const Divider(),
             _summaryRow(
               'Total',
@@ -311,28 +400,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               const SizedBox(height: 20),
             ],
 
-            // Payment Button
-            if (order.paymentStatus == 'unpaid' && order.status != 'cancelled') ...[
+            // Payment Button — order online (lunas sekali bayar) yang belum
+            // dibayar, atau pesanan DP yang DP-nya sudah masuk (tombol pelunasan).
+            // Face to face & COD dikonfirmasi admin saat pertemuan/pengiriman.
+            if (order.paymentStatus != 'paid' &&
+                order.paymentStatus != 'pending' &&
+                (order.paymentMethod == null ||
+                    order.paymentMethod == 'online' ||
+                    (order.isDp && order.paymentStatus == 'dp_paid')) &&
+                order.status != 'cancelled') ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PaymentScreen(order: order),
-                      ),
-                    );
+                  onPressed: () async {
+                    if (order.isDp) {
+                      // DP: langsung ke Snap Midtrans untuk pelunasan sisa tagihan.
+                      await _payRemainder(order);
+                    } else {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentScreen(order: order),
+                        ),
+                      );
+                      _loadOrder(); // Sinkronkan status terbaru dari backend.
+                    }
                   },
                   icon: const Icon(Icons.payment, size: 20),
-                  label: const Text('Bayar Sekarang'),
+                  label: Text(order.isDp && order.paymentStatus == 'dp_paid'
+                      ? 'Lunasi Sisa ${AppTheme.formatRupiah(order.remainingAmount)}'
+                      : 'Bayar Sekarang'),
                 ),
               ),
             ],
 
-            // Cancel Button
-            if (order.status == 'pending') ...[
+            // Cancel Button — alur backend: pending & confirmed masih bisa dibatalkan.
+            if (order.status == 'pending' || order.status == 'confirmed') ...[
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
@@ -346,7 +450,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ],
 
             // Invoice Button
-            if (order.status == 'completed' || order.status == 'confirmed' || order.status == 'processing') ...[
+            if (order.status == 'completed' || order.status == 'confirmed' || order.status == 'processing' || order.status == 'shipping' || order.status == 'delivered') ...[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,

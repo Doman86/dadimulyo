@@ -19,6 +19,14 @@ const EMPTY_ADDRESS = {
   postal_code: '',
 };
 
+// Metode pembayaran — sama dengan pilihan di mobile (konsisten lintas platform).
+const PAYMENT_METHODS = [
+  { value: 'online', label: 'Bayar Online (Midtrans)', desc: 'QRIS, GoPay, ShopeePay, VA — status otomatis setelah bayar.' },
+  { value: 'dp_online', label: 'DP 50% (Midtrans)', desc: 'Bayar setengah harga dulu via Midtrans, sisanya dilunasi belakangan.' },
+  { value: 'cod', label: 'Bayar di Tempat (COD)', desc: 'Bayar tunai saat pesanan tiba. Status "Belum Bayar" sampai dikonfirmasi.' },
+  { value: 'face_to_face', label: 'Face to Face', desc: 'Bayar langsung saat bertemu penjual. Status "Belum Bayar" sampai dikonfirmasi.' },
+];
+
 export default function Checkout() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -29,6 +37,7 @@ export default function Checkout() {
   const [notes, setNotes] = useState('');
   const [needDelivery, setNeedDelivery] = useState(false);
   const [delivery, setDelivery] = useState({ truck_id: '', scheduled_at: '', shipping_cost: '' });
+  const [paymentMethod, setPaymentMethod] = useState('online');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -53,6 +62,7 @@ export default function Checkout() {
     const payload = {
       items: items.map((item) => ({ orange_product_id: item.product_id, quantity_kg: item.quantity_kg })),
       address,
+      payment_method: paymentMethod,
       notes: notes || undefined,
     };
     if (needDelivery) {
@@ -62,8 +72,9 @@ export default function Checkout() {
     try {
       const order = await createOrder(payload);
       clearCart();
-      // Langsung tawarkan pembayaran setelah pesanan dibuat (popup pilih metode bayar).
-      navigate(`/orders/${order.id}`, { state: { payNow: true } });
+      // Langsung tawarkan pembayaran online setelah pesanan dibuat
+      // (jika metode yang dipilih adalah online).
+      navigate(`/orders/${order.id}`, { state: { payNow: paymentMethod === 'online' } });
     } catch (err) {
       const firstError = err.response?.data?.errors;
       setError(firstError ? Object.values(firstError)[0]?.[0] : err.response?.data?.message || 'Gagal membuat pesanan.');
@@ -127,6 +138,24 @@ export default function Checkout() {
 
             <Reveal delay={200}>
               <section className="card-lux p-6 !rounded-2xl">
+                <h2 className="font-display text-lg font-bold text-charcoal">Metode Pembayaran</h2>
+                <div className="mt-3 space-y-2">
+                  {PAYMENT_METHODS.map((m) => (
+                    <label key={m.value} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-all ${paymentMethod === m.value ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 hover:border-gold/60'}`}>
+                      <input type="radio" name="payment_method" value={m.value} checked={paymentMethod === m.value} onChange={() => setPaymentMethod(m.value)} className="mt-1 h-4 w-4 accent-primary" />
+                      <span>
+                        <span className="block text-sm font-bold text-charcoal">{m.label}</span>
+                        <span className="mt-0.5 block text-xs text-gray-400">{m.desc}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-3 text-[11px] text-gray-400">Status pesanan dan pembayaran terpisah: pesanan tetap diproses sesuai alur (pending → dikonfirmasi → diproses → dikirim → diterima → selesai) terlepas dari metode pembayaran.</p>
+              </section>
+            </Reveal>
+
+            <Reveal delay={300}>
+              <section className="card-lux p-6 !rounded-2xl">
                 <h2 className="font-display text-lg font-bold text-charcoal">Catatan (opsional)</h2>
                 <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Catatan untuk penjual / pengiriman..." className="input-lux mt-3" />
               </section>
@@ -156,8 +185,20 @@ export default function Checkout() {
                 <span className="font-bold text-charcoal">Total</span>
                 <span className="text-xl font-extrabold text-primary">{formatRupiah(total)}</span>
               </div>
+              {paymentMethod === 'dp_online' && (
+                <div className="mt-2 rounded-xl bg-gold/10 px-4 py-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-charcoal">DP 50% (dibayar sekarang)</span>
+                    <span className="font-extrabold text-primary">{formatRupiah(Math.round(total / 2))}</span>
+                  </div>
+                  <div className="mt-1 flex justify-between text-xs text-gray-500">
+                    <span>Sisa dilunasi belakangan</span>
+                    <span className="font-bold text-charcoal">{formatRupiah(total - Math.round(total / 2))}</span>
+                  </div>
+                </div>
+              )}
               <button type="submit" disabled={submitting} className="mt-5 w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-50">
-                {submitting ? 'Memproses...' : 'Buat Pesanan & Bayar'}
+                {submitting ? 'Memproses...' : 'Buat Pesanan'}
               </button>
               <Link to="/cart" className="mt-3 block text-center text-sm font-medium text-secondary hover:underline">← Kembali ke keranjang</Link>
             </aside>

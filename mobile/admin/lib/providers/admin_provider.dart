@@ -152,10 +152,29 @@ class AdminProvider extends ChangeNotifier {
   Future<bool> updateOrderStatus(int orderId, String status) async {
     try {
       final result = await _api.updateOrderStatus(orderId, status);
+      if (result['success'] == true || result['data'] != null) {
+        await loadOrders();
+        return true;
+      }
+      _error = result['message'];
+      notifyListeners();
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // Konfirmasi / tolak pembayaran tunai (face_to_face / COD).
+  // Hanya mengubah payment_status di backend — status order tidak berubah.
+  Future<bool> confirmCashPayment(int orderId, {bool reject = false}) async {
+    try {
+      final result = await _api.confirmCashPayment(orderId, reject: reject);
       if (result['success'] == true) {
         await loadOrders();
         return true;
       }
+      _error = result['message'];
+      notifyListeners();
       return false;
     } catch (_) {
       return false;

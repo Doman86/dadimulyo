@@ -10,15 +10,25 @@ const ORDER_STATUS = {
   pending: { label: 'Pending', cls: 'badge-orange' },
   confirmed: { label: 'Dikonfirmasi', cls: 'badge-green' },
   processing: { label: 'Diproses', cls: 'badge-gold' },
+  shipping: { label: 'Dikirim', cls: 'badge-gold' },
+  delivered: { label: 'Diterima', cls: 'badge-green' },
   completed: { label: 'Selesai', cls: 'badge-green' },
   cancelled: { label: 'Dibatalkan', cls: 'badge-orange' },
 };
 const PAYMENT_STATUS = {
   unpaid: { label: 'Belum Bayar', cls: 'badge-orange' },
-  pending: { label: 'Menunggu Verifikasi', cls: 'badge-gold' },
+  pending: { label: 'Menunggu Pembayaran', cls: 'badge-gold' },
+  dp_paid: { label: 'DP Dibayar (50%)', cls: 'badge-gold' },
   failed: { label: 'Gagal', cls: 'badge-orange' },
   paid: { label: 'Lunas', cls: 'badge-green' },
   refunded: { label: 'Dikembalikan', cls: 'badge-gold' },
+};
+const PAYMENT_METHODS = {
+  online: 'Online (Midtrans)',
+  dp_online: 'DP 50% (Midtrans)',
+  cod: 'Bayar di Tempat (COD)',
+  face_to_face: 'Face to Face',
+  transfer: 'Transfer Manual',
 };
 const MANUAL_PAYMENT_STATUS = {
   pending: { label: 'Menunggu Verifikasi', cls: 'badge-gold' },
@@ -61,7 +71,10 @@ export default function OrderDetail() {
   if (loading) return <div className="py-20 text-center"><div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" /><p className="mt-4 text-gray-500">Memuat pesanan...</p></div>;
   if (notFound || !order) return <div className="py-20 text-center"><p className="text-gray-500">Pesanan tidak ditemukan.</p><Link to="/orders" className="mt-3 inline-flex btn-outline-lux rounded-full px-6 py-2 text-sm font-bold">Kembali ke riwayat</Link></div>;
 
-  const canPay = order.payment_status !== 'paid' && order.status !== 'cancelled';
+  const isDp = order.payment_method === 'dp_online';
+  const dpAmount = order.dp_amount ?? Math.round((order.total || 0) / 2);
+  const remaining = isDp ? Math.max(0, (order.total || 0) - dpAmount) : 0;
+  const canPay = order.payment_status !== 'paid' && order.payment_status !== 'pending' && order.status !== 'cancelled';
   const payments = order.payments || [];
   const delivery = order.delivery;
   const addr = order.shipping_address;
@@ -86,15 +99,18 @@ export default function OrderDetail() {
                 Dibuat {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <span className={(ORDER_STATUS[order.status] || {}).cls || 'badge-gold'}>{(ORDER_STATUS[order.status] || { label: order.status }).label}</span>
               <span className={(PAYMENT_STATUS[order.payment_status] || {}).cls || 'badge-gold'}>{(PAYMENT_STATUS[order.payment_status] || { label: order.payment_status }).label}</span>
+              {order.payment_method && (
+                <span className="badge-gold">{(PAYMENT_METHODS[order.payment_method] || order.payment_method)}</span>
+              )}
             </div>
           </div>
           {canPay && (
             <div className="mt-5 flex flex-wrap gap-3">
               <button onClick={() => setShowPayModal(true)} className="btn-lux rounded-xl px-8 py-3 text-sm font-bold">
-                Bayar Sekarang
+                {isDp && order.payment_status === 'dp_paid' ? 'Lunasi Sisa Pembayaran' : 'Bayar Sekarang'}
               </button>
               {payments.some((p) => p.status === 'pending') && (
                 <span className="inline-flex items-center rounded-xl bg-gold/10 px-4 py-3 text-xs font-medium text-charcoal">
@@ -122,6 +138,12 @@ export default function OrderDetail() {
             <div className="border-t border-gray-100 px-5 py-4 text-sm space-y-1.5">
               <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-bold text-charcoal">{formatRupiah(order.subtotal)}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Ongkir</span><span className="font-bold text-charcoal">{formatRupiah(order.shipping_cost)}</span></div>
+              {isDp && (
+                <>
+                  <div className="flex justify-between"><span className="text-gray-500">DP 50% (dibayar)</span><span className="font-bold text-charcoal">{formatRupiah(dpAmount)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Sisa (belum dibayar)</span><span className="font-bold text-charcoal">{formatRupiah(remaining)}</span></div>
+                </>
+              )}
               <div className="flex justify-between pt-2 border-t border-gray-100"><span className="font-bold text-charcoal">Total</span><span className="text-lg font-extrabold text-primary">{formatRupiah(order.total)}</span></div>
             </div>
           </section>
@@ -222,7 +244,12 @@ export default function OrderDetail() {
 
       {showPayModal && (
         <PaymentModal
-          payable={{ id: order.id, order_number: order.order_number, total: order.total }}
+          payable={{
+            id: order.id,
+            order_number: order.order_number,
+            total: isDp && order.payment_status === 'dp_paid' ? remaining : order.total,
+            label: isDp ? (order.payment_status === 'dp_paid' ? 'Pelunasan DP 50%' : 'DP 50%') : undefined,
+          }}
           type="order"
           onClose={() => setShowPayModal(false)}
           onPaid={(_id, opts) => {

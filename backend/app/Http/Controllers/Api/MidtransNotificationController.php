@@ -16,9 +16,11 @@ class MidtransNotificationController extends Controller
      * Webhook pembayaran Midtrans.
      *
      * Order ID Midtrans memakai prefix untuk membedakan jenis transaksi:
-     * - "JERUK-{id}"  -> pembelian jeruk (orders)
-     * - "RENT-{id}"   -> sewa truck (rentals)
-     * - "TRUCK-{id}"  -> pembelian truck (truck_orders)
+     * - "JERUK-{id}"       -> pembelian jeruk (orders)
+     * - "JERUK-{id}-DP"    -> DP 50% pembelian jeruk (orders, metode dp_online)
+     * - "JERUK-{id}-REMAIN"-> pelunasan DP pembelian jeruk (orders, metode dp_online)
+     * - "RENT-{id}"        -> sewa truck (rentals)
+     * - "TRUCK-{id}"       -> pembelian truck (truck_orders)
      */
     public function handlePaymentNotification(Request $request): JsonResponse
     {
@@ -46,11 +48,78 @@ class MidtransNotificationController extends Controller
         }
 
         if ($transactionStatus === 'settlement') {
+            // Pesanan DP (dp_online) punya dua tahap Midtrans yang dibedakan
+            // dari akhiran order id: "-DP" (DP 50%) dan "-REMAIN" (pelunasan).
+            $isDpOrder = $payable instanceof Order && $payable->isDp();
+            $isDpStage = $isDpOrder && str_ends_with($midtransOrderId, '-DP');
+            $isRemainStage = $isDpOrder && str_ends_with($midtransOrderId, '-REMAIN');
+
+            if ($isDpStage) {
+                // Tahap 1: DP 50% diterima — order jadi dp_paid, BELUM lunas.
+                $payable->update([
+                    'payment_status' => 'dp_paid',
+                    'payment_method' => 'dp_online',
+                    'midtrans_order_id' => $midtransOrderId,
+                    'midtrans_transaction_id' => $transId,
+                    'payment_type' => $paymentType,
+                ]);
+
+                // Verifikasi payment record DP (record pertama yang pending).
+                $dpPayment = $payable->payments()->where('status', 'pending')->orderBy('id')->first();
+                $dpPayment?->update(['status' => 'paid', 'payment_method' => 'online', 'paid_at' => now()]);
+
+                // Konfirmasi pesanan otomatis setelah DP masuk (alur sama seperti lunas).
+                if (in_array($payable->status, ['pending'])) {
+                    $payable->update(['status' => 'confirmed']);
+                }
+
+                if ($payable->delivery) {
+                    $payable->delivery->update(['status' => 'ready']);
+                }
+
+                app(PushNotificationService::class)->notify(
+                    $payable->customer_id,
+                    'DP diterima',
+                    "DP untuk pesanan {$payable->order_number} berhasil dikonfirmasi. Sisa tagihan " . number_format($payable->remainingAmount(), 0, ',', '.') . ' dibayar saat pelunasan.',
+                    'payment',
+                    ['id' => $payable->id, 'order_number' => $payable->order_number, 'midtrans_transaction_id' => $transId],
+                );
+            } elseif ($isRemainStage) {
+                // Tahap 2: pelunasan diterima — order lunas penuh.
+                $payable->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'dp_online',
+                    'midtrans_order_id' => $midtransOrderId,
+                    'midtrans_transaction_id' => $transId,
+                    'payment_type' => $paymentType,
+                ]);
+
+                // Verifikasi payment record pelunasan (record pending berikutnya).
+                $remainPayment = $payable->payments()->where('status', 'pending')->orderBy('id')->first();
+                $remainPayment?->update(['status' => 'paid', 'payment_method' => 'online', 'paid_at' => now()]);
+
+                app(PushNotificationService::class)->notify(
+                    $payable->customer_id,
+                    'Pelunasan diterima',
+                    "Pelunasan untuk pesanan {$payable->order_number} berhasil dikonfirmasi. Pesanan lunas.",
+                    'payment',
+                    ['id' => $payable->id, 'order_number' => $payable->order_number, 'midtrans_transaction_id' => $transId],
+                );
+            } else {
             $payable->update([
                 'payment_status' => 'paid',
+                // Order lama tanpa payment_method (sebelum kolom ada) dianggap online.
+                'payment_method' => $payable->payment_method ?? 'online',
                 'midtrans_order_id' => $midtransOrderId,
                 'midtrans_transaction_id' => $transId,
                 'payment_type' => $paymentType,
+            ]);
+
+            // Catat pembayaran online pada tabel payments (riwayat & laporan).
+            $payable->payments()->where('status', 'pending')->update([
+                'status' => 'paid',
+                'payment_method' => 'online',
+                'paid_at' => now(),
             ]);
 
             // Perilaku lanjutan per jenis transaksi.
@@ -91,30 +160,46 @@ class MidtransNotificationController extends Controller
                     ['id' => $payable->id, 'order_number' => $payable->order_number, 'midtrans_transaction_id' => $transId],
                 );
             }
+            }
         } elseif (
             $transactionStatus === 'deny' ||
             $transactionStatus === 'expire' ||
             $transactionStatus === 'cancel'
         ) {
-            $payable->update([
-                'payment_status' => 'failed',
-                'payment_type' => $paymentType,
-            ]);
+            // Pesanan DP yang DP-nya sudah masuk tidak boleh turun ke failed —
+            // yang gagal hanya Snap pelunasannya; DP tetap dp_paid agar bisa dilunasi lagi.
+            $dpAlreadyPaid = $payable instanceof Order && $payable->isDp() && $payable->payment_status === 'dp_paid';
+
+            if (! $dpAlreadyPaid) {
+                $payable->update([
+                    'payment_status' => 'failed',
+                    'payment_type' => $paymentType,
+                ]);
+            }
+
+            if (! $dpAlreadyPaid) {
+                $payable->payments()->where('status', 'pending')->update(['status' => 'failed']);
+            }
 
             app(PushNotificationService::class)->notify(
                 $payable->customer_id,
                 'Pembayaran gagal',
-                $payable instanceof Rental
-                    ? "Pembayaran sewa truck #{$payable->id} gagal. Silakan coba lagi."
-                    : 'Pembayaran gagal. Silakan coba lagi.',
+                $dpAlreadyPaid
+                    ? "Pelunasan untuk pesanan {$payable->order_number} gagal. DP tetap aman — silakan coba lunasi lagi."
+                    : ($payable instanceof Rental
+                        ? "Pembayaran sewa truck #{$payable->id} gagal. Silakan coba lagi."
+                        : 'Pembayaran gagal. Silakan coba lagi.'),
                 'payment',
                 ['id' => $payable->id, 'midtrans_transaction_id' => $transId],
             );
         } elseif ($transactionStatus === 'pending') {
-            $payable->update([
-                'payment_status' => 'pending',
-                'payment_type' => $paymentType,
-            ]);
+            // DP yang sudah masuk tidak boleh ditimpa status pending dari Snap pelunasan.
+            if (! ($payable instanceof Order && $payable->isDp() && $payable->payment_status === 'dp_paid')) {
+                $payable->update([
+                    'payment_status' => 'pending',
+                    'payment_type' => $paymentType,
+                ]);
+            }
         }
 
         return response()->json([
@@ -161,9 +246,11 @@ class MidtransNotificationController extends Controller
             ], 400);
         }
 
-        $order = Order::where('id', $orderId)->first();
+        // Order ID bisa berupa "JERUK-{id}" / id polos — gunakan resolver yang sama
+        // dengan handlePaymentNotification.
+        $order = $this->resolvePayable($orderId);
 
-        if (!$order) {
+        if (!$order instanceof Order) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found',
@@ -173,6 +260,7 @@ class MidtransNotificationController extends Controller
         if ($transactionStatus === 'settlement') {
             $order->update([
                 'payment_status' => 'paid',
+                'payment_method' => $order->payment_method ?? 'online',
                 'midtrans_order_id' => $orderId,
                 'midtrans_transaction_id' => $transId,
                 'payment_type' => $paymentType,
@@ -231,9 +319,9 @@ class MidtransNotificationController extends Controller
             ], 400);
         }
 
-        $order = Order::where('id', $orderId)->first();
+        $order = $this->resolvePayable($orderId);
 
-        if (!$order) {
+        if (!$order instanceof Order) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found',

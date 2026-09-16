@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchOrders, updateOrderStatus } from '../../api/orders';
+import { confirmOrderPayment } from '../../api/payments';
 import { formatRupiah } from '../../utils/format';
 import { whatsappUrl } from '../../utils/contact';
 import Reveal from '../../components/Reveal';
@@ -7,17 +8,35 @@ import siteConfig from '../../config/site';
 
 const STATUSES = [
   { value: 'pending', label: 'Pending' }, { value: 'confirmed', label: 'Dikonfirmasi' },
-  { value: 'processing', label: 'Diproses' }, { value: 'completed', label: 'Selesai' },
+  { value: 'processing', label: 'Diproses' }, { value: 'shipping', label: 'Dikirim' },
+  { value: 'delivered', label: 'Diterima' }, { value: 'completed', label: 'Selesai' },
   { value: 'cancelled', label: 'Dibatalkan' },
 ];
+// Alur status yang valid (harus runtut, selaras dengan backend STATUS_FLOW).
+const NEXT_STATUS = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['processing', 'cancelled'],
+  processing: ['shipping', 'cancelled'],
+  shipping: ['delivered', 'cancelled'],
+  delivered: ['completed'],
+  completed: [],
+  cancelled: [],
+};
 const PAYMENT_STATUSES = [
-  { value: 'unpaid', label: 'Belum Bayar' }, { value: 'paid', label: 'Lunas' },
+  { value: 'unpaid', label: 'Belum Bayar' }, { value: 'pending', label: 'Menunggu Pembayaran' },
+  { value: 'dp_paid', label: 'DP Dibayar (50%)' },
+  { value: 'paid', label: 'Lunas' }, { value: 'failed', label: 'Gagal' },
   { value: 'refunded', label: 'Dikembalikan' },
 ];
+const PAYMENT_METHOD_LABELS = {
+  online: 'Online (Midtrans)', dp_online: 'DP 50% (Midtrans)', cod: 'COD', face_to_face: 'Face to Face', transfer: 'Transfer',
+};
 const STATUS_COLORS = {
   pending: 'bg-amber-50 text-amber-600 border border-amber-100',
   confirmed: 'bg-blue-50 text-blue-600 border border-blue-100',
   processing: 'bg-purple-50 text-purple-600 border border-purple-100',
+  shipping: 'bg-cyan-50 text-cyan-600 border border-cyan-100',
+  delivered: 'bg-teal-50 text-teal-600 border border-teal-100',
   completed: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
   cancelled: 'bg-red-50 text-red-600 border border-red-100',
 };
@@ -50,9 +69,24 @@ export default function AdminOrders() {
   async function saveEdit(order) {
     setSaving(true); setError(null);
     try {
-      await updateOrderStatus(order.id, { status: draft.status, payment_status: draft.payment_status, shipping_cost: draft.shipping_cost === '' ? undefined : Number(draft.shipping_cost) });
+      await updateOrderStatus(order.id, {
+        status: draft.status !== order.status ? draft.status : undefined,
+        payment_status: draft.payment_status !== order.payment_status ? draft.payment_status : undefined,
+        shipping_cost: draft.shipping_cost === '' || Number(draft.shipping_cost) === Number(order.shipping_cost) ? undefined : Number(draft.shipping_cost),
+      });
       setEditingId(null); load();
     } catch (err) { setError(err.response?.data?.message || 'Gagal menyimpan perubahan.'); } finally { setSaving(false); }
+  }
+
+  /** Konfirmasi pembayaran tunai (face_to_face / COD) via endpoint khusus. */
+  async function confirmCash(order, reject = false) {
+    setSaving(true); setError(null);
+    try {
+      await confirmOrderPayment(order.id, reject);
+      setEditingId(null); load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengonfirmasi pembayaran.');
+    } finally { setSaving(false); }
   }
 
   return (
@@ -100,7 +134,10 @@ export default function AdminOrders() {
                     <p className="mt-0.5 text-xs text-gray-400">
                       {order.customer?.name} · {order.customer?.phone} · {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <p className="text-xs text-gray-400">{order.items?.length ?? 0} item{order.delivery ? ' · 🚛 Ada pengiriman' : ''}</p>
+                    <p className="text-xs text-gray-400">
+                      {order.items?.length ?? 0} item{order.delivery ? ' · 🚛 Ada pengiriman' : ''}
+                      {order.payment_method ? ` · 💳 ${PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method}` : ''}
+                    </p>
                     {(order.customer?.phone || order.shipping_address?.phone) && (
                       <div className="mt-2 flex gap-2">
                         <a href={whatsappUrl(order.customer?.phone || order.shipping_address?.phone, `Halo ${order.customer?.name || order.shipping_address?.recipient_name || 'Bapak/Ibu'}, kami dari {siteConfig.company.name} terkait pesanan ${order.order_number}.`)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-all hover:bg-emerald-500/20">
@@ -114,7 +151,11 @@ export default function AdminOrders() {
                   <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right">
                       <p className="font-extrabold text-primary text-sm">{formatRupiah(order.total)}</p>
-                      <p className="text-xs text-gray-400">{order.payment_status}</p>
+                      <p className="text-xs text-gray-400">
+                        {order.payment_method === 'dp_online'
+                          ? `DP ${formatRupiah(order.dp_amount ?? Math.round((order.total || 0) / 2))}`
+                          : order.payment_status}
+                      </p>
                     </div>
                     <button onClick={() => openEdit(order)} className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-2 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-100">Kelola</button>
                   </div>
@@ -125,7 +166,10 @@ export default function AdminOrders() {
                     <div>
                       <label className="label-lux">Status</label>
                       <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} className="input-lux w-full">
-                        {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        {/* Hanya status berikutnya yang valid (alur runtut). */}
+                        {[{ value: order.status, label: (STATUSES.find((s) => s.value === order.status) || { label: order.status }).label },
+                          ...STATUSES.filter((s) => (NEXT_STATUS[order.status] || []).includes(s.value)),
+                        ].map((s) => <option key={s.value} value={s.value}>{s.value === order.status ? `${s.label} (sekarang)` : s.label}</option>)}
                       </select>
                     </div>
                     <div>
@@ -138,6 +182,13 @@ export default function AdminOrders() {
                       <label className="label-lux">Ongkir (Rp)</label>
                       <input type="number" min="0" value={draft.shipping_cost} onChange={(e) => setDraft({ ...draft, shipping_cost: e.target.value })} className="input-lux w-full" />
                     </div>
+                    {(order.payment_method === 'cod' || order.payment_method === 'face_to_face' || order.payment_method === 'dp_online') && order.payment_status !== 'paid' && (
+                      <div className="flex flex-wrap gap-2 sm:col-span-3">
+                        <button onClick={() => confirmCash(order)} disabled={saving} className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-emerald-600 disabled:opacity-50">✓ {order.payment_method === 'dp_online' ? 'Konfirmasi Pelunasan Tunai' : 'Konfirmasi Pembayaran Tunai'}</button>
+                        <button onClick={() => confirmCash(order, true)} disabled={saving} className="rounded-xl border border-red-200 px-5 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-50 disabled:opacity-50">Tolak</button>
+                        <span className="self-center text-xs text-gray-400">Hanya mengubah status pembayaran — status pesanan tetap mengikuti alur order.</span>
+                      </div>
+                    )}
                     <div className="flex gap-2 sm:col-span-3">
                       <button onClick={() => saveEdit(order)} disabled={saving} className="btn-lux rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50">{saving ? 'Menyimpan...' : 'Simpan'}</button>
                       <button onClick={() => setEditingId(null)} className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition-all hover:bg-gray-50">Batal</button>

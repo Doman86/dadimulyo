@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'providers/admin_provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const AdminApp());
 }
 

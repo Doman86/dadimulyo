@@ -48,6 +48,12 @@ const METHODS = [
     desc: 'Bayar tunai saat pesanan diterima / di lokasi.',
     icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
   },
+  {
+    id: 'face_to_face',
+    title: 'Face to Face',
+    desc: 'Bayar langsung saat bertemu dengan penjual (ambil di tempat / pertemuan).',
+    icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3',
+  },
 ];
 
 /**
@@ -81,7 +87,8 @@ export default function PaymentModal({ payable, type, onClose, onPaid }) {
   if (!payable) return null;
 
   const total = Number(payable.total) || 0;
-  const isManual = selected === 'transfer' || selected === 'cod';
+  const isManual = selected === 'transfer' || selected === 'cod' || selected === 'face_to_face';
+  const isCash = selected === 'cod' || selected === 'face_to_face';
 
   async function payWithMidtrans() {
     setProcessing(true);
@@ -133,14 +140,17 @@ export default function PaymentModal({ payable, type, onClose, onPaid }) {
       setError('Unggah bukti transfer terlebih dahulu (JPG/PNG/PDF, maks 5MB).');
       return;
     }
+    // COD / face_to_face tidak butuh bukti; nominal tetap dicatat sebagai tagihan.
 
     setProcessing(true);
     try {
-      await submitPayment(payable.id, type, { payment_method: selected, amount: numericAmount, proof });
+      await submitPayment(type, payable.id, { payment_method: selected, amount: numericAmount, proof });
       setDone(
         selected === 'transfer'
           ? 'Bukti pembayaran terkirim dan menunggu verifikasi admin. Kamu bisa memantau statusnya di halaman pesanan.'
-          : 'Pembayaran dicatat untuk dibayar di tempat (COD).'
+          : isCash
+            ? 'Pembayaran tunai dicatat. Status pesanan tetap "Belum Bayar" sampai pembayaran dikonfirmasi saat pertemuan/pengiriman.'
+            : 'Pembayaran dicatat.'
       );
       // Refresh data di belakang modal, tapi biarkan modal terbuka
       // supaya user sempat membaca pesan konfirmasinya.

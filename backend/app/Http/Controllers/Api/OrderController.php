@@ -125,16 +125,41 @@ class OrderController extends Controller
 
             $shippingCost = (float) $request->input('shipping_cost', 0);
 
+            $paymentMethod = $request->input('payment_method', 'online');
+
             $order = Order::create([
                 'customer_id' => $user->id,
                 'order_number' => 'DM' . now()->format('Ymd') . '-' . strtoupper(Str::random(6)),
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
                 'total' => $subtotal + $shippingCost,
+                // order_status & payment_status dipisah: order selalu mulai pending,
+                // payment_status selalu mulai unpaid (belum ada pembayaran yang sukses).
+                // Untuk online: Midtrans mengubahnya pending -> paid via webhook;
+                // untuk dp_online: Midtrans mengubahnya unpaid -> dp_paid (DP masuk)
+                // lalu dp_paid -> paid saat pelunasan; untuk face_to_face/cod:
+                // admin mengonfirmasi tunai menjadi paid.
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
+                'payment_method' => $paymentMethod,
+                // Pesanan DP menyimpan nominal DP-nya (setengah dari total).
+                'dp_amount' => $paymentMethod === 'dp_online' ? round(($subtotal + $shippingCost) * Order::DP_RATIO) : 0,
                 'shipping_address_id' => $address?->id,
                 'notes' => $request->input('notes'),
+            ]);
+
+            // Catat payment pertama sebagai jejak metode yang dipilih.
+            // Untuk DP, nominalnya hanya setengah dari tagihan.
+            $order->payments()->create([
+                'payment_method' => $paymentMethod === 'online' ? 'transfer' : $paymentMethod,
+                'amount' => $paymentMethod === 'dp_online' ? $order->dp_amount : $order->total,
+                'payable_type' => 'order',
+                'status' => 'pending',
+                'notes' => $paymentMethod === 'dp_online'
+                    ? 'DP 50% — dibayar via Midtrans, pelunasan menyusul.'
+                    : ($paymentMethod === 'face_to_face'
+                        ? 'Face to face — bayar langsung saat pertemuan.'
+                        : ($paymentMethod === 'cod' ? 'Bayar di tempat (COD).' : 'Pembayaran online (Midtrans).')),
             ]);
 
             foreach ($orderItems as $orderItem) {
@@ -199,6 +224,17 @@ class OrderController extends Controller
         return new OrderResource($order->load(['customer', 'shippingAddress', 'items.orangeProduct', 'delivery.truck', 'delivery.driver', 'payments']));
     }
 
+    /** Urutan status order yang valid — hanya boleh maju (kecuali cancel). */
+    private const STATUS_FLOW = [
+        'pending' => ['confirmed', 'cancelled'],
+        'confirmed' => ['processing', 'cancelled'],
+        'processing' => ['shipping', 'cancelled'],
+        'shipping' => ['delivered', 'cancelled'],
+        'delivered' => ['completed'],
+        'completed' => [],
+        'cancelled' => [],
+    ];
+
     public function updateStatus(Request $request, Order $order): OrderResource
     {
         if (! $request->user()->isAdmin()) {
@@ -206,16 +242,40 @@ class OrderController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['nullable', 'string', 'in:pending,confirmed,processing,completed,cancelled'],
-            'payment_status' => ['nullable', 'string', 'in:unpaid,paid,refunded'],
+            'status' => ['nullable', 'string', 'in:pending,confirmed,processing,shipping,delivered,completed,cancelled'],
+            'payment_status' => ['nullable', 'string', 'in:unpaid,pending,dp_paid,paid,failed,refunded'],
             'shipping_cost' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        // Alur order harus runtut — tidak boleh melompat (mis. pending -> completed).
+        if (isset($validated['status']) && $validated['status'] !== $order->status) {
+            $allowed = self::STATUS_FLOW[$order->status] ?? [];
+
+            if (! in_array($validated['status'], $allowed, true)) {
+                abort(422, "Perubahan status dari {$order->status} ke {$validated['status']} tidak valid. Alur: pending -> confirmed -> processing -> shipping -> delivered -> completed.");
+            }
+        }
 
         if (isset($validated['shipping_cost'])) {
             $validated['total'] = $order->subtotal + (float) $validated['shipping_cost'];
         }
 
+        // Order closed menjadi completed / cancelled hanya jika pembayaran sudah beres.
+        if (in_array($validated['status'] ?? null, ['completed', 'cancelled'], true)
+            && $order->payment_status !== 'paid'
+            && ($validated['payment_status'] ?? null) !== 'paid') {
+            abort(422, 'Pembayaran belum dikonfirmasi (payment_status harus paid) sebelum pesanan ditandai '.($validated['status'] ?? '').'.');
+        }
+
         $order->update($validated);
+
+        // Admin menandai lunas => payment record pending ikut terverifikasi.
+        if (($validated['payment_status'] ?? null) === 'paid') {
+            $order->payments()->where('status', 'pending')->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+        }
 
         app(PushNotificationService::class)->notify(
             $order->customer_id,

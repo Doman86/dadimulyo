@@ -317,6 +317,15 @@ class ApiClient {
     return _extractData(response);
   }
 
+  /// Buat order dengan metode pembayaran yang dipilih user.
+  /// [paymentMethod]: face_to_face | cod | online (konsisten dengan web).
+  Future<Map<String, dynamic>> createOrderWithPaymentMethod(
+    Map<String, dynamic> data,
+    String paymentMethod,
+  ) async {
+    return createOrder({...data, 'payment_method': paymentMethod});
+  }
+
   /// Batalkan pesanan
   Future<Map<String, dynamic>> cancelOrder(
       dynamic orderId, String reason) async {

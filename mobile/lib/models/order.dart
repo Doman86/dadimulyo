@@ -67,6 +67,10 @@ class Order {
   final double total;
   final String status;
   final String paymentStatus;
+
+  /// Metode pembayaran dari backend: face_to_face | cod | online.
+  final String? paymentMethod;
+
   final String? notes;
   final String createdAt;
   final List<OrderItem> items;
@@ -77,6 +81,9 @@ class Order {
   final String? midtransTransactionId;
   final String? paymentType;
 
+  /// Nominal DP yang dibayar (metode dp_online). 0 bila bukan pesanan DP.
+  final double dpAmount;
+
   Order({
     required this.id,
     required this.orderNumber,
@@ -85,6 +92,7 @@ class Order {
     required this.total,
     required this.status,
     required this.paymentStatus,
+    this.paymentMethod,
     this.notes,
     required this.createdAt,
     this.items = const [],
@@ -92,6 +100,7 @@ class Order {
     this.midtransOrderId,
     this.midtransTransactionId,
     this.paymentType,
+    this.dpAmount = 0,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -103,6 +112,7 @@ class Order {
       total: (json['total'] ?? 0).toDouble(),
       status: json['status'] ?? 'pending',
       paymentStatus: json['payment_status'] ?? 'unpaid',
+      paymentMethod: json['payment_method'],
       notes: json['notes'],
       createdAt: json['created_at'] ?? '',
       items:
@@ -116,6 +126,14 @@ class Order {
       midtransOrderId: json['midtrans_order_id'],
       midtransTransactionId: json['midtrans_transaction_id'],
       paymentType: json['payment_type'],
+      dpAmount: (json['dp_amount'] ?? 0).toDouble(),
     );
   }
+
+  /// Pesanan DP 50% (metode dp_online).
+  bool get isDp => paymentMethod == 'dp_online';
+
+  /// Sisa tagihan setelah DP dibayar (0 bila bukan pesanan DP).
+  double get remainingAmount =>
+      isDp ? (total - dpAmount).clamp(0, total).toDouble() : 0.0;
 }

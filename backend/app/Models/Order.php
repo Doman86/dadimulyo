@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'total',
     'status',
     'payment_status',
+    'payment_method',
+    'dp_amount',
     'shipping_address_id',
     'notes',
     'midtrans_order_id',
@@ -47,5 +49,25 @@ class Order extends Model
     public function delivery(): HasOne
     {
         return $this->hasOne(Delivery::class);
+    }
+
+    /** Metode DP 50%: setengah harga dibayar di muka via Midtrans. */
+    public const DP_RATIO = 0.5;
+
+    /** Nominal DP untuk pesanan ini (0 bila bukan pesanan DP). */
+    public function dpAmount(): float
+    {
+        return round(((float) $this->total) * self::DP_RATIO);
+    }
+
+    /** Sisa tagihan setelah DP dibayar (0 bila bukan pesanan DP). */
+    public function remainingAmount(): float
+    {
+        return max(0, ((float) $this->total) - $this->dp_amount);
+    }
+
+    public function isDp(): bool
+    {
+        return $this->payment_method === 'dp_online';
     }
 }

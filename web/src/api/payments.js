@@ -10,14 +10,20 @@ function basePath(type, id) {
   return `/orders/${id}`;
 }
 
-export async function submitPayment(orderId, { payment_method, amount, proof }) {
-  return submitPaymentFor('order', orderId, { payment_method, amount, proof });
+/**
+ * Kirim pembayaran manual.
+ * (Sebelumnya signature-nya (orderId, payload) tapi dipanggil dengan
+ * (payableId, type, payload) — metode/amount/bukti yang dipilih user hilang.
+ * Sekarang konsisten: (type, id, payload).)
+ */
+export async function submitPayment(type, id, { payment_method, amount, proof }) {
+  return submitPaymentFor(type, id, { payment_method, amount, proof });
 }
 
 export async function submitPaymentFor(type, id, { payment_method, amount, proof }) {
   const form = new FormData();
-  form.append('payment_method', payment_method);
-  form.append('amount', amount);
+  if (payment_method) form.append('payment_method', payment_method);
+  if (amount != null) form.append('amount', amount);
   if (proof) form.append('proof', proof);
   const { data } = await client.post(`${basePath(type, id)}/payment`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -32,6 +38,15 @@ export async function submitPaymentFor(type, id, { payment_method, amount, proof
 export async function createMidtransTransaction(id, type = 'order') {
   const { data } = await client.post(`${basePath(type, id)}/midtrans`);
   return data; // { success, transaction: { snap_token, redirect_url, client_key, ... } }
+}
+
+/**
+ * Konfirmasi / tolak pembayaran tunai (face_to_face / COD) — admin.
+ * Hanya mengubah payment_status; order_status tetap mengikuti alur order.
+ */
+export async function confirmOrderPayment(orderId, reject = false) {
+  const { data } = await client.post(`/orders/${orderId}/payment/${reject ? 'reject' : 'confirm'}`);
+  return data.data;
 }
 
 /**

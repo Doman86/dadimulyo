@@ -31,6 +31,10 @@ class StoreOrderRequest extends FormRequest
             'address.province' => ['nullable', 'string', 'max:255'],
             'address.postal_code' => ['nullable', 'string', 'max:10'],
             'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            // Metode pembayaran: face_to_face (bayar langsung), cod (bayar di tempat),
+            // online (Midtrans), dp_online (DP 50% via Midtrans + pelunasan).
+            // Dipakai konsisten oleh web & mobile.
+            'payment_method' => ['nullable', 'string', 'in:face_to_face,cod,online,dp_online'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'need_driver' => ['nullable', 'boolean'],
             'delivery' => ['nullable', 'array'],

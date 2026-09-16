@@ -308,6 +308,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
     Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus']);
 
+    // Konfirmasi pembayaran tunai (face_to_face / COD) — admin.
+    // Hanya mengubah payment_status; alur order tetap dijalankan terpisah.
+    Route::post('/orders/{order}/payment/confirm', [PaymentController::class, 'confirmCashPayment']);
+    Route::post('/orders/{order}/payment/reject', [PaymentController::class, 'rejectCashPayment']);
+
     // Deliveries
     Route::get('/deliveries', [DeliveryController::class, 'index']);
     Route::post('/deliveries', [DeliveryController::class, 'store']);

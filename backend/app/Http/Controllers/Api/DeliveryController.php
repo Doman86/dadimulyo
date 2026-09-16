@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\DeliveryResource;
 use App\Models\Delivery;
 use App\Models\Order;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class DeliveryController extends Controller
 {
@@ -73,10 +75,37 @@ class DeliveryController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $delivery->update([
-            ...$validated,
-            'delivered_at' => $validated['status'] === 'delivered' ? now() : $delivery->delivered_at,
-        ]);
+        $delivery = DB::transaction(function () use ($request, $validated, $delivery) {
+            $delivery->update([
+                ...$validated,
+                'delivered_at' => $validated['status'] === 'delivered' ? now() : $delivery->delivered_at,
+            ]);
+
+            // Sinkronkan status order dengan progres pengiriman (satu sumber kebenaran:
+            // deliveries). COD tetap unpaid sampai pembayaran tunai dikonfirmasi admin.
+            if ($order = $delivery->order) {
+                $orderStatus = match ($validated['status']) {
+                    'in_transit' => 'shipping',
+                    'delivered' => 'delivered',
+                    'cancelled' => in_array($order->status, ['pending', 'confirmed']) ? 'cancelled' : $order->status,
+                    default => null,
+                };
+
+                if ($orderStatus !== null && $orderStatus !== $order->status) {
+                    $order->update(['status' => $orderStatus]);
+
+                    app(PushNotificationService::class)->notify(
+                        $order->customer_id,
+                        'Status pesanan berubah',
+                        "Pesanan {$order->order_number} sekarang berstatus {$orderStatus}.",
+                        'order',
+                        ['id' => $order->id, 'order_number' => $order->order_number, 'status' => $orderStatus],
+                    );
+                }
+            }
+
+            return $delivery;
+        });
 
         return new DeliveryResource($delivery->load(['truck', 'driver', 'order']));
     }

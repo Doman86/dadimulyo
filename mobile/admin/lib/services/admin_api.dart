@@ -2,7 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminApi {
-  static String _baseUrl = 'https://dadimulyo.my.id/api/admin';
+  // Base URL ditentukan saat runtime (lihat main.dart -> _configureBaseUrl).
+  // Default = server produksi, sehingga build release langsung siap pakai.
+  // CATATAN: backend Laravel tidak punya prefix /api/admin — semua endpoint
+  // order ada di /api/orders (sama seperti aplikasi customer).
+  // Untuk development, override via --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+  static String _baseUrl = const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://dadimulyo.my.id/api',
+  );
   static const String _tokenKey = 'admin_token';
   
   late final Dio _dio;
@@ -163,13 +171,20 @@ class AdminApi {
     return _extractData(response);
   }
   
-  Future<Map<String, dynamic>> updateOrderStatus(int id, String status) async {
-    final response = await _dio.put('/orders/$id/status', data: {'status': status});
+  /// Update status order. [paymentStatus] opsional (unpaid/pending/paid/failed/refunded).
+  Future<Map<String, dynamic>> updateOrderStatus(int id, String status, {String? paymentStatus}) async {
+    final response = await _dio.put('/orders/$id/status', data: {
+      'status': status,
+      'payment_status': ?paymentStatus,
+    });
     return _extractData(response);
   }
-  
-  Future<Map<String, dynamic>> confirmPayment(int orderId) async {
-    final response = await _dio.post('/orders/$orderId/confirm-payment');
+
+  /// Konfirmasi pembayaran tunai (face_to_face / COD).
+  /// Hanya mengubah payment_status — order_status tetap mengikuti alur order.
+  Future<Map<String, dynamic>> confirmCashPayment(int orderId, {bool reject = false}) async {
+    final action = reject ? 'reject' : 'confirm';
+    final response = await _dio.post('/orders/$orderId/payment/$action');
     return _extractData(response);
   }
   

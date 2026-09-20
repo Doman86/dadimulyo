@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { fetchCategories, fetchTrucks } from '../api/trucks';
 import { formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import { useI18n } from '../i18n';
 
 export default function Trucks() {
+  const { t } = useI18n();
   const [categories, setCategories] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [meta, setMeta] = useState({});
@@ -67,18 +69,18 @@ export default function Trucks() {
         <div className="orb orb-2 top-10 right-[-80px] opacity-20" />
         <div className="relative z-10">
           <Reveal>
-            <span className="section-label centered text-gold-light/80">Katalog Lengkap</span>
+            <span className="section-label centered text-gold-light/80">{t('trucks.full_catalog')}</span>
           </Reveal>
           <Reveal variant="up" delay={150}>
-            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Katalog Truck</h1>
+            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">{t('trucks.catalog')}</h1>
           </Reveal>
           <Reveal variant="up" delay={250}>
-            <p className="mt-3 text-white/50 max-w-lg mx-auto">Temukan truck yang sesuai kebutuhan Anda — dari pickup hingga tronton.</p>
+            <p className="mt-3 text-white/50 max-w-lg mx-auto">{t('trucks.catalog_desc')}</p>
           </Reveal>
           <Reveal variant="up" delay={350}>
             <Link to="/compare" className="mt-5 inline-flex items-center gap-2 btn-ghost-lux rounded-full px-6 py-2.5 text-sm font-bold text-white">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
-              Bandingkan Truck
+              {t('trucks.compare')}
             </Link>
           </Reveal>
         </div>
@@ -94,28 +96,28 @@ export default function Trucks() {
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 <input
                   type="text"
-                  placeholder="Cari merek / model..."
+                  placeholder={t('trucks.search_placeholder')}
                   value={filters.search}
                   onChange={set('search')}
                   className="input-lux pl-10"
                 />
               </div>
               <select value={filters.category_id} onChange={set('category_id')} className="input-lux">
-                <option value="">Semua Kategori</option>
+                <option value="">{t('trucks.all_categories')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               <select value={filters.condition} onChange={set('condition')} className="input-lux">
-                <option value="">Semua Kondisi</option>
-                <option value="baru">Baru</option>
-                <option value="bekas">Bekas</option>
+                <option value="">{t('trucks.all_conditions')}</option>
+                <option value="baru">{t('trucks.condition_new')}</option>
+                <option value="bekas">{t('trucks.condition_used')}</option>
               </select>
               <select value={filters.sort} onChange={set('sort')} className="input-lux">
-                <option value="newest">Terbaru</option>
-                <option value="oldest">Terlama</option>
-                <option value="price_asc">Harga Terendah</option>
-                <option value="price_desc">Harga Tertinggi</option>
+                <option value="newest">{t('trucks.sort_newest')}</option>
+                <option value="oldest">{t('trucks.sort_oldest')}</option>
+                <option value="price_asc">{t('trucks.sort_price_asc')}</option>
+                <option value="price_desc">{t('trucks.sort_price_desc')}</option>
               </select>
             </div>
           </div>
@@ -139,9 +141,9 @@ export default function Trucks() {
           <Reveal>
             <div className="py-20 text-center">
               <div className="text-5xl mb-4">🚛</div>
-              <p className="text-gray-500 text-lg">Tidak ada truck yang cocok dengan filter Anda.</p>
+              <p className="text-gray-500 text-lg">{t('trucks.empty')}</p>
               <button onClick={() => setFilters({ search: '', category_id: '', condition: '', sort: 'newest' })} className="mt-4 btn-outline-lux rounded-full px-6 py-2.5 text-sm font-bold">
-                Reset Filter
+                {t('trucks.reset_filter')}
               </button>
             </div>
           </Reveal>
@@ -167,7 +169,7 @@ export default function Trucks() {
                     {truck.condition && (
                       <div className="absolute top-3 left-3">
                         <span className={truck.condition === 'baru' ? 'badge-green' : 'badge-orange'}>
-                          {truck.condition === 'baru' ? 'Baru' : 'Bekas'}
+                          {truck.condition === 'baru' ? t('trucks.condition_new') : t('trucks.condition_used')}
                         </span>
                       </div>
                     )}
@@ -176,7 +178,7 @@ export default function Trucks() {
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                       <span>{truck.year}</span>
                       <span>·</span>
-                      <span>{truck.category?.name || 'Truck'}</span>
+                      <span>{truck.category?.name || t('nav.trucks')}</span>
                     </div>
                     <h2 className="mt-2 text-lg font-bold text-charcoal group-hover:text-primary transition-colors duration-300">
                       {truck.brand} {truck.model}
@@ -199,7 +201,7 @@ export default function Trucks() {
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCompare(truck); }}
                       className="mt-3 btn-outline-lux rounded-full px-4 py-1.5 text-xs font-bold"
                     >
-                      Bandingkan
+                      {t('trucks.compare_button')}
                     </button>
                   </div>
                 </Link>
@@ -211,7 +213,7 @@ export default function Trucks() {
         {meta.last_page > 1 && (
           <Reveal>
             <div className="mt-10 text-center text-sm text-gray-500">
-              Halaman {meta.current_page} dari {meta.last_page}
+              {t('common.page_of', { current: meta.current_page, last: meta.last_page })}
             </div>
           </Reveal>
         )}

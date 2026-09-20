@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useI18n } from '../i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 import siteConfig from '../config/site';
-
-const links = [
-  { to: '/', label: 'Beranda' },
-  { to: '/trucks', label: 'Truck' },
-  { to: '/rental', label: 'Sewa' },
-  { to: '/oranges', label: 'Jeruk' },
-  { to: '/about', label: 'Tentang' },
-  { to: '/contact', label: 'Kontak' },
-];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { count } = useCart();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const links = [
+    { to: '/', label: t('nav.home') },
+    { to: '/trucks', label: t('nav.trucks') },
+    { to: '/rental', label: t('nav.rental') },
+    { to: '/oranges', label: t('nav.oranges') },
+    { to: '/about', label: t('nav.about') },
+    { to: '/contact', label: t('nav.contact') },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -77,10 +80,11 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
+          <LanguageSwitcher className="shrink-0" />
           <Link
             to="/cart"
             className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 backdrop-blur-md transition-all duration-300 hover:border-gold/60 hover:bg-gold/10"
-            aria-label="Keranjang"
+            aria-label={t('nav.cart')}
           >
             <svg className="h-[18px] w-[18px] text-white transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
@@ -115,22 +119,22 @@ export default function Navbar() {
                 onClick={handleLogout}
                 className="btn-lux hidden rounded-full px-5 py-2 text-sm font-semibold sm:block"
               >
-                Keluar
+                {t('nav.logout')}
               </button>
             </>
           ) : (
             <>
               <Link
                 to="/login"
-                className="hidden rounded-full px-4 py-2 text-sm font-medium text-white/80 transition-colors duration-300 hover:text-gold-light sm:block"
+                className="hidden rounded-full px-4 py-2 text-sm font-medium                text-white/80 transition-colors duration-300 hover:text-gold-light sm:block"
               >
-                Masuk
+                {t('nav.login')}
               </Link>
               <Link
                 to="/register"
                 className="btn-lux hidden rounded-full px-5 py-2 text-sm font-semibold sm:block"
               >
-                Daftar
+                {t('nav.register')}
               </Link>
             </>
           )}
@@ -139,7 +143,7 @@ export default function Navbar() {
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="relative flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-full border border-white/15 bg-white/5 lg:hidden"
-            aria-label="Menu"
+            aria-label={t('nav.menu')}
           >
             <span className={`h-[1.5px] w-5 bg-white transition-all duration-300 ${menuOpen ? 'translate-y-[6.5px] rotate-45' : ''}`} />
             <span className={`h-[1.5px] w-5 bg-white transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
@@ -176,15 +180,15 @@ export default function Navbar() {
               onClick={handleLogout}
               className="btn-lux w-full rounded-xl py-3 text-sm font-semibold"
             >
-              Keluar
+              {t('nav.logout')}
             </button>
           ) : (
             <div className="flex gap-3 pt-1">
               <Link to="/login" className="flex-1 rounded-xl border border-white/20 py-3 text-center text-sm font-medium text-white">
-                Masuk
+                {t('nav.login')}
               </Link>
               <Link to="/register" className="btn-lux flex-1 rounded-xl py-3 text-center text-sm font-semibold">
-                Daftar
+                {t('nav.register')}
               </Link>
             </div>
           )}

@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { fetchOrangeCategories, fetchOranges } from '../api/oranges';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import { useI18n } from '../i18n';
 import siteConfig from '../config/site';
 
 export default function Oranges() {
+  const { t } = useI18n();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [meta, setMeta] = useState({});
@@ -62,14 +64,14 @@ export default function Oranges() {
         <div className="orb orb-3 bottom-[-50px] left-20 opacity-20" />
         <div className="relative z-10">
           <Reveal>
-            <span className="section-label centered text-gold-light/80">Fresh from {siteConfig.address.city}</span>
+            <span className="section-label centered text-gold-light/80">{t('oranges.fresh_from')} {siteConfig.address.city}</span>
           </Reveal>
           <Reveal variant="up" delay={150}>
-            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Marketplace Jeruk</h1>
+            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">{t('oranges.marketplace')}</h1>
           </Reveal>
           <Reveal variant="up" delay={250}>
             <p className="mt-3 text-white/50 max-w-lg mx-auto">
-              Jeruk segar langsung dari kebun {siteConfig.address.city} &amp; sekitarnya.
+              {t('oranges.marketplace_desc', { city: siteConfig.address.city })}
             </p>
           </Reveal>
         </div>
@@ -85,28 +87,28 @@ export default function Oranges() {
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 <input
                   type="text"
-                  placeholder="Cari produk / lokasi kebun..."
+                  placeholder={t('oranges.search_placeholder')}
                   value={filters.search}
                   onChange={set('search')}
                   className="input-lux pl-10"
                 />
               </div>
               <select value={filters.category_id} onChange={set('category_id')} className="input-lux">
-                <option value="">Semua Kategori</option>
+                <option value="">{t('oranges.all_categories')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               <select value={filters.grade} onChange={set('grade')} className="input-lux">
-                <option value="">Semua Grade</option>
-                <option value="A">Grade A</option>
-                <option value="B">Grade B</option>
-                <option value="C">Grade C</option>
+                <option value="">{t('oranges.all_grades')}</option>
+                <option value="A">{t('oranges.grade', { value: 'A' })}</option>
+                <option value="B">{t('oranges.grade', { value: 'B' })}</option>
+                <option value="C">{t('oranges.grade', { value: 'C' })}</option>
               </select>
               <select value={filters.sort} onChange={set('sort')} className="input-lux">
-                <option value="newest">Terbaru</option>
-                <option value="price_asc">Harga Terendah</option>
-                <option value="price_desc">Harga Tertinggi</option>
+                <option value="newest">{t('oranges.sort_newest')}</option>
+                <option value="price_asc">{t('oranges.sort_price_asc')}</option>
+                <option value="price_desc">{t('oranges.sort_price_desc')}</option>
               </select>
             </div>
             <label className="mt-3 inline-flex items-center gap-2.5 text-sm text-gray-600 cursor-pointer group">
@@ -116,7 +118,7 @@ export default function Oranges() {
                 onChange={set('in_stock')}
                 className="h-4 w-4 rounded border-gray-300 accent-primary cursor-pointer"
               />
-              <span className="group-hover:text-primary transition-colors">Hanya yang tersedia (stok &gt; 0)</span>
+              <span className="group-hover:text-primary transition-colors">{t('oranges.in_stock_only')}</span>
             </label>
           </div>
         </Reveal>
@@ -139,9 +141,9 @@ export default function Oranges() {
           <Reveal>
             <div className="py-20 text-center">
               <div className="text-5xl mb-4">🍊</div>
-              <p className="text-gray-500 text-lg">Tidak ada produk yang cocok.</p>
+              <p className="text-gray-500 text-lg">{t('oranges.empty')}</p>
               <button onClick={() => setFilters({ search: '', category_id: '', grade: '', in_stock: false, sort: 'newest' })} className="mt-4 btn-outline-lux rounded-full px-6 py-2.5 text-sm font-bold">
-                Reset Filter
+                {t('oranges.reset_filter')}
               </button>
             </div>
           </Reveal>
@@ -161,12 +163,12 @@ export default function Oranges() {
                     )}
                     {product.grade && (
                       <div className="absolute top-3 right-3">
-                        <span className="badge-gold">Grade {product.grade}</span>
+                        <span className="badge-gold">{t('oranges.grade', { value: product.grade })}</span>
                       </div>
                     )}
                     {Number(product.stock_kg) <= 0 && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-bold text-white">Stok Habis</span>
+                        <span className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-bold text-white">{t('oranges.out_of_stock')}</span>
                       </div>
                     )}
                   </div>
@@ -179,15 +181,18 @@ export default function Oranges() {
                     </h2>
                     <div className="mt-2 flex items-baseline gap-1.5">
                       <span className="text-lg font-extrabold text-primary">{formatRupiah(product.price_per_kg)}</span>
-                      <span className="text-xs text-gray-400">/ kg</span>
+                      <span className="text-xs text-gray-400"> {t('oranges.per_kg')}</span>
                     </div>
                     {product.wholesale_price && (
                       <div className="mt-1 text-xs text-gray-500">
-                        Grosir: <span className="font-bold text-secondary">{formatRupiah(product.wholesale_price)}</span>/kg
+                        {t('oranges.wholesale')}: <span className="font-bold text-secondary">{formatRupiah(product.wholesale_price)}</span>/kg
                       </div>
                     )}
                     <div className="mt-2 text-xs text-gray-400">
-                      Stok {formatNumber(product.stock_kg)} kg · Min. {formatNumber(product.minimum_order_kg)} kg
+                      {t('oranges.stock_min', {
+                        stock: formatNumber(product.stock_kg),
+                        min: formatNumber(product.minimum_order_kg),
+                      })}
                     </div>
                   </div>
                 </Link>
@@ -199,7 +204,7 @@ export default function Oranges() {
         {meta.last_page > 1 && (
           <Reveal>
             <div className="mt-10 text-center text-sm text-gray-500">
-              Halaman {meta.current_page} dari {meta.last_page}
+              {t('common.page_of', { current: meta.current_page, last: meta.last_page })}
             </div>
           </Reveal>
         )}

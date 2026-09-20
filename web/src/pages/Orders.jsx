@@ -3,27 +3,30 @@ import { Link } from 'react-router-dom';
 import { fetchOrders } from '../api/orders';
 import { formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
+import { useI18n } from '../i18n';
 
+// Mapping status → translation key + class badge.
 const ORDER_STATUS = {
-  pending: { label: 'Pending', cls: 'badge-orange' },
-  confirmed: { label: 'Dikonfirmasi', cls: 'badge-green' },
-  processing: { label: 'Diproses', cls: 'badge-gold' },
-  shipping: { label: 'Dikirim', cls: 'badge-gold' },
-  delivered: { label: 'Diterima', cls: 'badge-green' },
-  completed: { label: 'Selesai', cls: 'badge-green' },
-  cancelled: { label: 'Dibatalkan', cls: 'badge-orange' },
+  pending: { key: 'orders.status.pending', cls: 'badge-orange' },
+  confirmed: { key: 'orders.status.confirmed', cls: 'badge-green' },
+  processing: { key: 'orders.status.processing', cls: 'badge-gold' },
+  shipping: { key: 'orders.status.shipping', cls: 'badge-gold' },
+  delivered: { key: 'orders.status.delivered', cls: 'badge-green' },
+  completed: { key: 'orders.status.completed', cls: 'badge-green' },
+  cancelled: { key: 'orders.status.cancelled', cls: 'badge-orange' },
 };
 
 const PAYMENT_STATUS = {
-  unpaid: { label: 'Belum Bayar', cls: 'badge-orange' },
-  pending: { label: 'Menunggu Pembayaran', cls: 'badge-gold' },
-  dp_paid: { label: 'DP Dibayar (50%)', cls: 'badge-gold' },
-  failed: { label: 'Gagal', cls: 'badge-orange' },
-  paid: { label: 'Lunas', cls: 'badge-green' },
-  refunded: { label: 'Dikembalikan', cls: 'badge-gold' },
+  unpaid: { key: 'orders.payment_status.unpaid', cls: 'badge-orange' },
+  pending: { key: 'orders.payment_status.pending', cls: 'badge-gold' },
+  dp_paid: { key: 'orders.payment_status.dp_paid', cls: 'badge-gold' },
+  failed: { key: 'orders.payment_status.failed', cls: 'badge-orange' },
+  paid: { key: 'orders.payment_status.paid', cls: 'badge-green' },
+  refunded: { key: 'orders.payment_status.refunded', cls: 'badge-gold' },
 };
 
 export default function Orders() {
+  const { t, dateLocale } = useI18n();
   const [orders, setOrders] = useState([]);
   const [meta, setMeta] = useState({});
   const [loading, setLoading] = useState(true);
@@ -32,7 +35,7 @@ export default function Orders() {
   useEffect(() => {
     fetchOrders({ per_page: 20 })
       .then((result) => { setOrders(result.data); setMeta(result.meta || {}); })
-      .catch(() => setError('Gagal memuat riwayat pesanan.'))
+      .catch(() => setError(t('orders.load_failed')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -40,8 +43,8 @@ export default function Orders() {
     <div>
       <section className="page-hero !py-12">
         <div className="relative z-10">
-          <Reveal><h1 className="font-display text-3xl font-extrabold text-white">Riwayat Pesanan</h1></Reveal>
-          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">Semua pesanan jeruk Anda.</p></Reveal>
+          <Reveal><h1 className="font-display text-3xl font-extrabold text-white">{t('orders.history')}</h1></Reveal>
+          <Reveal variant="up" delay={100}><p className="mt-2 text-white/50 text-sm">{t('orders.history_desc')}</p></Reveal>
         </div>
       </section>
 
@@ -56,8 +59,8 @@ export default function Orders() {
           <Reveal>
             <div className="py-16 text-center">
               <div className="text-5xl mb-4">📦</div>
-              <p className="text-gray-500 text-lg">Belum ada pesanan.</p>
-              <Link to="/oranges" className="mt-4 inline-flex btn-outline-lux rounded-full px-6 py-2.5 text-sm font-bold">Belanja jeruk sekarang</Link>
+              <p className="text-gray-500 text-lg">{t('orders.empty')}</p>
+              <Link to="/oranges" className="mt-4 inline-flex btn-outline-lux rounded-full px-6 py-2.5 text-sm font-bold">{t('orders.shop_now')}</Link>
             </div>
           </Reveal>
         ) : (
@@ -69,14 +72,14 @@ export default function Orders() {
                     <div>
                       <div className="font-bold text-charcoal">{order.order_number}</div>
                       <div className="text-xs text-gray-400 mt-0.5">
-                        {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {order.items?.length ?? 0} item
+                        {new Date(order.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {t('orders.item_count', { count: order.items?.length ?? 0 })}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-extrabold text-primary">{formatRupiah(order.total)}</div>
                       <div className="mt-1 flex justify-end gap-1.5">
-                        <span className={(ORDER_STATUS[order.status] || {}).cls || 'badge-gold'}>{(ORDER_STATUS[order.status] || { label: order.status }).label}</span>
-                        <span className={(PAYMENT_STATUS[order.payment_status] || {}).cls || 'badge-gold'}>{(PAYMENT_STATUS[order.payment_status] || { label: order.payment_status }).label}</span>
+                        <span className={(ORDER_STATUS[order.status] || {}).cls || 'badge-gold'}>{ORDER_STATUS[order.status] ? t(ORDER_STATUS[order.status].key) : order.status}</span>
+                        <span className={(PAYMENT_STATUS[order.payment_status] || {}).cls || 'badge-gold'}>{PAYMENT_STATUS[order.payment_status] ? t(PAYMENT_STATUS[order.payment_status].key) : order.payment_status}</span>
                       </div>
                     </div>
                   </div>
@@ -87,7 +90,7 @@ export default function Orders() {
         )}
 
         {meta.last_page > 1 && (
-          <Reveal><div className="mt-6 text-center text-sm text-gray-400">Halaman {meta.current_page} dari {meta.last_page}</div></Reveal>
+          <Reveal><div className="mt-6 text-center text-sm text-gray-400">{t('common.page_of', { current: meta.current_page, last: meta.last_page })}</div></Reveal>
         )}
       </div>
     </div>

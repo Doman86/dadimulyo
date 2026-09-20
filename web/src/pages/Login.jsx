@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../i18n';
 import Reveal from '../components/Reveal';
 import siteConfig from '../config/site';
 
 export default function Login() {
   const { login, verifyOtp, resendOtp, loading } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [step, setStep] = useState('credentials');
@@ -48,7 +50,7 @@ export default function Login() {
     setError(null);
     setInfo(null);
     if (!/^\d{6}$/.test(otp)) {
-      setError('Masukkan 6 digit kode verifikasi.');
+      setError(t('auth.otp_invalid'));
       return;
     }
     const result = await verifyOtp(pendingEmail, otp);
@@ -93,14 +95,14 @@ export default function Login() {
             </Link>
             {step === 'credentials' ? (
               <>
-                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Masuk</h1>
-                <p className="mt-1 text-sm text-gray-400">Selamat datang kembali di {siteConfig.company.name}</p>
+                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">{t('auth.login_title')}</h1>
+                <p className="mt-1 text-sm text-gray-400">{t('auth.login_desc', { name: siteConfig.company.name })}</p>
               </>
             ) : (
               <>
-                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Verifikasi Email</h1>
+                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">{t('auth.verify_title')}</h1>
                 <p className="mt-1 text-sm text-gray-400">
-                  Kode 6 digit dikirim ke <span className="font-semibold text-secondary">{pendingMasked || pendingEmail}</span>
+                  {t('auth.verify_desc', { email: <span className="font-semibold text-secondary">{pendingMasked || pendingEmail}</span> })}
                 </p>
               </>
             )}
@@ -117,24 +119,24 @@ export default function Login() {
           {step === 'credentials' ? (
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="label-lux">Email</label>
+                <label className="label-lux">{t('auth.email')}</label>
                 <input
                   type="email"
                   required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="email@contoh.com"
+                  placeholder={t('auth.email_placeholder')}
                   className="input-lux"
                 />
               </div>
               <div>
-                <label className="label-lux">Password</label>
+                <label className="label-lux">{t('auth.password')}</label>
                 <input
                   type="password"
                   required
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Masukkan password"
+                  placeholder={t('auth.password_placeholder')}
                   className="input-lux"
                 />
               </div>
@@ -146,15 +148,15 @@ export default function Login() {
                 {loading ? (
                   <span className="inline-flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
-                    Memproses...
+                    {t('common.processing')}
                   </span>
-                ) : 'Masuk'}
+                ) : t('auth.login_title')}
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerify} className="mt-6 space-y-4">
               <div>
-                <label className="label-lux">Kode Verifikasi</label>
+                <label className="label-lux">{t('auth.otp_code')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -176,9 +178,9 @@ export default function Login() {
                 {loading ? (
                   <span className="inline-flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
-                    Memverifikasi...
+                    {t('auth.verifying')}
                   </span>
-                ) : 'Verifikasi & Masuk'}
+                ) : t('auth.verify_login')}
               </button>
               <button
                 type="button"
@@ -186,17 +188,17 @@ export default function Login() {
                 disabled={resendIn > 0 || loading}
                 className="w-full text-center text-sm font-semibold text-secondary hover:underline disabled:text-gray-400 disabled:hover:no-underline"
               >
-                {resendIn > 0 ? `Kirim ulang kode (${resendIn} detik)` : 'Kirim ulang kode'}
+                {resendIn > 0 ? t('auth.resend_in', { seconds: resendIn }) : t('auth.resend')}
               </button>
               <p className="text-center text-xs text-gray-400">
-                Tidak menerima email? Pastikan alamat email benar, cek folder Spam, atau kirim ulang kode.
+                {t('auth.otp_help')}
               </p>
               <button
                 type="button"
                 onClick={backToCredentials}
                 className="w-full text-center text-xs text-gray-400 hover:text-primary transition-colors"
               >
-                ← Ganti email / password
+                {t('auth.change_credentials')}
               </button>
             </form>
           )}
@@ -204,8 +206,8 @@ export default function Login() {
           {step === 'credentials' && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500">
-                Belum punya akun?{' '}
-                <Link to="/register" className="font-bold text-secondary hover:underline">Daftar di sini</Link>
+                {t('auth.no_account')}{' '}
+                <Link to="/register" className="font-bold text-secondary hover:underline">{t('auth.register_here')}</Link>
               </p>
             </div>
           )}
@@ -213,7 +215,7 @@ export default function Login() {
           <div className="divider-gold my-5" />
 
           <Link to="/" className="block text-center text-xs text-gray-400 hover:text-primary transition-colors">
-            ← Kembali ke Beranda
+            {t('auth.back_home')}
           </Link>
         </div>
       </Reveal>

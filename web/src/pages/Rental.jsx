@@ -5,9 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import { formatNumber, formatRupiah } from '../utils/format';
 import Reveal from '../components/Reveal';
 import PaymentModal from '../components/PaymentModal';
+import { useI18n } from '../i18n';
 
 export default function Rental() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const [trucks, setTrucks] = useState([]);
@@ -26,7 +28,7 @@ export default function Rental() {
   useEffect(() => {
     fetchTrucks({ is_for_rent: 1, per_page: 50 })
       .then((result) => setTrucks(result.data))
-      .catch(() => setMessage({ type: 'error', text: 'Gagal memuat daftar truck sewaan.' }))
+      .catch(() => setMessage({ type: 'error', text: t('rental.load_failed') }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,7 +47,7 @@ export default function Rental() {
       const result = await checkAvailability(selected.id, dates.start_date, dates.end_date);
       setAvailability(result);
     } catch {
-      setMessage({ type: 'error', text: 'Gagal memeriksa ketersediaan.' });
+      setMessage({ type: 'error', text: t('rental.check_failed') });
     } finally {
       setChecking(false);
     }
@@ -82,7 +84,7 @@ export default function Rental() {
       });
       setMessage({
         type: 'success',
-        text: `Booking berhasil! Kode booking #${rental.id}. Silakan selesaikan pembayaran di popup berikut — status sewa otomatis dikonfirmasi setelah dibayar.`,
+        text: t('rental.book_success', { id: rental.id }),
       });
       setDates({ start_date: '', end_date: '' });
       setNotes('');
@@ -90,11 +92,11 @@ export default function Rental() {
       // Tawarkan pembayaran langsung (Midtrans / transfer / COD).
       setPayable({
         id: rental.id,
-        label: `Sewa ${selected.brand} ${selected.model}`,
+        label: t('rental.rent_label', { brand: selected.brand, model: selected.model }),
         total: rental.total_price ?? estimate?.total ?? 0,
       });
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Gagal membuat booking.' });
+      setMessage({ type: 'error', text: err.response?.data?.message || t('rental.book_failed') });
     } finally {
       setSubmitting(false);
     }
@@ -110,14 +112,14 @@ export default function Rental() {
         <div className="orb orb-3 bottom-[-50px] left-10 opacity-20" />
         <div className="relative z-10">
           <Reveal>
-            <span className="section-label centered text-gold-light/80">Sewa Truck</span>
+            <span className="section-label centered text-gold-light/80">{t('rental.label')}</span>
           </Reveal>
           <Reveal variant="up" delay={150}>
-            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">Sewa Truck</h1>
+            <h1 className="mt-3 font-display text-4xl font-extrabold text-white md:text-5xl">{t('rental.label')}</h1>
           </Reveal>
           <Reveal variant="up" delay={250}>
             <p className="mt-3 text-white/50 max-w-lg mx-auto">
-              Sewa truck harian untuk kebutuhan usaha Anda. Pilih truck, tentukan tanggal, dan booking.
+              {t('rental.desc')}
             </p>
           </Reveal>
         </div>
@@ -151,7 +153,7 @@ export default function Rental() {
               <Reveal>
                 <div className="py-16 text-center">
                   <div className="text-5xl mb-4">🚛</div>
-                  <p className="text-gray-500 text-lg">Belum ada truck yang disewakan.</p>
+                  <p className="text-gray-500 text-lg">{t('rental.empty')}</p>
                 </div>
               </Reveal>
             ) : (
@@ -174,7 +176,7 @@ export default function Rental() {
                         )}
                         {selected?.id === truck.id && (
                           <div className="absolute top-3 right-3">
-                            <span className="badge-gold">Dipilih</span>
+                            <span className="badge-gold">{t('rental.selected')}</span>
                           </div>
                         )}
                       </div>
@@ -187,7 +189,7 @@ export default function Rental() {
                         </h2>
                         <div className="mt-2 text-sm font-extrabold text-primary">
                           {formatRupiah(truck.rental_price_per_day)}
-                          <span className="font-normal text-gray-400"> / hari</span>
+                          <span className="font-normal text-gray-400"> {t('rental.per_day')}</span>
                         </div>
                       </div>
                     </button>
@@ -200,11 +202,11 @@ export default function Rental() {
           {/* Form booking */}
           <Reveal variant="right">
             <aside className="card-lux h-fit p-6 !rounded-2xl lg:sticky lg:top-24">
-              <h2 className="font-display text-lg font-bold text-primary">Form Booking</h2>
+              <h2 className="font-display text-lg font-bold text-primary">{t('rental.booking_form')}</h2>
 
               {!selected ? (
                 <p className="mt-3 text-sm text-gray-400">
-                  Pilih salah satu truck di daftar untuk mulai booking.
+                  {t('rental.pick_first')}
                 </p>
               ) : (
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -213,12 +215,12 @@ export default function Rental() {
                       {selected.brand} {selected.model}
                     </div>
                     <div className="text-primary font-bold">
-                      {formatRupiah(selected.rental_price_per_day)} / hari
+                      {formatRupiah(selected.rental_price_per_day)} {t('rental.per_day')}
                     </div>
                   </div>
 
                   <div>
-                    <label className="label-lux">Tanggal Mulai</label>
+                    <label className="label-lux">{t('rental.start_date')}</label>
                     <input
                       type="date"
                       required
@@ -229,7 +231,7 @@ export default function Rental() {
                     />
                   </div>
                   <div>
-                    <label className="label-lux">Tanggal Selesai</label>
+                    <label className="label-lux">{t('rental.end_date')}</label>
                     <input
                       type="date"
                       required
@@ -249,40 +251,40 @@ export default function Rental() {
                     {checking ? (
                       <span className="inline-flex items-center gap-2">
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        Memeriksa...
+                        {t('rental.checking')}
                       </span>
-                    ) : 'Cek Ketersediaan'}
+                    ) : t('rental.check_availability')}
                   </button>
 
                   {availability && (
                     <div className={`rounded-xl px-4 py-3 text-sm font-medium ${availability.available ? 'alert-lux-success' : 'alert-lux-error'}`}>
-                      {availability.available ? 'Truck tersedia pada tanggal tersebut.' : 'Truck sudah dibooking pada rentang tanggal tersebut.'}
+                      {availability.available ? t('rental.available_ok') : t('rental.available_taken')}
                     </div>
                   )}
 
                   {estimate && (
                     <div className="rounded-xl bg-sand px-4 py-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Durasi</span>
-                        <span className="font-bold text-charcoal">{estimate.days} hari</span>
+                        <span className="text-gray-500">{t('rental.duration')}</span>
+                        <span className="font-bold text-charcoal">{t('rental.days', { value: estimate.days })}</span>
                       </div>
                       <div className="mt-1 flex justify-between">
-                        <span className="text-gray-500">Total</span>
+                        <span className="text-gray-500">{t('rental.total')}</span>
                         <span className="font-extrabold text-primary">{formatRupiah(estimate.total)}</span>
                       </div>
                       {estimate.weeks > 0 && availability.rental_price_per_week && (
-                        <div className="mt-1 text-xs text-gray-400">Paket mingguan digunakan untuk {estimate.weeks} minggu.</div>
+                        <div className="mt-1 text-xs text-gray-400">{t('rental.weekly_package', { value: estimate.weeks })}</div>
                       )}
                     </div>
                   )}
 
                   <div>
-                    <label className="label-lux">Catatan (opsional)</label>
+                    <label className="label-lux">{t('rental.notes')}</label>
                     <textarea
                       rows={3}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Keperluan sewa, tujuan, dll."
+                      placeholder={t('rental.notes_placeholder')}
                       className="input-lux"
                     />
                   </div>
@@ -292,7 +294,7 @@ export default function Rental() {
                     disabled={submitting || !availability?.available}
                     className="w-full btn-lux rounded-xl px-4 py-3 text-sm font-bold disabled:opacity-40"
                   >
-                    {submitting ? 'Memproses...' : user ? 'Booking Sekarang' : 'Login untuk Booking'}
+                    {submitting ? t('common.processing') : user ? t('rental.book_now') : t('rental.login_to_book')}
                   </button>
                 </form>
               )}
@@ -307,7 +309,7 @@ export default function Rental() {
           type="rental"
           onClose={() => setPayable(null)}
           onPaid={() => {
-            setMessage({ type: 'success', text: 'Pembayaran sewa diterima! Booking kamu akan segera dikonfirmasi.' });
+            setMessage({ type: 'success', text: t('rental.paid_success') });
           }}
         />
       )}

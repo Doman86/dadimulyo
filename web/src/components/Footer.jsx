@@ -1,18 +1,20 @@
 import { Link } from 'react-router-dom';
+import { useI18n } from '../i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 import siteConfig from '../config/site';
 
 const navLinks = [
-  { to: '/trucks', label: 'Katalog Truck' },
-  { to: '/rental', label: 'Sewa Truck' },
-  { to: '/oranges', label: 'Marketplace Jeruk' },
-  { to: '/compare', label: 'Bandingkan Truck' },
+  { to: '/trucks', key: 'footer.catalog_trucks' },
+  { to: '/rental', key: 'footer.rent_trucks' },
+  { to: '/oranges', key: 'footer.orange_marketplace' },
+  { to: '/compare', key: 'footer.compare_trucks' },
 ];
 
 const companyLinks = [
-  { to: '/about', label: 'Tentang Kami' },
-  { to: '/contact', label: 'Kontak' },
-  { to: '/faq', label: 'FAQ' },
-  { to: '/login', label: 'Masuk' },
+  { to: '/about', key: 'footer.about_us' },
+  { to: '/contact', key: 'footer.contact' },
+  { to: '/faq', key: 'footer.faq' },
+  { to: '/login', key: 'footer.login' },
 ];
 
 const downloadLink = {
@@ -43,6 +45,8 @@ const contactItems = [
 ];
 
 export default function Footer() {
+  const { t } = useI18n();
+
   return (
     <footer className="relative overflow-hidden bg-primary-dark">
       <div className="orb orb-1 -bottom-40 -right-40 opacity-20" />
@@ -70,7 +74,7 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">Navigasi</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">{t('footer.navigation')}</h3>
             <ul className="mt-4 space-y-2.5">
               {navLinks.map((link) => (
                 <li key={link.to}>
@@ -78,7 +82,7 @@ export default function Footer() {
                     to={link.to}
                     className="link-underline text-sm text-white/60 transition-colors hover:text-white"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 </li>
               ))}
@@ -87,7 +91,7 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">Perusahaan</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">{t('footer.company')}</h3>
             <ul className="mt-4 space-y-2.5">
               {companyLinks.map((link) => (
                 <li key={link.to}>
@@ -95,7 +99,7 @@ export default function Footer() {
                     to={link.to}
                     className="link-underline text-sm text-white/60 transition-colors hover:text-white"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 </li>
               ))}
@@ -104,7 +108,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">Hubungi Kami</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">{t('footer.contact_us')}</h3>
             <ul className="mt-4 space-y-3.5">
               {contactItems.map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm text-white/60">
@@ -119,25 +123,28 @@ export default function Footer() {
         </div>
 
         {/* Download APK */}
-        <div>
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">Unduh Aplikasi</h3>
+        <div className="mt-6">
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gold-light">{t('footer.download_app')}</h3>
           <a
             href="https://dadimulyo.my.id/api/download/apk"
             download="dadi_mulyo_mobile.apk"
             className="mt-4 block w-full rounded-lg bg-gold text-white text-center py-2.5 font-medium transition-colors hover:bg-gold/90"
           >
-            Unduh APK Terbaru (55.9MB)
+            {t('footer.download_apk')}
           </a>
+          <div className="mt-4 flex justify-start">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <div className="divider-gold mt-12" />
 
         <div className="mt-6 flex flex-col items-center justify-between gap-3 text-xs text-white/35 sm:flex-row">
-          <p>© {new Date().getFullYear()} {siteConfig.company.name}. Seluruh hak cipta dilindungi.</p>
+          <p>{t('footer.copyright', { year: new Date().getFullYear(), name: siteConfig.company.name })}</p>
           <p className="flex items-center gap-1.5">
             {siteConfig.address.short}
             <span className="h-1 w-1 rounded-full bg-gold/60" />
-            Melayani {siteConfig.serviceArea}
+            {t('footer.serving', { area: siteConfig.serviceArea })}
           </p>
         </div>
       </div>

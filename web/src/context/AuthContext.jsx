@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import client from '../api/client';
+import { useI18n } from '../i18n';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,7 @@ function safeParseUser(raw) {
 }
 
 export function AuthProvider({ children }) {
+  const { t } = useI18n();
   const [user, setUser] = useState(() => safeParseUser(localStorage.getItem('auth_user')));
   const [loading, setLoading] = useState(false);
 
@@ -81,7 +83,7 @@ export function AuthProvider({ children }) {
           needsOtp: true,
           email: data?.data?.email || email,
           emailMasked: data?.data?.email_masked || '',
-          message: data?.message || 'Kode verifikasi telah dikirim ke email Anda.',
+          message: data?.message || t('auth.otp_sent'),
         };
       }
 
@@ -92,7 +94,7 @@ export function AuthProvider({ children }) {
       if (!token || !freshUser) {
         return {
           success: false,
-          message: data?.message || 'Response server tidak valid.',
+          message: data?.message || t('auth.invalid_server_response'),
         };
       }
 
@@ -109,25 +111,25 @@ export function AuthProvider({ children }) {
         // Validation error — ambil pesan pertama
         const errors = error.response?.data?.errors;
         const firstMsg = errors ? Object.values(errors)[0]?.[0] : null;
-        return { success: false, message: firstMsg || 'Data tidak valid.' };
+        return { success: false, message: firstMsg || t('auth.invalid_data') };
       }
       if (status === 401) {
-        return { success: false, message: serverMsg || 'Email atau password salah.' };
+        return { success: false, message: serverMsg || t('auth.invalid_credentials') };
       }
       if (status === 403) {
-        return { success: false, message: serverMsg || 'Akun Anda tidak aktif.' };
+        return { success: false, message: serverMsg || t('auth.account_inactive') };
       }
       if (status === 429) {
-        return { success: false, message: 'Terlalu banyak percobaan. Silakan tunggu beberapa saat.' };
+        return { success: false, message: t('auth.too_many_attempts') };
       }
       if (status === 500) {
-        return { success: false, message: 'Server sedang bermasalah. Silakan coba lagi.' };
+        return { success: false, message: t('auth.server_error') };
       }
       if (!error.response) {
         // Network error
-        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+        return { success: false, message: t('auth.network_error') };
       }
-      return { success: false, message: serverMsg || 'Login gagal.' };
+      return { success: false, message: serverMsg || t('auth.login_failed') };
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export function AuthProvider({ children }) {
       if (!token || !freshUser) {
         return {
           success: false,
-          message: data?.message || 'Response server tidak valid.',
+          message: data?.message || t('auth.invalid_server_response'),
         };
       }
 
@@ -159,18 +161,18 @@ export function AuthProvider({ children }) {
       if (status === 422) {
         const errors = error.response?.data?.errors;
         const firstMsg = errors ? Object.values(errors)[0]?.[0] : null;
-        return { success: false, message: firstMsg || serverMsg || 'Kode verifikasi salah.' };
+        return { success: false, message: firstMsg || serverMsg || t('auth.wrong_otp') };
       }
       if (status === 429) {
-        return { success: false, message: serverMsg || 'Terlalu banyak percobaan. Silakan minta kode baru.' };
+        return { success: false, message: serverMsg || t('auth.request_new_code') };
       }
       if (status === 500) {
         return { success: false, message: serverMsg || 'Server sedang bermasalah. Silakan coba lagi.' };
       }
       if (!error.response) {
-        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+        return { success: false, message: t('auth.network_error') };
       }
-      return { success: false, message: serverMsg || 'Verifikasi gagal.' };
+      return { success: false, message: serverMsg || t('auth.verify_failed') };
     } finally {
       setLoading(false);
     }
@@ -182,21 +184,21 @@ export function AuthProvider({ children }) {
       return {
         success: data?.success === true,
         emailMasked: data?.data?.email_masked || '',
-        message: data?.message || 'Kode verifikasi baru telah dikirim.',
+        message: data?.message || t('auth.otp_resent'),
       };
     } catch (error) {
       const serverMsg = error.response?.data?.message;
       const status = error.response?.status;
       if (status === 429) {
-        return { success: false, message: serverMsg || 'Terlalu banyak permintaan. Silakan tunggu.' };
+        return { success: false, message: serverMsg || t('auth.too_many_requests') };
       }
       if (status === 404) {
-        return { success: false, message: serverMsg || 'Email tidak ditemukan.' };
+        return { success: false, message: serverMsg || t('auth.email_not_found') };
       }
       if (!error.response) {
-        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+        return { success: false, message: t('auth.network_error') };
       }
-      return { success: false, message: serverMsg || 'Gagal mengirim ulang kode.' };
+      return { success: false, message: serverMsg || t('auth.resend_failed') };
     }
   }
 
@@ -212,7 +214,7 @@ export function AuthProvider({ children }) {
           needsOtp: true,
           email: data?.data?.email || payload.email,
           emailMasked: data?.data?.email_masked || '',
-          message: data?.message || 'Kode verifikasi telah dikirim ke email Anda.',
+          message: data?.message || t('auth.otp_sent'),
         };
       }
 
@@ -223,7 +225,7 @@ export function AuthProvider({ children }) {
       if (!token || !freshUser) {
         return {
           success: false,
-          message: data?.message || 'Response server tidak valid.',
+          message: data?.message || t('auth.invalid_server_response'),
         };
       }
 
@@ -238,18 +240,18 @@ export function AuthProvider({ children }) {
       if (status === 422) {
         const errors = error.response?.data?.errors;
         const firstMsg = errors ? Object.values(errors)[0]?.[0] : null;
-        return { success: false, message: firstMsg || 'Data tidak valid.' };
+        return { success: false, message: firstMsg || t('auth.invalid_data') };
       }
       if (status === 429) {
-        return { success: false, message: 'Terlalu banyak percobaan. Silakan tunggu beberapa saat.' };
+        return { success: false, message: t('auth.too_many_attempts') };
       }
       if (status === 500) {
-        return { success: false, message: 'Server sedang bermasalah. Silakan coba lagi.' };
+        return { success: false, message: t('auth.server_error') };
       }
       if (!error.response) {
-        return { success: false, message: 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' };
+        return { success: false, message: t('auth.network_error') };
       }
-      return { success: false, message: serverMsg || 'Registrasi gagal.' };
+      return { success: false, message: serverMsg || t('auth.register_failed') };
     } finally {
       setLoading(false);
     }

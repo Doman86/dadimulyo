@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../i18n';
 import Reveal from '../components/Reveal';
 
 export default function Register() {
   const { register, verifyOtp, resendOtp, loading } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [step, setStep] = useState('credentials');
   const [form, setForm] = useState({
@@ -52,7 +54,7 @@ export default function Register() {
     setError(null);
     setInfo(null);
     if (!/^\d{6}$/.test(otp)) {
-      setError('Masukkan 6 digit kode verifikasi.');
+      setError(t('auth.otp_invalid'));
       return;
     }
     const result = await verifyOtp(pendingEmail, otp);
@@ -92,14 +94,14 @@ export default function Register() {
             </Link>
             {step === 'credentials' ? (
               <>
-                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Daftar Akun</h1>
-                <p className="mt-1 text-sm text-gray-400">Buat akun untuk mulai berbelanja</p>
+                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">{t('auth.register_title')}</h1>
+                <p className="mt-1 text-sm text-gray-400">{t('auth.register_desc')}</p>
               </>
             ) : (
               <>
-                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">Verifikasi Email</h1>
+                <h1 className="mt-4 font-display text-2xl font-bold text-charcoal">{t('auth.verify_title')}</h1>
                 <p className="mt-1 text-sm text-gray-400">
-                  Kode 6 digit dikirim ke <span className="font-semibold text-secondary">{pendingMasked || pendingEmail}</span>
+                  {t('auth.verify_desc', { email: <span className="font-semibold text-secondary">{pendingMasked || pendingEmail}</span> })}
                 </p>
               </>
             )}
@@ -116,24 +118,24 @@ export default function Register() {
           {step === 'credentials' ? (
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="label-lux">Nama Lengkap</label>
-                <input type="text" required value={form.name} onChange={set('name')} placeholder="Nama lengkap Anda" className="input-lux" />
+                <label className="label-lux">{t('auth.full_name')}</label>
+                <input type="text" required value={form.name} onChange={set('name')} placeholder={t('auth.name_placeholder')} className="input-lux" />
               </div>
               <div>
-                <label className="label-lux">Email</label>
-                <input type="email" required value={form.email} onChange={set('email')} placeholder="email@contoh.com" className="input-lux" />
+                <label className="label-lux">{t('auth.email')}</label>
+                <input type="email" required value={form.email} onChange={set('email')} placeholder={t('auth.email_placeholder')} className="input-lux" />
               </div>
               <div>
-                <label className="label-lux">No. HP / WhatsApp *</label>
-                <input type="tel" required value={form.phone} onChange={set('phone')} placeholder="0812-xxxx-xxxx" className="input-lux" />
+                <label className="label-lux">{t('auth.phone_wa')}</label>
+                <input type="tel" required value={form.phone} onChange={set('phone')} placeholder={t('auth.phone_placeholder')} className="input-lux" />
               </div>
               <div>
-                <label className="label-lux">Password</label>
-                <input type="password" required minLength={8} value={form.password} onChange={set('password')} placeholder="Min. 8 karakter" className="input-lux" />
+                <label className="label-lux">{t('auth.password')}</label>
+                <input type="password" required minLength={8} value={form.password} onChange={set('password')} placeholder={t('auth.password_min')} className="input-lux" />
               </div>
               <div>
-                <label className="label-lux">Konfirmasi Password</label>
-                <input type="password" required value={form.password_confirmation} onChange={set('password_confirmation')} placeholder="Ulangi password" className="input-lux" />
+                <label className="label-lux">{t('auth.password_confirm')}</label>
+                <input type="password" required value={form.password_confirmation} onChange={set('password_confirmation')} placeholder={t('auth.password_confirm_placeholder')} className="input-lux" />
               </div>
               <button
                 type="submit"
@@ -143,15 +145,15 @@ export default function Register() {
                 {loading ? (
                   <span className="inline-flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
-                    Memproses...
+                    {t('common.processing')}
                   </span>
-                ) : 'Daftar'}
+                ) : t('auth.register')}
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerify} className="mt-6 space-y-4">
               <div>
-                <label className="label-lux">Kode Verifikasi</label>
+                <label className="label-lux">{t('auth.otp_code')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -175,7 +177,7 @@ export default function Register() {
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-forest border-t-transparent" />
                     Memverifikasi...
                   </span>
-                ) : 'Verifikasi & Masuk'}
+                ) : t('auth.verify_login')}
               </button>
               <button
                 type="button"
@@ -183,10 +185,10 @@ export default function Register() {
                 disabled={resendIn > 0 || loading}
                 className="w-full text-center text-sm font-semibold text-secondary hover:underline disabled:text-gray-400 disabled:hover:no-underline"
               >
-                {resendIn > 0 ? `Kirim ulang kode (${resendIn} detik)` : 'Kirim ulang kode'}
+                {resendIn > 0 ? t('auth.resend_in', { seconds: resendIn }) : t('auth.resend')}
               </button>
               <p className="text-center text-xs text-gray-400">
-                Tidak menerima email? Pastikan alamat email benar, cek folder Spam, atau kirim ulang kode.
+                {t('auth.otp_help')}
               </p>
             </form>
           )}
@@ -194,8 +196,8 @@ export default function Register() {
           {step === 'credentials' && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500">
-                Sudah punya akun?{' '}
-                <Link to="/login" className="font-bold text-secondary hover:underline">Masuk di sini</Link>
+                {t('auth.has_account')}{' '}
+                <Link to="/login" className="font-bold text-secondary hover:underline">{t('auth.login_here')}</Link>
               </p>
             </div>
           )}
@@ -203,7 +205,7 @@ export default function Register() {
           <div className="divider-gold my-5" />
 
           <Link to="/" className="block text-center text-xs text-gray-400 hover:text-primary transition-colors">
-            ← Kembali ke Beranda
+            {t('auth.back_home')}
           </Link>
         </div>
       </Reveal>
